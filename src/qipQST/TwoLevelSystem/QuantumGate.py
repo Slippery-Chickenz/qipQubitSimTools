@@ -2,7 +2,7 @@ import numpy as np
 import numpy.typing as npt
 import matplotlib.pyplot as plt
 
-from Pulse import Pulse
+from .Pulse import Pulse
 
 class QuantumGate:
     """

@@ -1,8 +1,4 @@
-import numpy as np
-import numpy.typing as npt
-
-from Pulse import Pulse
-
+from .Pulse import Pulse
 
 class ConstantPulse(Pulse):
     

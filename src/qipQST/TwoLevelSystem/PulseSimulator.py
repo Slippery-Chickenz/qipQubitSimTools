@@ -3,8 +3,8 @@ import numpy.typing as npt
 
 from scipy.linalg import expm
 
-from Qubit import Qubit
-from QuantumCircuit import QuantumCircuit
+from .Qubit import Qubit
+from .QuantumCircuit import QuantumCircuit
 
 class PulseSimulator:
     """

@@ -1,7 +1,4 @@
-
-from Pulse import Pulse
-
-
+from .Pulse import Pulse
 
 class RampPulse(Pulse):
 
