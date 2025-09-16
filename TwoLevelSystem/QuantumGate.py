@@ -1,28 +1,44 @@
 import numpy as np
 import numpy.typing as npt
-
 import matplotlib.pyplot as plt
 
+from Pulse import Pulse
 
-class Pulse:
+class QuantumGate:
+    """
+    Defines a set of pulse points which together create a waveform that the gate applies
+    """
 
-    def __init__(self, time: float) -> None:
+    def __init__(self) -> None:
 
-        # Total time the pulse takes
-        self.time: float = time
+        # List of pulses that constitute this gate
+        self.pulses: list[Pulse] = []
         return
 
     def getAmplitude(self, t: float) -> float:
-        assert False, "GetAmplitude not implemented"
-
+        pulse, pulseTime = self.getPulse(t)
+        return pulse.getAmplitude(pulseTime)
     def getFrequency(self, t: float) -> float:
-        assert False, "GetFrequency not implemented"
-
+        pulse, pulseTime = self.getPulse(t)
+        return pulse.getFrequency(pulseTime)
     def getPhase(self, t: float) -> float:
-        assert False, "GetPhase not implemented"
+        pulse, pulseTime = self.getPulse(t)
+        return pulse.getPhase(pulseTime)
+
+    def appendPulse(self, newPulse: Pulse) -> None:
+        self.pulses.append(newPulse)
+    def getPulse(self, t) -> tuple[Pulse, float]:
+        for pulse in self.pulses:
+            if t < pulse.getTime():
+                return pulse, t
+            t -= pulse.getTime()
+        return self.pulses[-1], self.pulses[-1].getTime()
 
     def getTime(self) -> float:
-        return self.time
+        t = 0
+        for pulse in self.pulses:
+            t += pulse.getTime()
+        return t
 
     def getIntegratedFrequencies(self, times: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
 
@@ -33,10 +49,10 @@ class Pulse:
         integratedFrequency = np.cumsum(rawFrequencies) * (times[1] - times[0])
         return integratedFrequency
 
-    def plotPulse(self) -> None:
+    def plotPulses(self) -> None:
 
         # Time values to plot over
-        plotTimes = np.linspace(0, self.time, 500)
+        plotTimes = np.linspace(0, self.getTime(), 500 * len(self.pulses))
 
         # Amplitude, frequency, and pulse values to plot
         amplitudes = [self.getAmplitude(t) for t in plotTimes]
@@ -60,4 +76,5 @@ class Pulse:
         axes[2].set_ylabel("Pulse Voltage")
         
         plt.show()
+
         return
