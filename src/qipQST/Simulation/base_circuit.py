@@ -43,7 +43,7 @@ class QuantumCircuit:
         frequency = self.integratedFrequency[timeIndex]
         phase = currentGate.getPhase(t)
 
-        hamiltonian += amplitude * (np.cos(frequency + phase) * sX + np.sin(frequency + phase) * sY)
+        hamiltonian += amplitude * (-np.cos(2 * np.pi * frequency + phase) * sX - np.sin(2 * np.pi * frequency + phase) * sY)
         return hamiltonian
 
     def setSimulationTimes(self, numIterations: int, numSamples: int) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.integer]]:
@@ -53,7 +53,6 @@ class QuantumCircuit:
 
         # Time stamps where each sample will be taken
         sampleTimes = np.linspace(0, self.getTime(), numSamples)
-
         sampleIndices = np.zeros(numSamples, dtype=np.int32)
 
         self.iterationTimes = np.linspace(0, sampleTimes[1], numIterations)
@@ -105,7 +104,7 @@ class QuantumCircuit:
 
         # Create the fig/axes and set the size
         fig, axes = plt.subplots(nrows=3, ncols=1, layout="tight", sharex=True)
-        fig.set_figheight(12)
+        fig.set_figheight(6)
         fig.set_figwidth(6)
         fig.supxlabel("Time")
 

@@ -26,5 +26,7 @@ class Qubit:
         fig.set_figwidth(8)
         fig.set_figheight(3)
 
-        axes.plot(self.times, [(state[0] * np.conj(state[0])).real for state in self.states])
+        axes.plot(self.times, [(state[1] * np.conj(state[1])).real for state in self.states])
+        axes.set_ylim(-0.1, 1.1)
+        plt.show()
         return
