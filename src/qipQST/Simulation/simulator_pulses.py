@@ -3,8 +3,8 @@ import numpy.typing as npt
 
 from scipy.linalg import expm
 
-from .Qubit import Qubit
-from .QuantumCircuit import QuantumCircuit
+from .base_qubit import Qubit
+from .base_circuit import QuantumCircuit
 
 class PulseSimulator:
     """
@@ -17,7 +17,7 @@ class PulseSimulator:
         self.qubit: Qubit
 
         # Circuit made of of gates made of pulses to simulate
-        self.quantumCircuit: QuantumCircuit = QuantumCircuit()
+        self.quantumCircuit: QuantumCircuit
 
         # List of indicies where the states are recorded and the times at those indcies
         self.sampleIndices: npt.NDArray[np.integer]
@@ -35,33 +35,14 @@ class PulseSimulator:
         self.quantumCircuit = newCircuit
         return
 
-    def setSimulationTimes(self, numIterations: int, numSamples: int) -> None:
-
-        # Add one because the number of iterations is the number of steps not the number of times
-        numIterations += 1
-
-        # Time stamps where each sample will be taken
-        self.qubit.times = np.linspace(0, self.quantumCircuit.getTime(), numSamples)
-
-        self.sampleIndices = np.zeros(numSamples, dtype=np.int32)
-
-        self.quantumCircuit.iterationTimes = np.linspace(0, self.qubit.times[1], numIterations)
-        self.quantumCircuit.dt = self.quantumCircuit.iterationTimes[1]
-
-        for i in range(numSamples - 2):
-            nextTimes: npt.NDArray[np.floating] = np.linspace(self.qubit.times[i + 1], self.qubit.times[i + 2], numIterations)
-            self.sampleIndices[i + 1] = len(self.quantumCircuit.iterationTimes) - 1
-            self.quantumCircuit.iterationTimes = np.concat((self.quantumCircuit.iterationTimes, nextTimes[1:]))
-            
-        self.sampleIndices[-1] = len(self.quantumCircuit.iterationTimes) - 1
-        return
-
     def simulateCircuit(self, numIterations: int, numSamples: int = 2) -> Qubit:
 
         assert numSamples > 1, "At least two time points are needed"
 
         # Set the simualation time values
-        self.setSimulationTimes(numIterations, numSamples)
+        self.qubit.times, self.sampleIndices = self.quantumCircuit.setSimulationTimes(numIterations, numSamples)
+
+        self.quantumCircuit.calculateIntegratedFrequencies()
 
         # Reset the tls for this circuit
         self.qubit.states = np.zeros(shape=(numSamples, 2), dtype="complex")
@@ -77,7 +58,6 @@ class PulseSimulator:
         return self.qubit
 
     def getEvolutionOperator(self, startIndex: int, endIndex: int) -> npt.NDArray[np.complexfloating]:
-
         # Evolution operator, Hamiltonian, and detuning term
         evolutionOperator: npt.NDArray[np.complexfloating]
         hamiltonian: npt.NDArray[np.complexfloating]

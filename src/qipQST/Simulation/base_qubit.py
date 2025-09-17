@@ -1,10 +1,11 @@
 import numpy as np
-
 import numpy.typing as npt
+
+import matplotlib.pyplot as plt
 
 class Qubit:
 
-    def __init__(self) -> None:
+    def __init__(self, larmor: float) -> None:
        
         # Current state of the system
         self.states: npt.NDArray[np.complexfloating]
@@ -14,6 +15,16 @@ class Qubit:
         
         # Current resonance of the system 
         # (energy difference between the two states, also known as the Larmor frequency)
-        self.larmor: float = 0
+        self.larmor: float = larmor
 
+        return
+
+    def plotStates(self) -> None:
+
+
+        fig, axes = plt.subplots(nrows=1, ncols=1, sharex=True)
+        fig.set_figwidth(8)
+        fig.set_figheight(3)
+
+        axes.plot(self.times, [(state[0] * np.conj(state[0])).real for state in self.states])
         return

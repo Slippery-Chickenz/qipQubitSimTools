@@ -1,4 +1,4 @@
-from .Pulse import Pulse
+from .base_pulse import Pulse
 
 class ConstantPulse(Pulse):
     

@@ -3,30 +3,29 @@ import numpy.typing as npt
 
 import matplotlib.pyplot as plt
 
-from .QuantumGate import QuantumGate
+from ..Gates.base_gate import QuantumGate
 
-from .constants import *
+from .._constants import *
 
 class QuantumCircuit:
     """
     Defines a set of quantum gates to run in a set sequence.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, guessLarmor: float) -> None:
 
         # List of quantum gates to perform in order
-        self.quantumGates: list[QuantumGate] = []
+        self.gates: list[QuantumGate] = []
 
         # Guess Larmor Frequency
-        self.guessLarmor: float
+        self.guessLarmor: float = guessLarmor
 
         # Integrated frequency values over the entire circuit for the frequency modulation
         self.integratedFrequency: npt.NDArray[np.floating] = np.array([])
 
         # Times for the iteration over the entire circuit
-        self.iterationTimes: npt.NDArray[np.floating]
+        self.iterationTimes: npt.NDArray[np.floating] = np.array([])
         self.dt: float # Time between iterations
-
         return
 
     def getGuessLarmor(self) -> float:
@@ -45,8 +44,28 @@ class QuantumCircuit:
         phase = currentGate.getPhase(t)
 
         hamiltonian += amplitude * (np.cos(frequency + phase) * sX + np.sin(frequency + phase) * sY)
+        return hamiltonian
 
-        return np.array([])
+    def setSimulationTimes(self, numIterations: int, numSamples: int) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.integer]]:
+
+        # Add one because the number of iterations is the number of steps not the number of times
+        numIterations += 1
+
+        # Time stamps where each sample will be taken
+        sampleTimes = np.linspace(0, self.getTime(), numSamples)
+
+        sampleIndices = np.zeros(numSamples, dtype=np.int32)
+
+        self.iterationTimes = np.linspace(0, sampleTimes[1], numIterations)
+        self.dt = self.iterationTimes[1]
+
+        for i in range(numSamples - 2):
+            nextTimes: npt.NDArray[np.floating] = np.linspace(sampleTimes[i + 1], sampleTimes[i + 2], numIterations)
+            sampleIndices[i + 1] = len(self.iterationTimes) - 1
+            self.iterationTimes = np.concat((self.iterationTimes, nextTimes[1:]))
+            
+        sampleIndices[-1] = len(self.iterationTimes) - 1
+        return sampleTimes, sampleIndices
 
     def calculateIntegratedFrequencies(self) -> None:
 
@@ -58,31 +77,31 @@ class QuantumCircuit:
         return
 
     def appendGate(self, newGate: QuantumGate) -> None:
-        self.quantumGates.append(newGate)
+        self.gates.append(newGate)
         return
     def getGate(self, t: float) -> QuantumGate:
-        for gate in self.quantumGates:
+        for gate in self.gates:
             if t < gate.getTime():
                 return gate
             t -= gate.getTime()
-        return self.quantumGates[-1]
+        return self.gates[-1]
 
     def getTime(self) -> float:
         time = 0
-        for gate in self.quantumGates:
+        for gate in self.gates:
             time += gate.getTime()
         return time
 
     def plotCircuitWaveform(self) -> None:
 
-        # Time values to plot over
-        plotTimes = np.linspace(0, self.getTime(), 500 * len(self.pulses))
+        if len(self.iterationTimes) == 0:
+            self.setSimulationTimes(500, len(self.gates) + 1)
+            self.calculateIntegratedFrequencies()
 
         # Amplitude, frequency, and pulse values to plot
-        amplitudes = [self.getAmplitude(t) for t in plotTimes]
-        integratedFrequency = self.getIntegratedFrequencies(plotTimes)
-        frequencies = [self.getFrequency(t) for t in plotTimes]
-        pulseValues = [self.getAmplitude(t) * np.cos(integratedFrequency[i] + self.getPhase((t))) for i, t in enumerate(plotTimes)]
+        amplitudes = [self.getGate(t).getAmplitude(t) for t in self.iterationTimes]
+        frequencies = [self.getGate(t).getFrequency(t) for t in self.iterationTimes]
+        pulseValues = [self.getHamiltonian(i)[0][1].real for i in range(len(self.iterationTimes))]
 
         # Create the fig/axes and set the size
         fig, axes = plt.subplots(nrows=3, ncols=1, layout="tight", sharex=True)
@@ -90,17 +109,16 @@ class QuantumCircuit:
         fig.set_figwidth(6)
         fig.supxlabel("Time")
 
-        axes[0].plot(plotTimes, amplitudes)
+        axes[0].plot(self.iterationTimes, amplitudes)
         axes[0].set_ylabel("Amplitude")
 
-        axes[1].plot(plotTimes, frequencies)
+        axes[1].plot(self.iterationTimes, frequencies)
         axes[1].set_ylabel("Frequency")
 
-        axes[2].plot(plotTimes, pulseValues)
+        axes[2].plot(self.iterationTimes, pulseValues)
         axes[2].set_ylabel("Pulse Voltage")
         
         plt.show()
-
         return
 
 

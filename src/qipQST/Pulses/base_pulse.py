@@ -1,44 +1,28 @@
 import numpy as np
 import numpy.typing as npt
+
 import matplotlib.pyplot as plt
 
-from .Pulse import Pulse
 
-class QuantumGate:
-    """
-    Defines a set of pulse points which together create a waveform that the gate applies
-    """
+class Pulse:
 
-    def __init__(self) -> None:
+    def __init__(self, time: float) -> None:
 
-        # List of pulses that constitute this gate
-        self.pulses: list[Pulse] = []
+        # Total time the pulse takes
+        self.time: float = time
         return
 
     def getAmplitude(self, t: float) -> float:
-        pulse, pulseTime = self.getPulse(t)
-        return pulse.getAmplitude(pulseTime)
-    def getFrequency(self, t: float) -> float:
-        pulse, pulseTime = self.getPulse(t)
-        return pulse.getFrequency(pulseTime)
-    def getPhase(self, t: float) -> float:
-        pulse, pulseTime = self.getPulse(t)
-        return pulse.getPhase(pulseTime)
+        assert False, "GetAmplitude not implemented"
 
-    def appendPulse(self, newPulse: Pulse) -> None:
-        self.pulses.append(newPulse)
-    def getPulse(self, t) -> tuple[Pulse, float]:
-        for pulse in self.pulses:
-            if t < pulse.getTime():
-                return pulse, t
-            t -= pulse.getTime()
-        return self.pulses[-1], self.pulses[-1].getTime()
+    def getFrequency(self, t: float) -> float:
+        assert False, "GetFrequency not implemented"
+
+    def getPhase(self, t: float) -> float:
+        assert False, "GetPhase not implemented"
 
     def getTime(self) -> float:
-        t = 0
-        for pulse in self.pulses:
-            t += pulse.getTime()
-        return t
+        return self.time
 
     def getIntegratedFrequencies(self, times: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
 
@@ -49,10 +33,10 @@ class QuantumGate:
         integratedFrequency = np.cumsum(rawFrequencies) * (times[1] - times[0])
         return integratedFrequency
 
-    def plotPulses(self) -> None:
+    def plotPulse(self) -> None:
 
         # Time values to plot over
-        plotTimes = np.linspace(0, self.getTime(), 500 * len(self.pulses))
+        plotTimes = np.linspace(0, self.time, 500)
 
         # Amplitude, frequency, and pulse values to plot
         amplitudes = [self.getAmplitude(t) for t in plotTimes]
@@ -62,7 +46,7 @@ class QuantumGate:
 
         # Create the fig/axes and set the size
         fig, axes = plt.subplots(nrows=3, ncols=1, layout="tight", sharex=True)
-        fig.set_figheight(12)
+        fig.set_figheight(8)
         fig.set_figwidth(6)
         fig.supxlabel("Time")
 
@@ -76,5 +60,4 @@ class QuantumGate:
         axes[2].set_ylabel("Pulse Voltage")
         
         plt.show()
-
         return
