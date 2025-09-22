@@ -30,3 +30,6 @@ class Qubit:
         axes.set_ylim(-0.1, 1.1)
         plt.show()
         return
+
+    def getZProb(self) -> float:
+        return (self.states[-1][1] * np.conj(self.states[-1][1])).real

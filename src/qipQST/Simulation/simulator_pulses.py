@@ -1,4 +1,3 @@
-from matplotlib.pyplot import waitforbuttonpress
 import numpy as np
 import numpy.typing as npt
 
@@ -37,6 +36,7 @@ class PulseSimulator:
         Set the circuit to simulate
         """
         self.quantumCircuit = newCircuit
+        self.timeStepsSet = False
         return
 
     def setTimeSteps(self, numIterations: int, numSamples: int = 2) -> None:

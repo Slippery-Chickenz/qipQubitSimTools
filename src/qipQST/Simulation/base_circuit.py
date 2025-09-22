@@ -69,7 +69,7 @@ class QuantumCircuit:
     def calculateIntegratedFrequencies(self) -> None:
 
         # Raw frequencies at each time step
-        rawFrequencies = np.array([self.getGate(t).getFrequency(t) for t in self.iterationTimes])
+        rawFrequencies = np.array([self.getGate(t).getFrequency(t) - self.guessLarmor for t in self.iterationTimes])
 
         # Integrate the raw frequencies to get the frequency modulated values
         self.integratedFrequency = np.cumsum(rawFrequencies) * self.dt
