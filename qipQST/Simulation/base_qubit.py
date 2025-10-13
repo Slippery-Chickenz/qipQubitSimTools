@@ -1,14 +1,16 @@
 import numpy as np
 import numpy.typing as npt
 
-import matplotlib.pyplot as plt
+from ..states import StateStr
+
+from .base_spin_state import SpinState
 
 class Qubit:
 
     def __init__(self, larmor: float) -> None:
        
         # Current state of the system
-        self.states: npt.NDArray[np.complexfloating]
+        self.states: list[SpinState]
 
         # Current time of the system
         self.times: npt.NDArray[np.floating]
@@ -19,17 +21,22 @@ class Qubit:
 
         return
 
-    def plotStates(self) -> None:
+    def initializeStates(self, times: npt.NDArray[np.floating]) -> None:
 
-
-        fig, axes = plt.subplots(nrows=1, ncols=1, sharex=True)
-        fig.set_figwidth(8)
-        fig.set_figheight(3)
-
-        axes.plot(self.times, [(state[1] * np.conj(state[1])).real for state in self.states])
-        axes.set_ylim(-0.1, 1.1)
-        plt.show()
+        self.times = times
+        self.states = [SpinState("+Z") for _ in range(len(self.times))]
         return
 
-    def getZProb(self) -> float:
-        return (self.states[-1][1] * np.conj(self.states[-1][1])).real
+    def getProb(self, index: int = -1, state: npt.NDArray[np.complexfloating] | StateStr = "-Z") -> float:
+        return self.states[index].getProbability(state = state)
+    def getProbs(self, state: npt.NDArray[np.complexfloating] | StateStr = "-Z") -> list[float]:
+        return [qubitState.getProbability(state) for qubitState in self.states]
+
+
+
+
+
+
+
+
+

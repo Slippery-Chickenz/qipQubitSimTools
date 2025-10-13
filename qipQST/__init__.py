@@ -1,6 +1,5 @@
 import sys
 
-from qipQST.Gates import idle_gate
 sys.path.insert(1, ".")
 
 __version__ = "1.0.0"
@@ -14,18 +13,17 @@ from .Gates import (
     QuantumGate,
     PiO2X,
     PiO2Y,
-    IdleGate
+    IdleGate,
+    SPhase,
+    Hadamard
 )
 
 from .Simulation import (
     QuantumCircuit,
     Qubit,
-    PulseSimulator
+    PulseSimulator,
+    SimulationResult,
+    SpinState
 )
 
 from .Experiments import ramsey
-
-# from .Experiments import (
-#     sweepGuess,
-#     sweepTau,
-# )

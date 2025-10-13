@@ -9,7 +9,7 @@ from .._constants import *
 
 class QuantumCircuit:
     """
-    Defines a set of quantum gates to run in a set sequence.
+    A set of quantum gates to run in a set sequence.
     """
 
     def __init__(self, guessLarmor: float) -> None:
@@ -43,10 +43,16 @@ class QuantumCircuit:
         frequency = self.integratedFrequency[timeIndex]
         phase = currentGate.getPhase(t)
 
-        hamiltonian += amplitude * (-np.cos(2 * np.pi * frequency + phase) * sX - np.sin(2 * np.pi * frequency + phase) * sY)
+        hamiltonian += (-amplitude * 
+                       (np.cos(2 * np.pi * frequency + phase) * sX + 
+                        np.sin(2 * np.pi * frequency + phase) * sY))
         return hamiltonian
 
-    def setSimulationTimes(self, numIterations: int, numSamples: int) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.integer]]:
+    def setSimulationTimes(
+        self, 
+        numIterations: int, 
+        numSamples: int
+    ) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.integer]]:
 
         # Add one because the number of iterations is the number of steps not the number of times
         numIterations += 1
@@ -59,7 +65,7 @@ class QuantumCircuit:
         self.dt = self.iterationTimes[1]
 
         for i in range(numSamples - 2):
-            nextTimes: npt.NDArray[np.floating] = np.linspace(sampleTimes[i + 1], sampleTimes[i + 2], numIterations)
+            nextTimes = np.linspace(sampleTimes[i + 1], sampleTimes[i + 2], numIterations)
             sampleIndices[i + 1] = len(self.iterationTimes) - 1
             self.iterationTimes = np.concat((self.iterationTimes, nextTimes[1:]))
             

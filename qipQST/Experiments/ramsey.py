@@ -5,9 +5,7 @@ from ..Simulation.base_circuit import QuantumCircuit
 from ..Simulation.simulator_pulses import PulseSimulator
 from ..Simulation.base_qubit import Qubit
 
-from ..Gates.idle_gate import IdleGate
-from ..Gates.PiO2X_gate import PiO2X
-from ..Gates.PiO2Y_gate import PiO2Y
+from ..Gates import IdleGate, PiO2X, PiO2Y
 
 from tqdm import tqdm
 
@@ -20,6 +18,7 @@ def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000,
 
     # List to hold the output probabilities
     probabilities = np.zeros(len(guessLarmors))
+
 
     # Loop over the guess values and run the circuit at that value and tau
     for i in tqdm(range(len(guessLarmors))):
@@ -42,7 +41,7 @@ def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000,
         
         # Run the sim and get the results
         results = simulator.simulateCircuit(numIterations, 2)
-        probabilities[i] = results.getZProb()
+        probabilities[i] = results.qubit.getProb()
 
     return probabilities
 
@@ -72,7 +71,7 @@ def sweepTau(taus: list[float], guessLarmor, numIterations: int = 1000) -> npt.N
         
         # Run the sim and get the results
         results = simulator.simulateCircuit(numIterations, 2)
-        probabilities[i] = results.getZProb()
+        probabilities[i] = results.qubit.getProb()
 
     return probabilities
 
@@ -107,13 +106,9 @@ def sweepGuessAndTau(taus: list[float], guessLarmors: list[float], numIterations
             
             # Run the sim and get the results
             results = simulator.simulateCircuit(numIterations, 2)
-            probabilities[i][j] = results.getZProb()
+            probabilities[i][j] = results.qubit.getProb()
 
     return probabilities.transpose()
-
-
-
-
 
 
 

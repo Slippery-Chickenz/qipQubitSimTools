@@ -2,7 +2,10 @@ import numpy as np
 import numpy.typing as npt
 import matplotlib.pyplot as plt
 
+from scipy.linalg import expm
+
 from ..Pulses.base_pulse import Pulse
+from .._constants import *
 
 class QuantumGate:
     """
@@ -24,6 +27,37 @@ class QuantumGate:
     def getPhase(self, t: float) -> float:
         pulse, pulseTime = self.getPulse(t)
         return pulse.getPhase(pulseTime)
+
+    def getMatrix(self) -> npt.NDArray[np.complexfloating]:
+
+        times = np.linspace(0, self.getTime(), 1000)
+        dt = times[1]
+
+        freqs = self.getIntegratedFrequencies(times)
+
+        # Evolution operator, Hamiltonian, and detuning term
+        evolutionOperator: npt.NDArray[np.complexfloating]
+        hamiltonian: npt.NDArray[np.complexfloating]
+
+        # Evolution operator for the given circuit
+        evolutionOperator = np.eye(2, dtype = "complex")
+
+        # Loop over the entire time of the circuit
+        for i in range(len(times)):
+
+            t = times[i]
+
+            hamiltonian: npt.NDArray[np.complexfloating] = np.zeros((2, 2), dtype="complex")
+
+            amplitude = self.getAmplitude(t)
+            frequency = freqs[i]
+            phase = self.getPhase(t)
+
+            hamiltonian += -amplitude * (np.cos(2 * np.pi * frequency + phase) * sX + np.sin(2 * np.pi * frequency + phase) * sY)
+
+            evolutionOperator = evolutionOperator.dot(expm(np.pi * 1j * dt * hamiltonian))
+
+        return np.round(evolutionOperator, 4)
 
     def appendPulse(self, newPulse: Pulse) -> None:
         self.pulses.append(newPulse)

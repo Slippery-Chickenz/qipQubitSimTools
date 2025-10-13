@@ -5,6 +5,8 @@ from scipy.linalg import expm
 
 from .base_qubit import Qubit
 from .base_circuit import QuantumCircuit
+from .simulation_result import SimulationResult
+from .base_spin_state import SpinState
 
 class PulseSimulator:
     """
@@ -44,19 +46,16 @@ class PulseSimulator:
         assert numSamples > 1, "At least two time points are needed"
 
         # Set the simualation time values
-        self.qubit.times, self.sampleIndices = self.quantumCircuit.setSimulationTimes(numIterations, numSamples)
+        sampleTimes, self.sampleIndices = self.quantumCircuit.setSimulationTimes(numIterations, numSamples)
 
         self.quantumCircuit.calculateIntegratedFrequencies()
 
         # Reset the tls for this circuit
-        self.qubit.states = np.zeros(shape=(numSamples, 2), dtype="complex")
-        self.qubit.states[0] = np.array([1, 0])
-
+        self.qubit.initializeStates(sampleTimes)
         self.timeStepsSet = True
         return
 
-
-    def simulateCircuit(self, numIterations: int = 500, numSamples: int = 2) -> Qubit:
+    def simulateCircuit(self, numIterations: int = 500, numSamples: int = 2) -> SimulationResult:
 
         if not self.timeStepsSet:
             self.setTimeSteps(numIterations, numSamples)
@@ -66,9 +65,9 @@ class PulseSimulator:
             startIndex = self.sampleIndices[i]
             endIndex = self.sampleIndices[i + 1]
             evolutionOperator = self.getEvolutionOperator(startIndex, endIndex)
-            self.qubit.states[i + 1] = self.qubit.states[i].dot(evolutionOperator)
+            self.qubit.states[i + 1] = SpinState(self.qubit.states[i].state.dot(evolutionOperator))
 
-        return self.qubit
+        return SimulationResult(self.qubit)
 
     def getEvolutionOperator(self, startIndex: int, endIndex: int) -> npt.NDArray[np.complexfloating]:
 
