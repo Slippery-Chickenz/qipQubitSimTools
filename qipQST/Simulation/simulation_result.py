@@ -34,6 +34,7 @@ class SimulationResult:
         #
         fig = plt.figure()
         ax = fig.add_subplot(1,1,1, projection='3d')
+        ax.invert_yaxis()
         ax.set_axis_off()
 
         # Make data
@@ -71,6 +72,10 @@ class SimulationResult:
         ax.plot([-1, 1], [0, 0], [0, 0], color = 'dimgray', alpha = 0.4)
         ax.plot([0, 0], [-1, 1], [0, 0], color = 'dimgray', alpha = 0.4)
         ax.plot([0, 0], [0, 0], [-1, 1], color = 'dimgray', alpha = 0.4)
+
+        ax.text(0, 0, 1.1, "$|+z\\rangle$")
+        ax.text(0, 1.1, 0, "$|+y\\rangle$")
+        ax.text(1.1, 0, 0, "$|+x\\rangle$")
 
         theta, phi = 0, 0
 
