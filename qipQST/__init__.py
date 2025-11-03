@@ -26,4 +26,12 @@ from .Simulation import (
     SpinState
 )
 
-from .Experiments import ramsey
+from .Experiments import (
+    ramsey,
+    rabi,
+)
+
+from .Plotting import (
+    plotBloch,
+    plotQubitBloch
+)

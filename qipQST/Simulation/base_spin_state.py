@@ -36,3 +36,22 @@ class SpinState:
         braket = np.dot(np.conj(state), self.state)
         return np.real(np.dot(np.conj(braket), braket))
 
+    def getSphericalState(self) -> tuple[float, float]:
+
+        # Alpha and Beta for the state a|0> + b|1>
+        a = self.state[0]
+        b = self.state[1]
+
+        # Magnitude of the values
+        magA = np.sqrt((a * np.conj(a)).real)
+        magB = np.sqrt((b * np.conj(b)).real)
+
+        phi = 2 * np.arccos(magA)
+
+        theta = 0
+        if (magA > 0.0001 and magB > 0.0001):
+            theta = np.log((b * np.conj(a)) / (magA * magB)) / 1j
+
+        return np.real(theta), np.real(phi)
+
+

@@ -4,8 +4,7 @@ import numpy.typing as npt
 import matplotlib.pyplot as plt
 
 from ..Gates.base_gate import QuantumGate
-
-from .._constants import *
+from ..Pulses.base_pulse import Pulse
 
 class QuantumCircuit:
     """
@@ -43,9 +42,7 @@ class QuantumCircuit:
         frequency = self.integratedFrequency[timeIndex]
         phase = currentGate.getPhase(t)
 
-        hamiltonian += (-amplitude * 
-                       (np.cos(2 * np.pi * frequency + phase) * sX + 
-                        np.sin(2 * np.pi * frequency + phase) * sY))
+        hamiltonian += Pulse.hamiltonian(amplitude, frequency, phase)
         return hamiltonian
 
     def setSimulationTimes(
@@ -54,7 +51,8 @@ class QuantumCircuit:
         numSamples: int
     ) -> tuple[npt.NDArray[np.floating], npt.NDArray[np.integer]]:
 
-        # Add one because the number of iterations is the number of steps not the number of times
+        # Add one because the number of iterations is 
+        # the number of steps not the number of times
         numIterations += 1
 
         # Time stamps where each sample will be taken
@@ -90,6 +88,8 @@ class QuantumCircuit:
                 return gate
             t -= gate.getTime()
         return self.gates[-1]
+    def getNumGates(self) -> int:
+        return len(self.gates)
 
     def getTime(self) -> float:
         time = 0

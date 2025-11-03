@@ -8,6 +8,6 @@ class PiO2Y(QuantumGate):
 
     def __init__(self) -> None:
         super().__init__()
-        self.appendPulse(ConstantPulse(1/4, 1, 0, np.pi/2))
+        self.appendPulse(ConstantPulse(np.pi / 2, 1, 0, -np.pi/2))
         return
 

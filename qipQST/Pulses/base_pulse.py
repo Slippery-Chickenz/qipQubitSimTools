@@ -3,6 +3,7 @@ import numpy.typing as npt
 
 import matplotlib.pyplot as plt
 
+from .._constants import sX, sY
 
 class Pulse:
 
@@ -13,18 +14,21 @@ class Pulse:
         return
 
     def getAmplitude(self, t: float) -> float:
-        assert False, "GetAmplitude not implemented"
+        raise NotImplementedError("getAmplitude is not implemented")
 
     def getFrequency(self, t: float) -> float:
-        assert False, "GetFrequency not implemented"
+        raise NotImplementedError("getFrequency is not implemented")
 
     def getPhase(self, t: float) -> float:
-        assert False, "GetPhase not implemented"
+        raise NotImplementedError("getPhase is not implemented")
 
     def getTime(self) -> float:
         return self.time
 
-    def getIntegratedFrequencies(self, times: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
+    def getIntegratedFrequencies(
+        self, 
+        times: npt.NDArray[np.floating]
+    ) -> npt.NDArray[np.floating]:
 
         # Raw frequencies at each time step
         rawFrequencies = np.array([self.getFrequency(t) for t in times])
@@ -32,6 +36,15 @@ class Pulse:
         # Integrate the raw frequencies to get the frequency modulated values
         integratedFrequency = np.cumsum(rawFrequencies) * (times[1] - times[0])
         return integratedFrequency
+
+    @staticmethod
+    def hamiltonian(amplitude: float, frequency: float, phase:float) -> float:
+        """
+        Hamiltonian for the pulse in the rotating frame.
+        """
+        return (amplitude * 
+               (np.cos(frequency + phase) * sX - 
+                np.sin(frequency + phase) * sY))
 
     def plotPulse(self) -> None:
 

@@ -8,6 +8,8 @@ from .base_circuit import QuantumCircuit
 from .simulation_result import SimulationResult
 from .base_spin_state import SpinState
 
+from .._constants import *
+
 class PulseSimulator:
     """
     Simulate a quantum circut constructed of raw ESR pulses
@@ -46,7 +48,8 @@ class PulseSimulator:
         assert numSamples > 1, "At least two time points are needed"
 
         # Set the simualation time values
-        sampleTimes, self.sampleIndices = self.quantumCircuit.setSimulationTimes(numIterations, numSamples)
+        sampleTimes, self.sampleIndices = (self.quantumCircuit
+                                           .setSimulationTimes(numIterations, numSamples))
 
         self.quantumCircuit.calculateIntegratedFrequencies()
 
@@ -55,7 +58,15 @@ class PulseSimulator:
         self.timeStepsSet = True
         return
 
-    def simulateCircuit(self, numIterations: int = 500, numSamples: int = 2) -> SimulationResult:
+    def simulateCircuit(
+        self, 
+        numIterations: int = 500, 
+        numSamples: int = 2,
+        sampleAfterGate: bool = False
+    ) -> SimulationResult:
+
+        if sampleAfterGate:
+            numSamples = self.quantumCircuit.getNumGates() + 1
 
         if not self.timeStepsSet:
             self.setTimeSteps(numIterations, numSamples)
@@ -65,13 +76,19 @@ class PulseSimulator:
             startIndex = self.sampleIndices[i]
             endIndex = self.sampleIndices[i + 1]
             evolutionOperator = self.getEvolutionOperator(startIndex, endIndex)
-            self.qubit.states[i + 1] = SpinState(self.qubit.states[i].state.dot(evolutionOperator))
+            self.qubit.states[i + 1] = SpinState(evolutionOperator @ 
+                                                 self.qubit.states[i].state)
 
         return SimulationResult(self.qubit)
 
-    def getEvolutionOperator(self, startIndex: int, endIndex: int) -> npt.NDArray[np.complexfloating]:
+    def getEvolutionOperator(
+        self, 
+        startIndex: int, 
+        endIndex: int
+    ) -> npt.NDArray[np.complexfloating]:
 
-        assert endIndex < len(self.quantumCircuit.integratedFrequency), "Set end index within the length of the circuit"
+        if endIndex >= len(self.quantumCircuit.integratedFrequency):
+            raise ValueError("Set end index within the length of the circuit")
 
         # Evolution operator, Hamiltonian, and detuning term
         evolutionOperator: npt.NDArray[np.complexfloating]
@@ -87,15 +104,17 @@ class PulseSimulator:
         # Loop over the entire time of the circuit
         for i in range(startIndex, endIndex):
             hamiltonian = self.quantumCircuit.getHamiltonian(i) + detuningTerm
-            evolutionOperator = evolutionOperator.dot(expm(np.pi * 1j * self.quantumCircuit.dt * hamiltonian))
+            evolutionOperator = (evolutionOperator.dot(expm(-1j 
+                                 *self.quantumCircuit.dt 
+                                 *hamiltonian)))
 
         return evolutionOperator
 
     def getDetuningTerm(self) -> npt.NDArray[np.complexfloating]:
 
         # Diagonal term in the interaction frame. Splitting of the spin states based on detuning
-        detuningTerm: npt.NDArray[np.complexfloating] = np.eye(2, dtype = "complex")
-        detuning: float = self.quantumCircuit.getGuessLarmor() - self.qubit.larmor 
-        detuningTerm *= detuning
+        detuningTerm: npt.NDArray[np.complexfloating] = sZ
+        detuning: float = self.qubit.larmor - self.quantumCircuit.getGuessLarmor()
+        detuningTerm *= -detuning
         return detuningTerm
 

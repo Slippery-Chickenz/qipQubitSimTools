@@ -29,8 +29,8 @@ class Qubit:
 
     def getProb(self, index: int = -1, state: npt.NDArray[np.complexfloating] | StateStr = "-Z") -> float:
         return self.states[index].getProbability(state = state)
-    def getProbs(self, state: npt.NDArray[np.complexfloating] | StateStr = "-Z") -> list[float]:
-        return [qubitState.getProbability(state) for qubitState in self.states]
+    def getProbs(self, state: npt.NDArray[np.complexfloating] | StateStr = "-Z") -> npt.NDArray[np.floating]:
+        return np.array([qubitState.getProbability(state) for qubitState in self.states])
 
 
 
