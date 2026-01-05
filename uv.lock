@@ -416,9 +416,8 @@ wheels = [
 ]
 
 [[package]]
-name = "qipqubitsimtools"
-version = "0.1.0"
-source = { virtual = "." }
+name = "qipqst"
+source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },
     { name = "numpy" },

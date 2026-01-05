@@ -1,3 +1,4 @@
+from typing import override
 from .base_pulse import Pulse
 
 class ConstantPulse(Pulse):
@@ -13,11 +14,14 @@ class ConstantPulse(Pulse):
         self.phase: float = phase
         return
 
+    @override
     def getAmplitude(self, t: float) -> float:
         return self.amplitude
 
+    @override
     def getFrequency(self, t: float) -> float:
         return self.frequency
 
+    @override
     def getPhase(self, t: float) -> float:
         return self.phase

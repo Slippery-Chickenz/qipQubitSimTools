@@ -4,3 +4,5 @@ from .ramsey import sweepTau
 from .rabi import sweepGuess
 from .rabi import rabiCycle
 from .rabi import sweepGuessAndTime
+
+from .gate_test import sweepGuess

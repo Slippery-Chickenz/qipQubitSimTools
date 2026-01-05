@@ -1,38 +1,76 @@
 import numpy as np
 import numpy.typing as npt
 
-from ..states import StateStr, BasisStr, getBasisState 
-
 from ..Gates import Hadamard, SPhase
+
+from typing import Literal, TypeAlias
+
+upXState: npt.NDArray[np.complexfloating] = np.array([1, 1]) / np.sqrt(2)
+downXState: npt.NDArray[np.complexfloating] = np.array([1, -1]) / np.sqrt(2)
+upYState: npt.NDArray[np.complexfloating] = np.array([1, 1j]) / np.sqrt(2)
+downYState: npt.NDArray[np.complexfloating] = np.array([1, -1j]) / np.sqrt(2)
+upZState: npt.NDArray[np.complexfloating] = np.array([1, 0])
+downZState: npt.NDArray[np.complexfloating] = np.array([0, 1])
+
+StateStr =  Literal["+X", "-X", "+Y", "-Y", "+Z", "-Z"] 
+BasisStr =  Literal["X", "Y", "Z"] 
+
+SpinStateType: TypeAlias = npt.NDArray[np.complexfloating] | StateStr | "SpinState"
+
+def getBasisState(stateStr: StateStr = "+Z") -> npt.NDArray[np.complexfloating]:
+    match stateStr:
+        case "+X":
+            return upXState
+        case "-X":
+            return downXState
+        case "+Y":
+            return upYState
+        case "-Y":
+            return downYState
+        case "+Z":
+            return upZState
+        case "-Z":
+            return downZState
+
+def getStateArray(state: SpinStateType) -> npt.NDArray[np.complexfloating]:
+    if isinstance(state, str):
+        return getBasisState(state)
+    elif isinstance(state, SpinState):
+        return state.state
+    return state
 
 class SpinState:
 
     def __init__(
         self, 
-        state: npt.NDArray[np.complexfloating] | StateStr = "+Z"
+        state: SpinStateType = "+Z"
     ) -> None:
 
         if isinstance(state, str):
             state = getBasisState(state)
+        elif isinstance(state, SpinState):
+            state = state.state
         # Spin state held
         self.state: npt.NDArray[np.complexfloating] = state
         return
 
-    def getState(self, basis: BasisStr = "Z"):
+    def getState(self, basis: BasisStr = "Z") -> npt.NDArray[np.complexfloating]:
         if basis == "Z":
             return self.state
         if basis == "X":
             return Hadamard.getIdealGate().dot(self.state)
         return Hadamard.getIdealGate().dot(SPhase.getIdealGate().dot(self.state))
+    
+    def setState(self, newState: SpinStateType) -> None:
+        self.state = getStateArray(newState)
+        return
 
     def getProbability(
         self, 
-        state: npt.NDArray[np.complexfloating] | StateStr = "+Z"
+        state: SpinStateType = "+Z"
     ) -> float:
 
-        if isinstance(state, str):
-            state = getBasisState(state)
-
+        state = getStateArray(state)
         braket = np.dot(np.conj(state), self.state)
         return np.real(np.dot(np.conj(braket), braket))
 

@@ -38,6 +38,8 @@ def rabiCycle(
     # Run the sim and get the results
     results = simulator.simulateCircuit(numIterations, numIterations)
 
+    results.plotBloch()
+
     return results.qubit.times, results.qubit.getProbs()
 
 def sweepGuess(
@@ -78,7 +80,6 @@ def sweepGuess(
 
     return probabilities
 
-
 def sweepGuessAndTime(
     times: list[float], 
     guessLarmors: list[float], 
@@ -118,7 +119,7 @@ def sweepGuessAndTime(
             # Run the sim and get the results
             results = simulator.simulateCircuit(numIterations, 2)
 
-            #probabilities[i][j] = results.qubit.getProb()
+            probabilities[i][j] = results.qubit.getProb()
 
     return probabilities.transpose()
 

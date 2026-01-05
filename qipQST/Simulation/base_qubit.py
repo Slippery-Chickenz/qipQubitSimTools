@@ -1,9 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 
-from ..states import StateStr
-
-from .base_spin_state import SpinState
+from .base_spin_state import SpinState, SpinStateType
 
 class Qubit:
 
@@ -21,16 +19,22 @@ class Qubit:
 
         return
 
+    def getLarmor(self) -> float:
+        return self.larmor
+
     def initializeStates(self, times: npt.NDArray[np.floating]) -> None:
 
         self.times = times
         self.states = [SpinState("+Z") for _ in range(len(self.times))]
         return
 
-    def getProb(self, index: int = -1, state: npt.NDArray[np.complexfloating] | StateStr = "-Z") -> float:
+    def getState(self, i: int = -1) -> SpinState:
+        return self.states[i]
+
+    def getProb(self, index: int = -1, state: SpinStateType = "-Z") -> float:
         return self.states[index].getProbability(state = state)
-    def getProbs(self, state: npt.NDArray[np.complexfloating] | StateStr = "-Z") -> npt.NDArray[np.floating]:
-        return np.array([qubitState.getProbability(state) for qubitState in self.states])
+    def getProbs(self, state: SpinStateType = "-Z") -> npt.NDArray[np.floating]:
+        return np.array([qubitState.getProbability(state = state) for qubitState in self.states])
 
 
 

@@ -6,7 +6,7 @@ from scipy.linalg import expm
 from .base_qubit import Qubit
 from .base_circuit import QuantumCircuit
 from .simulation_result import SimulationResult
-from .base_spin_state import SpinState
+from .base_spin_state import SpinState, SpinStateType
 
 from .._constants import *
 
@@ -62,7 +62,8 @@ class PulseSimulator:
         self, 
         numIterations: int = 500, 
         numSamples: int = 2,
-        sampleAfterGate: bool = False
+        sampleAfterGate: bool = False,
+        startingState: SpinStateType = "+Z",
     ) -> SimulationResult:
 
         if sampleAfterGate:
@@ -71,6 +72,9 @@ class PulseSimulator:
         if not self.timeStepsSet:
             self.setTimeSteps(numIterations, numSamples)
 
+        # Set the starting state
+        self.qubit.states[0].setState(startingState)
+        
         # Loop over all the sample times to get the evolution operator between each sample
         for i in range(len(self.sampleIndices) - 1):
             startIndex = self.sampleIndices[i]
@@ -98,7 +102,8 @@ class PulseSimulator:
         # Evolution operator for the given circuit
         evolutionOperator = np.eye(2, dtype = "complex")
 
-        # Diagonal term in the interaction frame. Splitting of the spin states based on detuning
+        # Diagonal term in the interaction frame. 
+        # Splitting of the spin states based on detuning
         detuningTerm = self.getDetuningTerm()
 
         # Loop over the entire time of the circuit
@@ -112,9 +117,13 @@ class PulseSimulator:
 
     def getDetuningTerm(self) -> npt.NDArray[np.complexfloating]:
 
-        # Diagonal term in the interaction frame. Splitting of the spin states based on detuning
-        detuningTerm: npt.NDArray[np.complexfloating] = sZ
-        detuning: float = self.qubit.larmor - self.quantumCircuit.getGuessLarmor()
-        detuningTerm *= -detuning
+        # Diagonal term in the interaction frame
+        # Splitting of the spin states based on detuning
+        detuningTerm: npt.NDArray[np.complexfloating] = SZ.copy()
+        detuning: float = self.qubit.getLarmor() - self.quantumCircuit.getGuessLarmor()
+        detuningTerm *= -detuning * 2 * np.pi
         return detuningTerm
+
+    def getDetuning(self) -> float:
+        return self.qubit.larmor - self.quantumCircuit.getGuessLarmor()
 

@@ -1,3 +1,4 @@
+from typing import override
 from .base_pulse import Pulse
 
 class RampPulse(Pulse):
@@ -13,11 +14,14 @@ class RampPulse(Pulse):
         self.phaseRange = phaseRange
         return
 
+    @override
     def getAmplitude(self, t: float) -> float:
         return (t * ((self.amplitudeRange[1] - self.amplitudeRange[0]) / self.time)) + self.amplitudeRange[0]
 
+    @override
     def getFrequency(self, t: float) -> float:
         return (t * ((self.frequencyRange[1] - self.frequencyRange[0]) / self.time)) + self.frequencyRange[0]
 
+    @override
     def getPhase(self, t: float) -> float:
         return (t * ((self.phaseRange[1] - self.phaseRange[0]) / self.time)) + self.phaseRange[0]

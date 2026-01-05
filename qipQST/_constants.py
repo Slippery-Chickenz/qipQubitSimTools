@@ -1,13 +1,10 @@
 import numpy as np
 import numpy.typing as npt
 
-from typing import Literal
+PAULIX: npt.NDArray[np.complexfloating] = np.array([[0,   1], [ 1,  0]])
+PAULIY: npt.NDArray[np.complexfloating] = np.array([[0, -1j], [1j,  0]])
+PAULIZ: npt.NDArray[np.complexfloating] = np.array([[1,   0], [ 0, -1]])
 
-pauliX: npt.NDArray[np.complexfloating] = np.array([[0,   1], [ 1,  0]])
-pauliY: npt.NDArray[np.complexfloating] = np.array([[0, -1j], [1j,  0]])
-pauliZ: npt.NDArray[np.complexfloating] = np.array([[1,   0], [ 0, -1]])
-
-sX: npt.NDArray[np.complexfloating] = pauliX / 2
-sY: npt.NDArray[np.complexfloating] = pauliY / 2
-sZ: npt.NDArray[np.complexfloating] = pauliZ / 2
-
+SX: npt.NDArray[np.complexfloating] = PAULIX / 2
+SY: npt.NDArray[np.complexfloating] = PAULIY / 2
+SZ: npt.NDArray[np.complexfloating] = PAULIZ / 2

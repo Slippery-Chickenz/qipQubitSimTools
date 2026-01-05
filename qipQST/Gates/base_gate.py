@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.typing as npt
 import matplotlib.pyplot as plt
+import matplotlib.axes
 
 from scipy.linalg import expm
 
@@ -72,16 +73,51 @@ class QuantumGate:
             t += pulse.getTime()
         return t
 
-    def getIntegratedFrequencies(self, times: npt.NDArray[np.floating]) -> npt.NDArray[np.floating]:
+    def getIntegratedFrequencies(
+        self, 
+        times: npt.NDArray[np.floating]
+    ) -> npt.NDArray[np.floating]:
 
         # Raw frequencies at each time step
         rawFrequencies = np.array([self.getFrequency(t) for t in times])
 
         # Integrate the raw frequencies to get the frequency modulated values
         integratedFrequency = np.cumsum(rawFrequencies) * (times[1] - times[0])
+        integratedFrequency -= integratedFrequency[-1]
         return integratedFrequency
 
-    def plotPulses(self) -> None:
+    def getGateWaveform(
+        self, 
+        timeUnitConversion: float = 1e3
+    ) -> tuple[list[float], list[float]]:
+
+        # Time values to save at (Should be in nano seconds)
+        saveTimes = np.linspace(0, self.getTime(), int(self.getTime() * timeUnitConversion))
+
+        # Amplitude, frequency, and pulse values to plot
+        integratedFrequency = self.getIntegratedFrequencies(saveTimes)
+        pulseValues = [self.getAmplitude(t) * 
+                        np.exp((2 * np.pi * integratedFrequency[i]
+                        + self.getPhase(t)) * 1j)
+                        # np.cos(2 * np.pi * integratedFrequency[i]
+                        # + self.getPhase(t)) 
+                        for i, t in enumerate(saveTimes)]
+        pulseValuesI = [val.real for val in pulseValues]
+        pulseValuesQ = [val.imag for val in pulseValues]
+        # pulseValuesI = [self.getAmplitude(t) * 
+        #                 np.exp(2 * np.pi * integratedFrequency[i]
+        #                 + self.getPhase(t)).real
+        #                 # np.cos(2 * np.pi * integratedFrequency[i]
+        #                 # + self.getPhase(t)) 
+        #                 for i, t in enumerate(saveTimes)]
+        #
+        # pulseValuesQ = [self.getAmplitude(t) * 
+        #                 np.cos(2 * np.pi * integratedFrequency[i]
+        #                 + self.getPhase(t) + (np.pi / 2)) 
+        #                 for i, t in enumerate(saveTimes)]
+        return pulseValuesI, pulseValuesQ
+
+    def plotPulses(self, axes: list[matplotlib.axes.Axes] | None = None) -> None:
 
         # Time values to plot over
         plotTimes = np.linspace(0, self.getTime(), 500 * len(self.pulses))
@@ -90,13 +126,20 @@ class QuantumGate:
         amplitudes = [self.getAmplitude(t) for t in plotTimes]
         integratedFrequency = self.getIntegratedFrequencies(plotTimes)
         frequencies = [self.getFrequency(t) for t in plotTimes]
-        pulseValues = [self.getAmplitude(t) * np.cos(integratedFrequency[i] + self.getPhase((t))) for i, t in enumerate(plotTimes)]
+        pulseValues = [self.getAmplitude(t) * np.cos(2 * np.pi * integratedFrequency[i] + self.getPhase((t))) for i, t in enumerate(plotTimes)]
+
+        showPlot = False
 
         # Create the fig/axes and set the size
-        fig, axes = plt.subplots(nrows=3, ncols=1, layout="tight", sharex=True)
-        fig.set_figheight(12)
-        fig.set_figwidth(6)
-        fig.supxlabel("Time")
+        if axes is None:
+            showPlot = True
+            fig, axes = plt.subplots(nrows=3, ncols=1, layout="tight", sharex=True)
+            fig.set_figheight(12)
+            fig.set_figwidth(6)
+            fig.supxlabel("Time")
+
+        if axes is None:
+            raise TypeError("Something went wrong and Axes are not defined")
 
         axes[0].plot(plotTimes, amplitudes)
         axes[0].set_ylabel("Amplitude")
@@ -107,6 +150,7 @@ class QuantumGate:
         axes[2].plot(plotTimes, pulseValues)
         axes[2].set_ylabel("Pulse Voltage")
         
-        plt.show()
+        if showPlot:
+            plt.show()
 
         return

@@ -6,7 +6,8 @@ __version__ = "1.0.0"
 
 from .Pulses import (
     RampPulse,
-    ConstantPulse
+    ConstantPulse,
+    TangentPulse,
 )
 
 from .Gates import (
@@ -29,6 +30,7 @@ from .Simulation import (
 from .Experiments import (
     ramsey,
     rabi,
+    gate_test,
 )
 
 from .Plotting import (
