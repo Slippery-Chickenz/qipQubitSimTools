@@ -3,6 +3,8 @@ import numpy.typing as npt
 
 import matplotlib.pyplot as plt
 
+from .base_qubit import Qubit
+
 from ..Gates.base_gate import QuantumGate
 from ..Pulses.base_pulse import Pulse
 
@@ -12,6 +14,9 @@ class QuantumCircuit:
     """
 
     def __init__(self, guessLarmor: float) -> None:
+
+        # Qubit the circuit will act on
+        self.qubit: Qubit
 
         # List of quantum gates to perform in order
         self.gates: list[QuantumGate] = []
@@ -26,6 +31,10 @@ class QuantumCircuit:
         self.iterationTimes: npt.NDArray[np.floating] = np.array([])
         self.dt: float # Time between iterations
         return
+
+    def setQubit(self, newQubit: Qubit) -> None:
+        self.qubit = newQubit
+        return;
 
     def getGuessLarmor(self) -> float:
         return self.guessLarmor

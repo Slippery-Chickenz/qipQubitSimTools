@@ -33,9 +33,9 @@ def sweepGuess(
 
         # Add the gate to test
         gateTestCircuit.appendGate(gate)
+        gateTestCircuit.setQubit(Qubit(0))
 
         # Set the qubit to run on and the circuit
-        simulator.setQubit(Qubit(0))
         simulator.setCircuit(gateTestCircuit)
         
         # Run the sim and get the results

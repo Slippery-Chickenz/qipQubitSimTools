@@ -36,8 +36,9 @@ def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000,
         else:
             ramseyCircuit.appendGate(PiO2Y())
 
+        ramseyCircuit.setQubit(Qubit(0))
+
         # Set the qubit to run on and the circuit
-        simulator.setQubit(Qubit(0))
         simulator.setCircuit(ramseyCircuit)
         
         # Run the sim and get the results
@@ -65,9 +66,9 @@ def sweepTau(taus: list[float], guessLarmor: float, numIterations: int = 1000) -
         ramseyCircuit.appendGate(PiO2X())
         ramseyCircuit.appendGate(IdleGate(tau))
         ramseyCircuit.appendGate(PiO2Y())
+        ramseyCircuit.setQubit(Qubit(0))
 
         # Set the qubit to run on and the circuit
-        simulator.setQubit(Qubit(0))
         simulator.setCircuit(ramseyCircuit)
         
         # Run the sim and get the results
@@ -101,8 +102,9 @@ def sweepGuessAndTau(taus: list[float], guessLarmors: list[float], numIterations
             else:
                 ramseyCircuit.appendGate(PiO2Y())
 
+            ramseyCircuit.setQubit(Qubit(0))
+
             # Set the qubit to run on and the circuit
-            simulator.setQubit(Qubit(0))
             simulator.setCircuit(ramseyCircuit)
             
             # Run the sim and get the results

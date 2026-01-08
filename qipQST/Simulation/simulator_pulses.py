@@ -18,10 +18,10 @@ class PulseSimulator:
     def __init__(self) -> None:
 
         # Qubit to simluate pusles on
-        self.qubit: Qubit
+        # self.circuit.qubit: Qubit
 
         # Circuit made of of gates made of pulses to simulate
-        self.quantumCircuit: QuantumCircuit
+        self.circuit: QuantumCircuit
 
         # List of indicies where the states are recorded and the times at those indcies
         self.sampleIndices: npt.NDArray[np.integer]
@@ -31,15 +31,15 @@ class PulseSimulator:
 
         return
 
-    def setQubit(self, newQubit: Qubit) -> None:
-        self.qubit = newQubit
-        return;
+    # def setQubit(self, newQubit: Qubit) -> None:
+    #     # self.circuit.qubit = newQubit
+    #     return;
 
     def setCircuit(self, newCircuit: QuantumCircuit) -> None:
         """
         Set the circuit to simulate
         """
-        self.quantumCircuit = newCircuit
+        self.circuit = newCircuit
         self.timeStepsSet = False
         return
 
@@ -48,13 +48,13 @@ class PulseSimulator:
         assert numSamples > 1, "At least two time points are needed"
 
         # Set the simualation time values
-        sampleTimes, self.sampleIndices = (self.quantumCircuit
+        sampleTimes, self.sampleIndices = (self.circuit
                                            .setSimulationTimes(numIterations, numSamples))
 
-        self.quantumCircuit.calculateIntegratedFrequencies()
+        self.circuit.calculateIntegratedFrequencies()
 
-        # Reset the tls for this circuit
-        self.qubit.initializeStates(sampleTimes)
+        # Reset the qubit state for this circuit
+        self.circuit.qubit.initializeStates(sampleTimes)
         self.timeStepsSet = True
         return
 
@@ -67,23 +67,24 @@ class PulseSimulator:
     ) -> SimulationResult:
 
         if sampleAfterGate:
-            numSamples = self.quantumCircuit.getNumGates() + 1
+            numSamples = self.circuit.getNumGates() + 1
 
         if not self.timeStepsSet:
             self.setTimeSteps(numIterations, numSamples)
 
         # Set the starting state
-        self.qubit.states[0].setState(startingState)
+        self.circuit.qubit.states[0].setState(startingState)
         
         # Loop over all the sample times to get the evolution operator between each sample
         for i in range(len(self.sampleIndices) - 1):
             startIndex = self.sampleIndices[i]
             endIndex = self.sampleIndices[i + 1]
             evolutionOperator = self.getEvolutionOperator(startIndex, endIndex)
-            self.qubit.states[i + 1] = SpinState(evolutionOperator @ 
-                                                 self.qubit.states[i].state)
 
-        return SimulationResult(self.qubit)
+            self.circuit.qubit.states[i + 1] = SpinState(evolutionOperator @ 
+                                                 self.circuit.qubit.states[i].state)
+
+        return SimulationResult(self.circuit.qubit)
 
     def getEvolutionOperator(
         self, 
@@ -91,7 +92,7 @@ class PulseSimulator:
         endIndex: int
     ) -> npt.NDArray[np.complexfloating]:
 
-        if endIndex >= len(self.quantumCircuit.integratedFrequency):
+        if endIndex >= len(self.circuit.integratedFrequency):
             raise ValueError("Set end index within the length of the circuit")
 
         # Evolution operator, Hamiltonian, and detuning term
@@ -108,9 +109,9 @@ class PulseSimulator:
 
         # Loop over the entire time of the circuit
         for i in range(startIndex, endIndex):
-            hamiltonian = self.quantumCircuit.getHamiltonian(i) + detuningTerm
+            hamiltonian = self.circuit.getHamiltonian(i) + detuningTerm
             evolutionOperator = (evolutionOperator.dot(expm(-1j 
-                                 *self.quantumCircuit.dt 
+                                 *self.circuit.dt 
                                  *hamiltonian)))
 
         return evolutionOperator
@@ -120,10 +121,10 @@ class PulseSimulator:
         # Diagonal term in the interaction frame
         # Splitting of the spin states based on detuning
         detuningTerm: npt.NDArray[np.complexfloating] = SZ.copy()
-        detuning: float = self.qubit.getLarmor() - self.quantumCircuit.getGuessLarmor()
+        detuning: float = self.circuit.qubit.getLarmor() - self.circuit.getGuessLarmor()
         detuningTerm *= -detuning * 2 * np.pi
         return detuningTerm
 
     def getDetuning(self) -> float:
-        return self.qubit.larmor - self.quantumCircuit.getGuessLarmor()
+        return self.circuit.qubit.larmor - self.circuit.getGuessLarmor()
 

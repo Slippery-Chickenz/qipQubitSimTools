@@ -30,9 +30,9 @@ def rabiCycle(
 
     # Add a single constant pulse
     rabiCircuit.appendGate(constantPulseGate)
+    rabiCircuit.setQubit(Qubit(0))
 
     # Set the qubit to run on and the circuit
-    simulator.setQubit(Qubit(0))
     simulator.setCircuit(rabiCircuit)
     
     # Run the sim and get the results
@@ -69,9 +69,9 @@ def sweepGuess(
 
         # Add the gates for Ramsey
         rabiCircuit.appendGate(constantPulseGate)
+        rabiCircuit.setQubit(Qubit(0))
 
         # Set the qubit to run on and the circuit
-        simulator.setQubit(Qubit(0))
         simulator.setCircuit(rabiCircuit)
         
         # Run the sim and get the results
@@ -111,9 +111,9 @@ def sweepGuessAndTime(
 
             # Add a single constant pulse
             rabiCircuit.appendGate(constantPulseGate)
+            rabiCircuit.setQubit(Qubit(0))
 
             # Set the qubit to run on and the circuit
-            simulator.setQubit(Qubit(0))
             simulator.setCircuit(rabiCircuit)
             
             # Run the sim and get the results
