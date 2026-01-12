@@ -5,7 +5,6 @@ from tqdm import tqdm
 
 from ..Simulation.base_circuit import QuantumCircuit
 from ..Simulation.simulator_pulses import PulseSimulator
-from ..Simulation.base_qubit import Qubit
 from ..Simulation.base_spin_state import SpinStateType
 
 from ..Gates import QuantumGate
@@ -33,14 +32,13 @@ def sweepGuess(
 
         # Add the gate to test
         gateTestCircuit.appendGate(gate)
-        gateTestCircuit.setQubit(Qubit(0))
 
         # Set the qubit to run on and the circuit
         simulator.setCircuit(gateTestCircuit)
         
         # Run the sim and get the results
         results = simulator.simulateCircuit(numIterations, 2, startingState=startingState)
-        probabilities[i] = results.qubit.getProb(state=probabilityState)
+        probabilities[i] = results.getProb(state=probabilityState)
 
     return probabilities
 

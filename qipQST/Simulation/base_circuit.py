@@ -15,8 +15,8 @@ class QuantumCircuit:
 
     def __init__(self, guessLarmor: float) -> None:
 
-        # Qubit the circuit will act on
-        self.qubit: Qubit
+        # Number of qubits this circuit operates on
+        self.numQubits: int = 1
 
         # List of quantum gates to perform in order
         self.gates: list[QuantumGate] = []
@@ -30,11 +30,14 @@ class QuantumCircuit:
         # Times for the iteration over the entire circuit
         self.iterationTimes: npt.NDArray[np.floating] = np.array([])
         self.dt: float # Time between iterations
+
+        # Flag for if the simulation times have been generated for this circuit
+        self.simulationTimesSet:bool = False
+
         return
 
-    def setQubit(self, newQubit: Qubit) -> None:
-        self.qubit = newQubit
-        return;
+    def getNumQubits(self) -> int:
+        return self.numQubits
 
     def getGuessLarmor(self) -> float:
         return self.guessLarmor
@@ -77,7 +80,11 @@ class QuantumCircuit:
             self.iterationTimes = np.concat((self.iterationTimes, nextTimes[1:]))
             
         sampleIndices[-1] = len(self.iterationTimes) - 1
+        self.simulationTimesSet = True
         return sampleTimes, sampleIndices
+
+    def simulationTimesAreSet(self) -> bool:
+        return self.simulationTimesSet
 
     def calculateIntegratedFrequencies(self) -> None:
 

@@ -30,7 +30,6 @@ def rabiCycle(
 
     # Add a single constant pulse
     rabiCircuit.appendGate(constantPulseGate)
-    rabiCircuit.setQubit(Qubit(0))
 
     # Set the qubit to run on and the circuit
     simulator.setCircuit(rabiCircuit)
@@ -40,7 +39,7 @@ def rabiCycle(
 
     results.plotBloch()
 
-    return results.qubit.times, results.qubit.getProbs()
+    return results.getTimes(), results.getProbs()
 
 def sweepGuess(
     guessLarmors: list[float], 
@@ -69,14 +68,13 @@ def sweepGuess(
 
         # Add the gates for Ramsey
         rabiCircuit.appendGate(constantPulseGate)
-        rabiCircuit.setQubit(Qubit(0))
 
         # Set the qubit to run on and the circuit
         simulator.setCircuit(rabiCircuit)
         
         # Run the sim and get the results
         results = simulator.simulateCircuit(numIterations, 2)
-        probabilities[i] = results.qubit.getProb()
+        probabilities[i] = results.getProb()
 
     return probabilities
 
@@ -111,7 +109,6 @@ def sweepGuessAndTime(
 
             # Add a single constant pulse
             rabiCircuit.appendGate(constantPulseGate)
-            rabiCircuit.setQubit(Qubit(0))
 
             # Set the qubit to run on and the circuit
             simulator.setCircuit(rabiCircuit)
@@ -119,7 +116,7 @@ def sweepGuessAndTime(
             # Run the sim and get the results
             results = simulator.simulateCircuit(numIterations, 2)
 
-            probabilities[i][j] = results.qubit.getProb()
+            probabilities[i][j] = results.getProb()
 
     return probabilities.transpose()
 

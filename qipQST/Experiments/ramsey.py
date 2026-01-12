@@ -36,15 +36,11 @@ def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000,
         else:
             ramseyCircuit.appendGate(PiO2Y())
 
-        ramseyCircuit.setQubit(Qubit(0))
-
         # Set the qubit to run on and the circuit
         simulator.setCircuit(ramseyCircuit)
         
         # Run the sim and get the results
         results.append(simulator.simulateCircuit(numIterations, 2))
-        # probabilities[i] = results.qubit.getProb()
-
     return results
 
 def sweepTau(taus: list[float], guessLarmor: float, numIterations: int = 1000) -> npt.NDArray[np.floating]:
@@ -66,14 +62,13 @@ def sweepTau(taus: list[float], guessLarmor: float, numIterations: int = 1000) -
         ramseyCircuit.appendGate(PiO2X())
         ramseyCircuit.appendGate(IdleGate(tau))
         ramseyCircuit.appendGate(PiO2Y())
-        ramseyCircuit.setQubit(Qubit(0))
 
         # Set the qubit to run on and the circuit
         simulator.setCircuit(ramseyCircuit)
         
         # Run the sim and get the results
         results = simulator.simulateCircuit(numIterations, 2)
-        probabilities[i] = results.qubit.getProb()
+        probabilities[i] = results.getProb()
 
     return probabilities
 
@@ -102,14 +97,12 @@ def sweepGuessAndTau(taus: list[float], guessLarmors: list[float], numIterations
             else:
                 ramseyCircuit.appendGate(PiO2Y())
 
-            ramseyCircuit.setQubit(Qubit(0))
-
             # Set the qubit to run on and the circuit
             simulator.setCircuit(ramseyCircuit)
             
             # Run the sim and get the results
             results = simulator.simulateCircuit(numIterations, 2)
-            probabilities[i][j] = results.qubit.getProb()
+            probabilities[i][j] = results.getProb()
 
     return probabilities.transpose()
 

@@ -46,24 +46,23 @@ class SpinState:
         state: SpinStateType = "+Z"
     ) -> None:
 
-        if isinstance(state, str):
-            state = getBasisState(state)
-        elif isinstance(state, SpinState):
-            state = state.state
         # Spin state held
-        self.state: npt.NDArray[np.complexfloating] = state
+        self.state: npt.NDArray[np.complexfloating] = getStateArray(state)
         return
 
     def getState(self, basis: BasisStr = "Z") -> npt.NDArray[np.complexfloating]:
         if basis == "Z":
             return self.state
         if basis == "X":
-            return Hadamard.getIdealGate().dot(self.state)
-        return Hadamard.getIdealGate().dot(SPhase.getIdealGate().dot(self.state))
+            return Hadamard.getIdealMatrix().dot(self.state)
+        return Hadamard.getIdealMatrix().dot(SPhase.getIdealGate().dot(self.state))
     
     def setState(self, newState: SpinStateType) -> None:
         self.state = getStateArray(newState)
         return
+    
+    def evolveState(self, evolutionOperator: npt.NDArray[np.complexfloating]) -> npt.NDArray[np.complexfloating]:
+        return evolutionOperator @ self.state
 
     def getProbability(
         self, 

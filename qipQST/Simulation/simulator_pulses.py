@@ -4,9 +4,10 @@ import numpy.typing as npt
 from scipy.linalg import expm
 
 from .base_qubit import Qubit
+from .base_qubit_array import QubitArray
 from .base_circuit import QuantumCircuit
 from .simulation_result import SimulationResult
-from .base_spin_state import SpinState, SpinStateType
+from .base_spin_state import SpinStateType
 
 from .._constants import *
 
@@ -17,11 +18,11 @@ class PulseSimulator:
 
     def __init__(self) -> None:
 
-        # Qubit to simluate pusles on
-        # self.circuit.qubit: Qubit
+        # Qubit Array to simulate on
+        self.qubitArray: QubitArray = QubitArray()
 
         # Circuit made of of gates made of pulses to simulate
-        self.circuit: QuantumCircuit
+        self.circuit: QuantumCircuit = QuantumCircuit(0)
 
         # List of indicies where the states are recorded and the times at those indcies
         self.sampleIndices: npt.NDArray[np.integer]
@@ -31,21 +32,17 @@ class PulseSimulator:
 
         return
 
-    # def setQubit(self, newQubit: Qubit) -> None:
-    #     # self.circuit.qubit = newQubit
-    #     return;
-
     def setCircuit(self, newCircuit: QuantumCircuit) -> None:
         """
         Set the circuit to simulate
         """
         self.circuit = newCircuit
-        self.timeStepsSet = False
         return
 
-    def setTimeSteps(self, numIterations: int, numSamples: int = 2) -> None:
+    def setTimeSteps(self, numIterations: int, numSamples: int) -> None:
 
-        assert numSamples > 1, "At least two time points are needed"
+        if numSamples <= 1:
+            raise ValueError("At least two time points are needed")
 
         # Set the simualation time values
         sampleTimes, self.sampleIndices = (self.circuit
@@ -54,8 +51,20 @@ class PulseSimulator:
         self.circuit.calculateIntegratedFrequencies()
 
         # Reset the qubit state for this circuit
-        self.circuit.qubit.initializeStates(sampleTimes)
-        self.timeStepsSet = True
+        self.qubitArray.initializeStateSamples(sampleTimes)
+        return
+
+    def prepareSimulation(self, numIterations: int, numSamples: int) -> None:
+
+        if not self.circuit.simulationTimesAreSet():
+            self.qubitArray.clearQubits()
+            self.setTimeSteps(numIterations, numSamples)
+
+        # Check that the qubit array has the correct number of qubits
+        if self.circuit.getNumQubits() != self.qubitArray.getNumQubits():
+            self.qubitArray.clearQubits()
+            for _ in range(self.circuit.getNumQubits()):
+                self.qubitArray.addQubit(Qubit(0))
         return
 
     def simulateCircuit(
@@ -66,14 +75,22 @@ class PulseSimulator:
         startingState: SpinStateType = "+Z",
     ) -> SimulationResult:
 
+        if self.circuit.getNumGates() == 0:
+            raise ValueError("Current set circuit has no gates to be run")
+
+        # for i in range(self.circuit.getNumQubits() - self.qubitArray.getNumQubits()):
+        #     self.qubitArray.addQubit(Qubit(0))
+
         if sampleAfterGate:
             numSamples = self.circuit.getNumGates() + 1
 
-        if not self.timeStepsSet:
-            self.setTimeSteps(numIterations, numSamples)
+        self.prepareSimulation(numIterations, numSamples)
+
+        # if not self.timeStepsSet:
+        #     self.setTimeSteps(numIterations, numSamples)
 
         # Set the starting state
-        self.circuit.qubit.states[0].setState(startingState)
+        self.qubitArray.setStates(startingState, 0)
         
         # Loop over all the sample times to get the evolution operator between each sample
         for i in range(len(self.sampleIndices) - 1):
@@ -81,10 +98,9 @@ class PulseSimulator:
             endIndex = self.sampleIndices[i + 1]
             evolutionOperator = self.getEvolutionOperator(startIndex, endIndex)
 
-            self.circuit.qubit.states[i + 1] = SpinState(evolutionOperator @ 
-                                                 self.circuit.qubit.states[i].state)
+            self.qubitArray.evolveState(evolutionOperator, i)
 
-        return SimulationResult(self.circuit.qubit)
+        return SimulationResult(self.qubitArray)
 
     def getEvolutionOperator(
         self, 
@@ -121,10 +137,10 @@ class PulseSimulator:
         # Diagonal term in the interaction frame
         # Splitting of the spin states based on detuning
         detuningTerm: npt.NDArray[np.complexfloating] = SZ.copy()
-        detuning: float = self.circuit.qubit.getLarmor() - self.circuit.getGuessLarmor()
+        detuning: float = self.qubitArray.getLarmor(0) - self.circuit.getGuessLarmor()
         detuningTerm *= -detuning * 2 * np.pi
         return detuningTerm
 
     def getDetuning(self) -> float:
-        return self.circuit.qubit.larmor - self.circuit.getGuessLarmor()
+        return self.qubitArray.getLarmor(0)- self.circuit.getGuessLarmor()
 
