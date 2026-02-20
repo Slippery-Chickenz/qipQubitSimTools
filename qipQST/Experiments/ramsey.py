@@ -14,9 +14,6 @@ from typing import Literal
 
 def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000, secondGate: Literal["X", "Y"] = "Y") -> list[SimulationResult]:
 
-    # Make a simulator object to run the circuit
-    simulator = PulseSimulator()
-
     # List to hold the output probabilities
     # probabilities = np.zeros(len(guessLarmors))
     results: list[SimulationResult] = []
@@ -24,6 +21,10 @@ def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000,
     # Loop over the guess values and run the circuit at that value and tau
     for i in tqdm(range(len(guessLarmors))):
         larmor = guessLarmors[i]
+
+
+        # Make a simulator object to run the circuit
+        simulator = PulseSimulator()
 
         # Make the circuit with this guess
         ramseyCircuit = QuantumCircuit(larmor)
@@ -41,6 +42,7 @@ def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000,
         
         # Run the sim and get the results
         results.append(simulator.simulateCircuit(numIterations, 2))
+
     return results
 
 def sweepTau(taus: list[float], guessLarmor: float, numIterations: int = 1000) -> npt.NDArray[np.floating]:

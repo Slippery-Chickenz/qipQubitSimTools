@@ -118,6 +118,7 @@ class QuantumCircuit:
         if len(self.iterationTimes) == 0:
             self.setSimulationTimes(500, len(self.gates) + 1)
             self.calculateIntegratedFrequencies()
+            self.simulationTimesSet = False
 
         # Amplitude, frequency, and pulse values to plot
         amplitudes = [self.getGate(t).getAmplitude(t) for t in self.iterationTimes]

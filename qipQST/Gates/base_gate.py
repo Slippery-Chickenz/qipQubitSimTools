@@ -18,6 +18,11 @@ class QuantumGate:
         self.pulses: list[Pulse] = []
         return
 
+    @classmethod
+    def getIdealMatrix(cls) -> npt.NDArray[np.complexfloating]:
+        return np.array([[1, 1], [1, 1]])
+
+
     def getAmplitude(self, t: float) -> float:
         pulse, pulseTime = self.getPulse(t)
         return pulse.getAmplitude(pulseTime)
@@ -56,7 +61,9 @@ class QuantumGate:
             hamiltonian += Pulse.hamiltonian(amplitude, frequency, phase)
 
             evolutionOperator = evolutionOperator.dot(expm(-1j * dt * hamiltonian))
-        return np.round(evolutionOperator, 4)
+
+        # evolutionOperator = evolutionOperator * evolutionOperator[0][0].conj()
+        return evolutionOperator
 
     def appendPulse(self, newPulse: Pulse) -> None:
         self.pulses.append(newPulse)
