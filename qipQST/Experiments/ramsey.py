@@ -3,7 +3,6 @@ import numpy.typing as npt
 
 from ..Simulation.base_circuit import QuantumCircuit
 from ..Simulation.simulator_pulses import PulseSimulator
-from ..Simulation.base_qubit import Qubit
 from ..Simulation.simulation_result import SimulationResult
 
 from ..Gates import IdleGate, PiO2X, PiO2Y
@@ -12,7 +11,13 @@ from tqdm import tqdm
 
 from typing import Literal
 
-def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000, secondGate: Literal["X", "Y"] = "Y") -> list[SimulationResult]:
+def sweepGuess(
+    guessLarmors: list[float], 
+    tau: float, 
+    # amplitude: float = 1,
+    numIterations: int = 1000, 
+    secondGate: Literal["X", "Y"] = "Y"
+) -> list[SimulationResult]:
 
     # List to hold the output probabilities
     # probabilities = np.zeros(len(guessLarmors))
@@ -21,7 +26,6 @@ def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000,
     # Loop over the guess values and run the circuit at that value and tau
     for i in tqdm(range(len(guessLarmors))):
         larmor = guessLarmors[i]
-
 
         # Make a simulator object to run the circuit
         simulator = PulseSimulator()
@@ -45,7 +49,11 @@ def sweepGuess(guessLarmors: list[float], tau: float, numIterations: int = 1000,
 
     return results
 
-def sweepTau(taus: list[float], guessLarmor: float, numIterations: int = 1000) -> npt.NDArray[np.floating]:
+def sweepTau(
+    taus: list[float], 
+    guessLarmor: float, 
+    numIterations: int = 1000
+) -> npt.NDArray[np.floating]:
 
     # Make a simulator object to run the circuit
     simulator = PulseSimulator()
