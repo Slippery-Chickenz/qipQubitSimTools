@@ -21,6 +21,7 @@ class QubitArray:
         return
     def clearQubits(self) -> None:
         self.qubits = []
+        return
 
     def getQubit(self, qubitNum: int) -> Qubit:
         return self.qubits[qubitNum]
