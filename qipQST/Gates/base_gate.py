@@ -140,9 +140,7 @@ class QuantumGate:
         # Create the fig/axes and set the size
         if axes is None:
             showPlot = True
-            fig, axes = plt.subplots(nrows=3, ncols=1, layout="tight", sharex=True)
-            fig.set_figheight(12)
-            fig.set_figwidth(6)
+            fig, axes = plt.subplots(nrows=3, ncols=1, figsize = (12, 6), layout="tight", sharex=True)
             fig.supxlabel("Time")
 
         if axes is None:
