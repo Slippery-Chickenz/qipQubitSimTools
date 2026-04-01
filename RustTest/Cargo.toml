@@ -5,3 +5,11 @@ edition = "2024"
 
 [dependencies]
 ndarray = "0.17.2"
+
+[lib]
+name = "qip_qst"
+path = "src/lib.rs"
+
+[[bin]]
+name = "qip_qs"
+path = "src/main.rs"
