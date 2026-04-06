@@ -40,7 +40,7 @@ impl Simulator {
     fn get_evolution_operator(&self, circuit: &Circuit, qubit_array: &QubitArray, guess_larmor: f64, sample_num: usize) -> Array2<Complex64> {
 
         let evolution_operator: Array2<Complex64> = Array2::<Complex64>::zeros([2, 2]);
-        let qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num) + qubit_array.get_detuning_hamiltonians(guess_larmor);
+        let _qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num) + qubit_array.get_detuning_hamiltonians(guess_larmor);
 
         // let mut temp_evolution: Array2<Complex64> = Array2::zeros((2, 2));
         //

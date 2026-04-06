@@ -7,3 +7,4 @@ pub mod simulation_times;
 pub mod qubit_array;
 // pub mod constants;
 
+extern crate blas_src;

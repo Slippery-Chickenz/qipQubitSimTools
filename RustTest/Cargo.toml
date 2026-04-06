@@ -4,8 +4,12 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-ndarray = "0.17.2"
+ndarray = {version = "0.17.2", features = ["blas"] }
+ndarray-linalg = {version = "0.18.1", features = ["openblas-system"] }
+blas-src = { version = "0.10", features = ["openblas"] }
+openblas-src = { version = "0.10", features = ["cblas", "system"] }
 num-complex = "0.4"
+
 
 [lib]
 name = "qip_qst"

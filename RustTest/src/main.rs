@@ -4,6 +4,8 @@
 use ndarray::{ Array2, Array3 };
 use num_complex::Complex64;
 
+extern crate blas_src;
+
 fn main() {
 
     // Larmor value of the qubit
