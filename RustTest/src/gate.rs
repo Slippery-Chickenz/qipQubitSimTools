@@ -1,15 +1,22 @@
-mod pulse;
+use crate::pulse::Pulse;
+use crate::pulse::ConstantPulse;
 
-trait Gate {
+pub trait Gate {
     fn get_amplitude(&self, t: f64) -> f64;
     fn get_frequency(&self, t: f64) -> f64;
     fn get_phase(&self, t: f64) -> f64;
-    fn get_length(&self) -> f64;
+    fn get_duration(&self) -> f64;
 }
 
 
-struct IdleGate {
-    length: f64,
+pub struct IdleGate {
+    duration: f64,
+}
+
+impl IdleGate {
+    pub fn new(duration: f64) -> IdleGate {
+        return IdleGate { duration }
+    }
 }
 
 impl Gate for IdleGate {
@@ -22,16 +29,16 @@ impl Gate for IdleGate {
     fn get_phase(&self, _t: f64) -> f64 {
         return 0.
     }
-    fn get_length(&self) -> f64 {
-        return self.length
+    fn get_duration(&self) -> f64 {
+        return self.duration
     }
 }
 
 
-struct PiO2X {}
+pub struct PiO2X {}
 
 impl PiO2X {
-    const PI02X_PULSE: pulse::ConstantPulse = pulse::ConstantPulse::new(1., 0., 0.,0.5);
+    const PI02X_PULSE: ConstantPulse = ConstantPulse::new(1., 0., 0.,0.5);
 }
 
 impl Gate for PiO2X {
@@ -44,16 +51,16 @@ impl Gate for PiO2X {
     fn get_phase(&self, t: f64) -> f64 {
         return PiO2X::PI02X_PULSE.get_phase(t)
     }
-    fn get_length(&self) -> f64 {
-        return PiO2X::PI02X_PULSE.get_length()
+    fn get_duration(&self) -> f64 {
+        return PiO2X::PI02X_PULSE.get_duration()
     }
 }
 
 
-struct PiO2Y {}
+pub struct PiO2Y {}
 
 impl PiO2Y {
-    const PI02Y_PULSE: ConstantPulse = ConstantPulse { amplitude: 1., frequency: 0., phase: (-3.141592 / 2.), length: 0.5 };
+    const PI02Y_PULSE: ConstantPulse = ConstantPulse::new(1., 0., -(std::f64::consts::PI) / 2., 0.5);
 }
 
 impl Gate for PiO2Y {
@@ -66,7 +73,7 @@ impl Gate for PiO2Y {
     fn get_phase(&self, t: f64) -> f64 {
         return PiO2Y::PI02Y_PULSE.get_phase(t)
     }
-    fn get_length(&self) -> f64 {
-        return PiO2Y::PI02Y_PULSE.get_length()
+    fn get_duration(&self) -> f64 {
+        return PiO2Y::PI02Y_PULSE.get_duration()
     }
 }
