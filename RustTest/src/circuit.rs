@@ -16,7 +16,7 @@ pub struct Circuit {
 
 impl Circuit {
     pub fn new() -> Circuit {
-        return Circuit { gates: vec![], duration: 0., integrated_frequencies: vec![], simulation_times: Rc::new(SimulationTimes::new(0., 0, 0))}
+        return Circuit { gates: vec![], duration: 0., integrated_frequencies: vec![], simulation_times: Rc::new(SimulationTimes::new(10., 3, 2))}
     }
     pub fn get_duration(&self) -> f64 {
         return self.duration;
@@ -42,7 +42,7 @@ impl Circuit {
         let mut temp_f: f64 = 0.;
 
         // Integrate through all the frequencies
-        for i in 0..self.simulation_times.get_num_sample_times() {
+        for i in 0..self.simulation_times.get_num_sample_times()-1 {
 
             // Temporary vector to hold integrated frequencies for this sample
             let mut temp_fs: Vec<f64> = Vec::with_capacity(self.simulation_times.get_num_iterations_per_sample());
@@ -59,16 +59,17 @@ impl Circuit {
         // Array of hamiltonians at each time step
         let mut hamiltonians: Array3<Complex64> = Array3::<Complex64>::zeros([self.integrated_frequencies[sample_num].len(), 2, 2]);
 
+
         for (i, t) in self.simulation_times.get_iteration_times_after_sample(sample_num).iter().enumerate() {
 
             let amplitude: f64 = self.get_amplitude(*t);
             let frequency: f64 = self.get_integrated_frequency(sample_num, i);
             let phase: f64 = self.get_phase(*t);
 
-            hamiltonians[[i, 0, 1]] = Complex64 {re:  amplitude * PI * (2. * PI * frequency + phase).cos(),
-                                                 im: -amplitude * PI * (2. * PI * frequency + phase).sin() };
-            hamiltonians[[i, 1, 0]] = Complex64 {re:  amplitude * PI * (2. * PI * frequency + phase).cos(),
-                                                 im:  amplitude * PI * (2. * PI * frequency + phase).sin() };
+            hamiltonians[[i, 0, 1]] = Complex64::new( amplitude * PI * (2. * PI * frequency + phase).cos(),
+                                                      amplitude * PI * (2. * PI * frequency + phase).sin() );
+            hamiltonians[[i, 1, 0]] = Complex64::new( amplitude * PI * (2. * PI * frequency + phase).cos(),
+                                                     -amplitude * PI * (2. * PI * frequency + phase).sin() );
         }
 
         return hamiltonians;
@@ -87,9 +88,10 @@ impl Circuit {
         return self.gates[self.get_gate_index(time)].get_phase(time);
     }
     fn get_gate_index(&self, mut time: f64) -> usize {
+        
         for (i, gate) in self.gates.iter().enumerate() {
             let gate_duration: f64 = gate.get_duration();
-            if time < gate_duration {
+            if time <= gate_duration {
                 return i;
             }
             time -= gate_duration;

@@ -6,7 +6,8 @@ use crate::simulation_results::SimulationResults;
 use crate::simulation_times::SimulationTimes;
 
 use num_complex::Complex64;
-use ndarray::{ Array2, Array3 };
+use ndarray::{ Array3, Array4, Axis };
+use ndarray_linalg::expm::expm;
 
 pub struct Simulator { }
 
@@ -27,29 +28,54 @@ impl Simulator {
         circuit.integrate_frequencies();
         qubit_array.set_simulation_times(Rc::clone(&simulation_times));
 
-        let simulation_results: SimulationResults = SimulationResults::new(simulation_times.get_num_sample_times());
+        let mut simulation_results: SimulationResults = SimulationResults::new();
 
-        for i in 0..(simulation_times.get_sample_indicies().len() - 1) {
+        for i in 0..simulation_times.get_iteration_times().len() {
 
-            let _evolution_operator: Array2<Complex64> = self.get_evolution_operator(circuit, qubit_array, guess_larmor, i);
+            let evolution_operators: Array4<Complex64> = self.get_evolution_operator(circuit, 
+                                                                                     qubit_array, 
+                                                                                     &simulation_times, 
+                                                                                     guess_larmor, 
+                                                                                     i, 
+                                                                                     simulation_times.get_dt());
 
+            qubit_array.evolve_state(evolution_operators);
         }
-
+        simulation_results.add_array(qubit_array);
         return simulation_results;
     }
-    fn get_evolution_operator(&self, circuit: &Circuit, qubit_array: &QubitArray, guess_larmor: f64, sample_num: usize) -> Array2<Complex64> {
+    fn get_evolution_operator(&self, 
+                              circuit: &Circuit, 
+                              qubit_array: &QubitArray, 
+                              simulation_times: &SimulationTimes,
+                              guess_larmor: f64, 
+                              sample_num: usize, 
+                              dt: f64) -> Array4<Complex64> {
 
-        let evolution_operator: Array2<Complex64> = Array2::<Complex64>::zeros([2, 2]);
-        let _qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num) + qubit_array.get_detuning_hamiltonians(guess_larmor);
+        let mut evolution_operators: Array4<Complex64> = Array4::<Complex64>::zeros([simulation_times.get_num_iterations_per_sample(), 2, 2, 2]);
+        let qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num) + qubit_array.get_detuning_hamiltonians(guess_larmor);
 
-        // let mut temp_evolution: Array2<Complex64> = Array2::zeros((2, 2));
-        //
-        // for hamiltonian in qubit_hamiltonians.outer_iter() {
-        //
-        //     expm(&hamiltonian, &mut temp_evolution);
-        //
-        // }
+        for mut iter in qubit_hamiltonians.outer_iter().zip(evolution_operators.outer_iter_mut()) {
+            iter.1.index_axis_mut(Axis(0), 0).assign(&expm(&(Complex64::new(0., -1.) * dt * iter.0.to_owned())).0);
+            iter.1.index_axis_mut(Axis(0), 1).assign(&expm(&(Complex64::new(0., 1.) * dt * iter.0.to_owned())).0);
+        }
 
-        return evolution_operator;
+        return evolution_operators;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

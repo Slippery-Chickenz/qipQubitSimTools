@@ -39,6 +39,9 @@ pub struct PiO2X {}
 
 impl PiO2X {
     const PI02X_PULSE: ConstantPulse = ConstantPulse::new(1., 0., 0.,0.5);
+    pub fn new() -> PiO2X {
+        return PiO2X {  };
+    }
 }
 
 impl Gate for PiO2X {
