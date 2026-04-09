@@ -4,8 +4,9 @@ use std::f64::consts::PI;
 use crate::simulation_times::SimulationTimes;
 
 use num_complex::Complex64;
-use ndarray::{ Array2, Array3, Array4, Axis };
+use ndarray::{ Array1, Array2, Array3, Array4, Axis };
 use ndarray::linalg::kron;
+use ndarray_linalg::trace::Trace;
 
 #[derive(Clone)]
 pub struct QubitArray {
@@ -34,6 +35,10 @@ impl QubitArray {
     }
     pub fn get_density_matrices(&self) -> &Vec<Array2<Complex64>> {
         return &self.density_matrices;
+    }
+    pub fn get_probability(&self, sample_num: usize, state: Array1<Complex64>) -> f64 {
+        let projection_operator: Array2<Complex64> = state.to_shape([2, 1]).unwrap().dot(&state.mapv(|x| x.conj()).to_shape([1, 2]).unwrap());
+        return self.density_matrices[sample_num].dot(&projection_operator).trace().unwrap().re;
     }
     pub fn set_simulation_times(&mut self, simulation_times: Rc<SimulationTimes>) -> () {
         self.simulation_times = simulation_times;

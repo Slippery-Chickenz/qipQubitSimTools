@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 ndarray = {version = "0.17.2", features = ["blas"] }
 # ndarray-linalg = {version = "0.18.1", features = ["openblas-system"] }
-ndarray-linalg = {path = "../../ndarray-linalg/ndarray-linalg", features = ["openblas-system"] }
+ndarray-linalg = {path = "../ndarray-linalg/ndarray-linalg", features = ["openblas-system"] }
 blas-src = { version = "0.10", features = ["openblas"] }
 openblas-src = { version = "0.10", features = ["cblas", "system"] }
 num-complex = "0.4"
