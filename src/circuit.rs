@@ -66,10 +66,10 @@ impl Circuit {
             let frequency: f64 = self.get_integrated_frequency(sample_num, i);
             let phase: f64 = self.get_phase(*t);
 
-            hamiltonians[[i, 0, 1]] = Complex64::new( amplitude * PI * (2. * PI * frequency + phase).cos(),
-                                                      amplitude * PI * (2. * PI * frequency + phase).sin() );
-            hamiltonians[[i, 1, 0]] = Complex64::new( amplitude * PI * (2. * PI * frequency + phase).cos(),
-                                                     -amplitude * PI * (2. * PI * frequency + phase).sin() );
+            hamiltonians[[i, 0, 1]] = Complex64::new( amplitude * PI * 0.5 * (2. * PI * frequency + phase).cos(),
+                                                      amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin() );
+            hamiltonians[[i, 1, 0]] = Complex64::new( amplitude * PI * 0.5 * (2. * PI * frequency + phase).cos(),
+                                                     -amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin() );
         }
 
         return hamiltonians;

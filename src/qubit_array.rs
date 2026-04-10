@@ -40,6 +40,11 @@ impl QubitArray {
         let projection_operator: Array2<Complex64> = state.to_shape([2, 1]).unwrap().dot(&state.mapv(|x| x.conj()).to_shape([1, 2]).unwrap());
         return self.density_matrices[sample_num].dot(&projection_operator).trace().unwrap().re;
     }
+    pub fn get_bloch_coords_cart(&self, sample_num: usize) -> (f64, f64, f64) {
+        return (2. * self.density_matrices[sample_num][[1, 0]].re, 
+                2. * self.density_matrices[sample_num][[1, 0]].im,
+                2. * self.density_matrices[sample_num][[0, 0]].re - 1.);
+    }
     pub fn set_simulation_times(&mut self, simulation_times: Rc<SimulationTimes>) -> () {
         self.simulation_times = simulation_times;
         return;

@@ -6,8 +6,10 @@ use crate::simulation_results::SimulationResults;
 use crate::simulation_times::SimulationTimes;
 
 use num_complex::Complex64;
-use ndarray::{ Array3, Array4, Axis };
+use num_complex::ComplexFloat;
+use ndarray::{ Array3, Array4, Axis, Array2 };
 use ndarray_linalg::expm::expm;
+use ndarray_linalg::OperationNorm;
 
 pub struct Simulator { }
 
@@ -44,6 +46,12 @@ impl Simulator {
         simulation_results.add_array(qubit_array);
         return simulation_results;
     }
+    pub fn simulate_detuning_response(&mut self, circuit: &mut Circuit, qubit_array: &mut QubitArray, guess_larmors: Vec<f64>, num_iterations: usize) -> SimulationResults {
+
+
+
+        return SimulationResults::new();
+    }
     fn get_evolution_operator(&self, 
                               circuit: &Circuit, 
                               qubit_array: &QubitArray, 
@@ -56,8 +64,17 @@ impl Simulator {
         let qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num) + qubit_array.get_detuning_hamiltonians(guess_larmor);
 
         for mut iter in qubit_hamiltonians.outer_iter().zip(evolution_operators.outer_iter_mut()) {
-            iter.1.index_axis_mut(Axis(0), 0).assign(&expm(&(Complex64::new(0., -1.) * dt * iter.0.to_owned())).0);
-            iter.1.index_axis_mut(Axis(0), 1).assign(&expm(&(Complex64::new(0., 1.) * dt * iter.0.to_owned())).0);
+
+            let a_one_norm = iter.0.map(|x| x.abs()).opnorm_one().unwrap();
+
+            if a_one_norm < f64::EPSILON * 2. {
+                iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
+                iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
+            }
+            else {
+                iter.1.index_axis_mut(Axis(0), 0).assign(&expm(&(Complex64::new(0., -1.) * dt * iter.0.to_owned())).0);
+                iter.1.index_axis_mut(Axis(0), 1).assign(&expm(&(Complex64::new(0., 1.) * dt * iter.0.to_owned())).0);
+            }
         }
 
         return evolution_operators;
