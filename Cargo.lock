@@ -350,6 +350,7 @@ dependencies = [
 [[package]]
 name = "lax"
 version = "0.18.0"
+source = "git+https://github.com/Slippery-Chickenz/ndarray-linalg#b91c73b31b1162513571e3808b89a90a9d0e529d"
 dependencies = [
  "cauchy",
  "katexit",
@@ -500,6 +501,7 @@ dependencies = [
 [[package]]
 name = "ndarray-linalg"
 version = "0.18.1"
+source = "git+https://github.com/Slippery-Chickenz/ndarray-linalg#b91c73b31b1162513571e3808b89a90a9d0e529d"
 dependencies = [
  "cauchy",
  "katexit",
