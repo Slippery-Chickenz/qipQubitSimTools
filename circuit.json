@@ -1,0 +1,8 @@
+{
+	"gates": {
+		"Idle": {
+			"duration": 0.1
+		}
+	},
+	"order": ["PiO2X", "Idle", "PiO2Y"]
+}

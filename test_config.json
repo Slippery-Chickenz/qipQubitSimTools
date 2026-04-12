@@ -1,0 +1,11 @@
+{
+	"num_iterations": 1000,
+	"num_samples": 1,
+	"circuit": { "filename": "circuit.json" },
+	"qubits": { 
+		"q1": {
+			"larmor": 0,
+			"guess_larmor": 0
+		}
+	}
+}

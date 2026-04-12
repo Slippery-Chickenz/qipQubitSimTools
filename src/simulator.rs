@@ -5,94 +5,157 @@ use crate::qubit_array::QubitArray;
 use crate::simulation_results::SimulationResults;
 use crate::simulation_times::SimulationTimes;
 
+use ndarray::{Array2, Array3, Array4, Axis};
+use ndarray_linalg::OperationNorm;
+use ndarray_linalg::expm::expm;
 use num_complex::Complex64;
 use num_complex::ComplexFloat;
-use ndarray::{ Array3, Array4, Axis, Array2 };
-use ndarray_linalg::expm::expm;
-use ndarray_linalg::OperationNorm;
 
-pub struct Simulator { }
+pub struct Simulator {
+    circuit: Option<Circuit>,
+    qubit_array: Option<QubitArray>,
+    simulation_times: Option<Rc<SimulationTimes>>,
+    guess_larmor: Option<f64>,
+}
 
 impl Simulator {
     pub fn new() -> Simulator {
-        return Simulator {}
+        return Simulator {
+            circuit: None,
+            qubit_array: None,
+            simulation_times: None,
+            guess_larmor: None,
+        };
     }
-    pub fn simulate_circuit(&mut self, circuit: &mut Circuit, qubit_array: &mut QubitArray, guess_larmor: f64, num_iterations: usize, num_samples: usize) -> SimulationResults  {
-
-        // Make sure the qubit array has the correct number of qubits for this circuit
-        assert!(qubit_array.get_num_qubits() == circuit.get_num_qubits(), 
-                "Qubit array contains {} qubits but circuit is made for {}", 
-                qubit_array.get_num_qubits(), circuit.get_num_qubits());
-
-        // Times for the simulation
-        let simulation_times: Rc<SimulationTimes> = Rc::new(SimulationTimes::new(circuit.get_duration(), num_iterations, num_samples));
-        circuit.set_simulation_times(Rc::clone(&simulation_times));
-        circuit.integrate_frequencies();
-        qubit_array.set_simulation_times(Rc::clone(&simulation_times));
-
-        let mut simulation_results: SimulationResults = SimulationResults::new();
-
-        for i in 0..simulation_times.get_iteration_times().len() {
-
-            let evolution_operators: Array4<Complex64> = self.get_evolution_operator(circuit, 
-                                                                                     qubit_array, 
-                                                                                     &simulation_times, 
-                                                                                     guess_larmor, 
-                                                                                     i, 
-                                                                                     simulation_times.get_dt());
-
-            qubit_array.evolve_state(evolution_operators);
-        }
-        simulation_results.add_array(qubit_array);
-        return simulation_results;
+    pub fn set_simulation(
+        &mut self,
+        circuit: Circuit,
+        qubit_array: QubitArray,
+        num_iterations: usize,
+        num_samples: usize,
+        guess_larmor: f64,
+    ) -> () {
+        self.circuit = Some(circuit);
+        self.qubit_array = Some(qubit_array);
+        self.simulation_times = Some(Rc::new(SimulationTimes::new(
+            self.circuit.as_ref().unwrap().get_duration(),
+            num_iterations,
+            num_samples,
+        )));
+        self.guess_larmor = Some(guess_larmor);
+        return;
     }
-    pub fn simulate_detuning_response(&mut self, circuit: &mut Circuit, qubit_array: &mut QubitArray, guess_larmors: Vec<f64>, num_iterations: usize) -> SimulationResults {
-
-
-
-        return SimulationResults::new();
+    pub fn simulate_circuit(
+        &mut self,
+        circuit: Circuit,
+        qubit_array: QubitArray,
+        guess_larmor: f64,
+        num_iterations: usize,
+        num_samples: usize,
+    ) -> SimulationResults {
+        self.circuit = Some(circuit);
+        self.qubit_array = Some(qubit_array);
+        self.simulation_times = Some(Rc::new(SimulationTimes::new(
+            self.circuit.as_ref().unwrap().get_duration(),
+            num_iterations,
+            num_samples,
+        )));
+        self.guess_larmor = Some(guess_larmor);
+        return self.simulate_current_circuit();
     }
-    fn get_evolution_operator(&self, 
-                              circuit: &Circuit, 
-                              qubit_array: &QubitArray, 
-                              simulation_times: &SimulationTimes,
-                              guess_larmor: f64, 
-                              sample_num: usize, 
-                              dt: f64) -> Array4<Complex64> {
 
-        let mut evolution_operators: Array4<Complex64> = Array4::<Complex64>::zeros([simulation_times.get_num_iterations_per_sample(), 2, 2, 2]);
-        let qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num) + qubit_array.get_detuning_hamiltonians(guess_larmor);
+    pub fn simulate_current_circuit(&mut self) -> SimulationResults {
+        if let (Some(circuit), Some(qubit_array), Some(simulation_times)) = (
+            self.circuit.as_mut(),
+            self.qubit_array.as_mut(),
+            self.simulation_times.as_mut(),
+        ) {
+            let mut simulation_results: SimulationResults =
+                SimulationResults::new(Rc::clone(&simulation_times));
 
-        for mut iter in qubit_hamiltonians.outer_iter().zip(evolution_operators.outer_iter_mut()) {
+            // Make sure the qubit array has the correct number of qubits for this circuit
+            assert!(
+                qubit_array.get_num_qubits() == circuit.get_num_qubits(),
+                "Qubit array contains {} qubits but circuit is made for {}",
+                qubit_array.get_num_qubits(),
+                circuit.get_num_qubits()
+            );
 
-            let a_one_norm = iter.0.map(|x| x.abs()).opnorm_one().unwrap();
+            circuit.set_simulation_times(Rc::clone(&simulation_times));
 
-            if a_one_norm < f64::EPSILON * 2. {
-                iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
-                iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
+            for i in 0..simulation_times.get_iteration_times().len() {
+                let evolution_operators: Array4<Complex64> = self.get_evolution_operator(i);
+                simulation_results.evolve_state(i, evolution_operators);
             }
-            else {
-                iter.1.index_axis_mut(Axis(0), 0).assign(&expm(&(Complex64::new(0., -1.) * dt * iter.0.to_owned())).0);
-                iter.1.index_axis_mut(Axis(0), 1).assign(&expm(&(Complex64::new(0., 1.) * dt * iter.0.to_owned())).0);
-            }
+            return simulation_results;
         }
+        panic!();
+    }
+    // pub fn simulate_detuning_response(
+    //     &mut self,
+    //     circuit: &mut Circuit,
+    //     qubit_array: &mut QubitArray,
+    //     guess_larmors: Vec<f64>,
+    //     num_iterations: usize,
+    // ) -> LarmorSweepResult {
+    //     let mut larmor_sweep_result: LarmorSweepResult = LarmorSweepResult::new();
+    //     //
+    //     // for l in &guess_larmors {
+    //     //     let sim_result =
+    //     //         self.simulate_circuit(circuit, &mut qubit_array.clone(), *l, num_iterations, 2);
+    //     //     larmor_sweep_result.add_result(sim_result);
+    //     // }
+    //     //
+    //     // larmor_sweep_result.set_larmor_values(guess_larmors);
+    //     return larmor_sweep_result;
+    // }
+    fn get_evolution_operator(&self, sample_num: usize) -> Array4<Complex64> {
+        if let (Some(circuit), Some(qubit_array), Some(simulation_times), Some(guess_larmor)) = (
+            &self.circuit,
+            &self.qubit_array,
+            &self.simulation_times,
+            self.guess_larmor,
+        ) {
+            let mut evolution_operators: Array4<Complex64> = Array4::<Complex64>::zeros([
+                simulation_times.get_num_iterations_per_sample(),
+                2,
+                2,
+                2,
+            ]);
+            let qubit_hamiltonians: Array3<Complex64> = circuit
+                .get_hamiltonian_operator(sample_num)
+                + qubit_array.get_detuning_hamiltonians(guess_larmor);
 
-        return evolution_operators;
+            for mut iter in qubit_hamiltonians
+                .outer_iter()
+                .zip(evolution_operators.outer_iter_mut())
+            {
+                let a_one_norm = iter.0.map(|x| x.abs()).opnorm_one().unwrap();
+
+                if a_one_norm < f64::EPSILON * 2. {
+                    iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
+                    iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
+                } else {
+                    iter.1.index_axis_mut(Axis(0), 0).assign(
+                        &expm(
+                            &(Complex64::new(0., -1.)
+                                * simulation_times.get_dt()
+                                * iter.0.to_owned()),
+                        )
+                        .0,
+                    );
+                    iter.1.index_axis_mut(Axis(0), 1).assign(
+                        &expm(
+                            &(Complex64::new(0., 1.)
+                                * simulation_times.get_dt()
+                                * iter.0.to_owned()),
+                        )
+                        .0,
+                    );
+                }
+            }
+            return evolution_operators;
+        }
+        panic!();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

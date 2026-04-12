@@ -1,4 +1,3 @@
-
 pub struct ConstantPulse {
     amplitude: f64,
     frequency: f64,
@@ -15,22 +14,26 @@ pub trait Pulse {
 
 impl Pulse for ConstantPulse {
     fn get_amplitude(&self, _t: f64) -> f64 {
-        return self.amplitude
+        return self.amplitude;
     }
     fn get_frequency(&self, _t: f64) -> f64 {
-        return self.frequency
+        return self.frequency;
     }
     fn get_phase(&self, _t: f64) -> f64 {
-        return self.phase
+        return self.phase;
     }
     fn get_duration(&self) -> f64 {
-        return self.duration
+        return self.duration;
     }
 }
 
 impl ConstantPulse {
     pub const fn new(amplitude: f64, frequency: f64, phase: f64, duration: f64) -> ConstantPulse {
-        return ConstantPulse { amplitude: amplitude, frequency: frequency, phase: phase, duration: duration }
+        return ConstantPulse {
+            amplitude: amplitude,
+            frequency: frequency,
+            phase: phase,
+            duration: duration,
+        };
     }
 }
-
