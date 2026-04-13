@@ -14,11 +14,18 @@ pub struct SimulationResults {
 }
 
 impl SimulationResults {
-    pub fn new(simulation_times: Rc<SimulationTimes>) -> SimulationResults {
+    pub fn new(
+        simulation_times: Rc<SimulationTimes>,
+        starting_density_matrx: &Array2<Complex64>,
+    ) -> SimulationResults {
         let num_samples = simulation_times.get_num_sample_times();
+        let mut density_matrices = Array3::<Complex64>::zeros([num_samples, 2, 2]);
+        density_matrices
+            .index_axis_mut(Axis(0), 0)
+            .assign(starting_density_matrx);
         return SimulationResults {
             simulation_times: simulation_times,
-            density_matrices: Array3::<Complex64>::zeros([num_samples, 2, 2]),
+            density_matrices: density_matrices,
         };
     }
     pub fn evolve_state(
@@ -66,8 +73,8 @@ impl SimulationResults {
     }
     pub fn get_final_probability(&self) -> f64 {
         return self.get_final_state_probability(&Array1::<Complex64>::from_vec(vec![
-            Complex64::new(1., 0.),
             Complex64::new(0., 0.),
+            Complex64::new(0., 1.),
         ]));
     }
     pub fn save_bloch_coords_cart(&self, file_name: &str) -> Result<()> {

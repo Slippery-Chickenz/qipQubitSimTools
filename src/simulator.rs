@@ -70,8 +70,10 @@ impl Simulator {
             self.qubit_array.as_mut(),
             self.simulation_times.as_mut(),
         ) {
-            let mut simulation_results: SimulationResults =
-                SimulationResults::new(Rc::clone(&simulation_times));
+            let mut simulation_results: SimulationResults = SimulationResults::new(
+                Rc::clone(&simulation_times),
+                qubit_array.get_density_matrix(),
+            );
 
             // Make sure the qubit array has the correct number of qubits for this circuit
             assert!(
@@ -82,6 +84,7 @@ impl Simulator {
             );
 
             circuit.set_simulation_times(Rc::clone(&simulation_times));
+            qubit_array.set_simulation_times(Rc::clone(&simulation_times));
 
             for i in 0..simulation_times.get_iteration_times().len() {
                 let evolution_operators: Array4<Complex64> = self.get_evolution_operator(i);

@@ -1,5 +1,8 @@
-use crate::pulse::ConstantPulse;
-use crate::pulse::Pulse;
+use crate::pulse::{ConstantPulse, Pulse};
+
+pub trait CheckGateName {
+    fn check_name(name: &str) -> bool;
+}
 
 pub trait Gate {
     fn get_amplitude(&self, t: f64) -> f64;
@@ -8,17 +11,32 @@ pub trait Gate {
     fn get_duration(&self) -> f64;
 }
 
-pub struct IdleGate {
+macro_rules! default_name {
+    ($n:ident) => {
+        impl CheckGateName for $n {
+            fn check_name(name: &str) -> bool {
+                return name == stringify!($n);
+            }
+        }
+    };
+}
+
+pub struct Idle {
     duration: f64,
 }
 
-impl IdleGate {
-    pub fn new(duration: f64) -> IdleGate {
-        return IdleGate { duration };
+impl Idle {
+    pub fn new(duration: f64) -> Box<Idle> {
+        return Box::new(Idle { duration });
+    }
+    pub fn new_raw(duration: f64) -> Idle {
+        return Idle { duration };
     }
 }
 
-impl Gate for IdleGate {
+default_name!(Idle);
+
+impl Gate for Idle {
     fn get_amplitude(&self, _t: f64) -> f64 {
         return 0.;
     }
@@ -37,8 +55,8 @@ pub struct PiO2X {}
 
 impl PiO2X {
     const PI02X_PULSE: ConstantPulse = ConstantPulse::new(1., 0., 0., 0.5);
-    pub fn new() -> PiO2X {
-        return PiO2X {};
+    pub fn new() -> Box<PiO2X> {
+        return Box::new(PiO2X {});
     }
 }
 
@@ -62,6 +80,9 @@ pub struct PiO2Y {}
 impl PiO2Y {
     const PI02Y_PULSE: ConstantPulse =
         ConstantPulse::new(1., 0., -(std::f64::consts::PI) / 2., 0.5);
+    pub fn new() -> Box<PiO2Y> {
+        return Box::new(PiO2Y {});
+    }
 }
 
 impl Gate for PiO2Y {
