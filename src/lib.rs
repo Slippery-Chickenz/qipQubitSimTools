@@ -1,6 +1,8 @@
 pub mod circuit;
+pub mod circuit_blueprint;
 pub mod experiment;
 pub mod gate;
+pub mod gate_blueprint;
 pub mod larmor_sweep_results;
 pub mod pulse;
 pub mod qubit_array;
