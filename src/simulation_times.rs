@@ -42,7 +42,7 @@ impl SimulationTimes {
     pub fn get_sample_times(&self) -> &Vec<f64> {
         return &self.sample_times;
     }
-    pub fn get_num_sample_times(&self) -> usize {
+    pub fn get_num_samples(&self) -> usize {
         return self.sample_times.len();
     }
     pub fn get_num_iterations_per_sample(&self) -> usize {

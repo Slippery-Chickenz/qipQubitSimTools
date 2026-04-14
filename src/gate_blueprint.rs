@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::gate::{CheckGateName, Gate, Idle};
 
-use serde_json::{ Value, Map };
+use serde_json::{Map, Value};
 
 #[derive(Debug)]
 pub struct GateBlueprint {
@@ -16,7 +16,10 @@ impl GateBlueprint {
         for (key, value) in json_values.into_iter() {
             parameters.insert(key.clone(), value.as_f64().unwrap());
         }
-        return GateBlueprint { name: name, parameters: parameters }
+        return GateBlueprint {
+            name: name,
+            parameters: parameters,
+        };
     }
     pub fn get_name(&self) -> &String {
         return &self.name;
@@ -24,18 +27,21 @@ impl GateBlueprint {
     pub fn get(&self, key: &str) -> f64 {
         return *self.parameters.get(key).unwrap();
     }
+    pub fn get_gate(&self) -> Box<dyn Gate> {
+        return try_convert_blueprint(self).unwrap();
+    }
 }
 
-impl From<GateBlueprint> for Idle {
-    fn from(blueprint: GateBlueprint) -> Idle {
+impl From<&GateBlueprint> for Idle {
+    fn from(blueprint: &GateBlueprint) -> Idle {
         return Idle::new_raw(blueprint.get("duration"));
     }
 }
 
-fn try_convert_blueprint_to<T>(blueprint: GateBlueprint) -> Result<Box<dyn Gate>, GateBlueprint>
+fn try_convert_blueprint_to<T>(blueprint: &GateBlueprint) -> Result<Box<dyn Gate>, &GateBlueprint>
 where
     T: Gate + CheckGateName + 'static,
-    GateBlueprint: Into<T>,
+    for<'a> &'a GateBlueprint: Into<T>,
 {
     if T::check_name(blueprint.get_name()) {
         Ok(Box::new(blueprint.into()))
@@ -44,8 +50,8 @@ where
     }
 }
 
-fn try_convert_blueprint(mut blueprint: GateBlueprint) -> Option<Box<dyn Gate>> {
-    static DICT_LOADERS: &[fn(GateBlueprint) -> Result<Box<dyn Gate>, GateBlueprint>] =
+fn try_convert_blueprint(mut blueprint: &GateBlueprint) -> Option<Box<dyn Gate>> {
+    static DICT_LOADERS: &[fn(&GateBlueprint) -> Result<Box<dyn Gate>, &GateBlueprint>] =
         &[try_convert_blueprint_to::<Idle>];
 
     for loader in DICT_LOADERS {

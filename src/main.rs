@@ -1,18 +1,18 @@
-use std::{env, io::BufReader, fs::File};
+use std::{env, fs::File, io::BufReader};
 
 extern crate blas_src;
 extern crate serde_json;
 
-
 // use qip_qst::experiment::Experiment;
 use qip_qst::{
     circuit::Circuit,
-    experiment::{RamseyEndGate, RamseyExperiment},
+    circuit_blueprint::CircuitBlueprint,
+    experiment::{Experiment, RamseyEndGate, RamseyExperiment},
     gate::{Idle, PiO2X},
     qubit_array::QubitArray,
+    qubit_array_blueprint::QubitArrayBlueprint,
     simulation_results::SimulationResults,
     simulator::Simulator,
-    circuit_blueprint::CircuitBlueprint,
 };
 
 use ndarray::Array1;
@@ -31,17 +31,29 @@ fn main() {
     // );
     // ramsey_exp.run_experiment().unwrap();
 
-    json_example();
+    let _test_experiment = Experiment::from_json("test_config.json");
+    dbg!(_test_experiment);
 }
 
 fn json_example() -> () {
-
-    let file = File::open("circuit.json").unwrap();
+    let file = File::open("test_config.json").unwrap();
     let reader = BufReader::new(file);
 
     let u: Value = serde_json::from_reader(reader).unwrap();
 
-    let _test_blueprint = CircuitBlueprint::from_json(u);
+    let _test_qubit_blueprint = QubitArrayBlueprint::from_json(u["qubits"].as_object().unwrap());
+
+    let circuit_file: String = u["circuit"]["filename"].as_str().unwrap().to_string();
+
+    dbg!(&circuit_file);
+
+    let file = File::open(circuit_file).unwrap();
+    let reader = BufReader::new(file);
+
+    let u: Value = serde_json::from_reader(reader).unwrap();
+
+    let _test_blueprint = CircuitBlueprint::from_json(u.as_object().unwrap());
+
     return;
 }
 

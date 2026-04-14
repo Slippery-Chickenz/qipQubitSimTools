@@ -1,6 +1,8 @@
-use crate::gate_blueprint::GateBlueprint;
+use crate::{
+    circuit::Circuit, gate_blueprint::{self, GateBlueprint}
+};
 
-use serde_json::{ Value, Map };
+use serde_json::{Map, Value};
 
 #[derive(Debug)]
 pub struct CircuitBlueprint {
@@ -8,8 +10,7 @@ pub struct CircuitBlueprint {
 }
 
 impl CircuitBlueprint {
-    pub fn from_json(json_values: Value) -> CircuitBlueprint {
-
+    pub fn from_json(json_values: &Map<String, Value>) -> CircuitBlueprint {
         // Get list of gates defining the circuit
         let order: &Vec<Value> = json_values["order"].as_array().unwrap();
 
@@ -20,10 +21,24 @@ impl CircuitBlueprint {
         let mut circuit_data: Vec<GateBlueprint> = vec![];
 
         for gate in order {
-            circuit_data.push(GateBlueprint::from_json(gate.as_str().unwrap().to_string(), &gate_map[gate.as_str().unwrap()].as_object().unwrap()));
+            circuit_data.push(GateBlueprint::from_json(
+                gate.as_str().unwrap().to_string(),
+                &gate_map[gate.as_str().unwrap()].as_object().unwrap(),
+            ));
         }
 
-        dbg!(&circuit_data);
-        return CircuitBlueprint { circuit_data: circuit_data }
+        return CircuitBlueprint {
+            circuit_data: circuit_data,
+        };
+    }
+    pub fn get_circuit(&self) -> Circuit {
+
+        // Circuit object to construct
+        let mut circuit: Circuit = Circuit::new();
+
+        for gate_blueprint in &self.circuit_data {
+            circuit.add_gate(gate_blueprint.get_gate());
+        }
+        return circuit;
     }
 }

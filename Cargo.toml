@@ -11,7 +11,7 @@ openblas-src = { version = "0.10", features = ["cblas", "system"] }
 num-complex = "0.4"
 serde = { version = "1.0.104", features = ["derive"] }
 serde_json = "1.0.48"
-hdf5 = { package = "hdf5-metno", version = "0.12.4"}
+hdf5 = { package = "hdf5-metno", version = "0.12.4", features = ["complex"]}
 
 
 [lib]

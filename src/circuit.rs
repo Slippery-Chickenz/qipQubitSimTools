@@ -2,7 +2,6 @@ use std::f64::consts::PI;
 use std::option::Option;
 use std::rc::Rc;
 
-use crate::circuit;
 use crate::gate::Gate;
 use crate::simulation_times::{SimulationTimes, UninitializedTimesError};
 
@@ -55,13 +54,13 @@ impl Circuit {
     fn integrate_frequencies(&mut self) -> () {
         if let Some(sim_times) = &self.simulation_times {
             // Set the integrated frequencies to an array with the size of the times
-            self.integrated_frequencies = Vec::with_capacity(sim_times.get_num_sample_times());
+            self.integrated_frequencies = Vec::with_capacity(sim_times.get_num_samples());
 
             // Temporary frequency that is the integrated value
             let mut temp_f: f64 = 0.;
 
             // Integrate through all the frequencies
-            for i in 0..sim_times.get_num_sample_times() - 1 {
+            for i in 0..sim_times.get_num_samples() - 1 {
                 // Temporary vector to hold integrated frequencies for this sample
                 let mut temp_fs: Vec<f64> =
                     Vec::with_capacity(sim_times.get_num_iterations_per_sample());

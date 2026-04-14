@@ -6,6 +6,7 @@ pub mod gate_blueprint;
 pub mod larmor_sweep_results;
 pub mod pulse;
 pub mod qubit_array;
+pub mod qubit_array_blueprint;
 pub mod simulation_results;
 pub mod simulation_times;
 pub mod simulator;

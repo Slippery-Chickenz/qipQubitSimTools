@@ -108,11 +108,9 @@ impl Simulator {
     //     return larmor_sweep_result;
     // }
     fn get_evolution_operator(&self, sample_num: usize) -> Array4<Complex64> {
-        if let (Some(circuit), Some(qubit_array), Some(simulation_times)) = (
-            &self.circuit,
-            &self.qubit_array,
-            &self.simulation_times,
-        ) {
+        if let (Some(circuit), Some(qubit_array), Some(simulation_times)) =
+            (&self.circuit, &self.qubit_array, &self.simulation_times)
+        {
             let mut evolution_operators: Array4<Complex64> = Array4::<Complex64>::zeros([
                 simulation_times.get_num_iterations_per_sample(),
                 2,
