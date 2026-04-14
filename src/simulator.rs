@@ -15,7 +15,6 @@ pub struct Simulator {
     circuit: Option<Circuit>,
     qubit_array: Option<QubitArray>,
     simulation_times: Option<Rc<SimulationTimes>>,
-    guess_larmor: Option<f64>,
 }
 
 impl Simulator {
@@ -24,7 +23,6 @@ impl Simulator {
             circuit: None,
             qubit_array: None,
             simulation_times: None,
-            guess_larmor: None,
         };
     }
     pub fn set_simulation(
@@ -42,14 +40,12 @@ impl Simulator {
             num_iterations,
             num_samples,
         )));
-        self.guess_larmor = Some(guess_larmor);
         return;
     }
     pub fn simulate_circuit(
         &mut self,
         circuit: Circuit,
         qubit_array: QubitArray,
-        guess_larmor: f64,
         num_iterations: usize,
         num_samples: usize,
     ) -> SimulationResults {
@@ -60,7 +56,6 @@ impl Simulator {
             num_iterations,
             num_samples,
         )));
-        self.guess_larmor = Some(guess_larmor);
         return self.simulate_current_circuit();
     }
 
@@ -113,11 +108,10 @@ impl Simulator {
     //     return larmor_sweep_result;
     // }
     fn get_evolution_operator(&self, sample_num: usize) -> Array4<Complex64> {
-        if let (Some(circuit), Some(qubit_array), Some(simulation_times), Some(guess_larmor)) = (
+        if let (Some(circuit), Some(qubit_array), Some(simulation_times)) = (
             &self.circuit,
             &self.qubit_array,
             &self.simulation_times,
-            self.guess_larmor,
         ) {
             let mut evolution_operators: Array4<Complex64> = Array4::<Complex64>::zeros([
                 simulation_times.get_num_iterations_per_sample(),
@@ -127,7 +121,7 @@ impl Simulator {
             ]);
             let qubit_hamiltonians: Array3<Complex64> = circuit
                 .get_hamiltonian_operator(sample_num)
-                + qubit_array.get_detuning_hamiltonians(guess_larmor);
+                + qubit_array.get_detuning_hamiltonians();
 
             for mut iter in qubit_hamiltonians
                 .outer_iter()

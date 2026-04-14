@@ -56,9 +56,9 @@ fn simulator_example() -> () {
     circuit.add_gate(PiO2X::new());
 
     // QubitArray
-    let qubit_array: QubitArray = QubitArray::new(1, 0.);
+    let qubit_array: QubitArray = QubitArray::new(1, 0., 0.);
 
-    let results: SimulationResults = simulator.simulate_circuit(circuit, qubit_array, 0., 1000, 2);
+    let results: SimulationResults = simulator.simulate_circuit(circuit, qubit_array, 1000, 2);
 
     results.save_bloch_coords_cart("Test_Sim.txt").unwrap();
 }

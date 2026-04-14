@@ -12,11 +12,12 @@ pub struct QubitArray {
     num_qubts: u32,
     density_matrix: Array2<Complex64>,
     larmor: f64,
+    guess_larmor: f64,
     simulation_times: Option<Rc<SimulationTimes>>,
 }
 
 impl QubitArray {
-    pub fn new(num_qubits: u32, larmor: f64) -> QubitArray {
+    pub fn new(num_qubits: u32, larmor: f64, guess_larmor: f64) -> QubitArray {
         let mut density_matrix: Array2<Complex64> = Array2::<Complex64>::zeros((2, 2));
         density_matrix[[0, 0]] = Complex64::new(1., 0.);
 
@@ -30,6 +31,7 @@ impl QubitArray {
             num_qubts: num_qubits,
             density_matrix: density_matrix,
             larmor: larmor,
+            guess_larmor: guess_larmor,
             simulation_times: None,
         };
     }
@@ -43,9 +45,9 @@ impl QubitArray {
     pub fn get_num_qubits(&self) -> u32 {
         return self.num_qubts;
     }
-    pub fn get_detuning_hamiltonians(&self, guess_larmor: f64) -> Array3<Complex64> {
+    pub fn get_detuning_hamiltonians(&self) -> Array3<Complex64> {
         // Detuning between guess and qubit
-        let detuning: f64 = 2. * PI * (guess_larmor - self.larmor);
+        let detuning: f64 = 2. * PI * (self.guess_larmor - self.larmor);
 
         let detuning_hamiltonian: Array3<Complex64> = Array3::<Complex64>::from_shape_fn(
             (

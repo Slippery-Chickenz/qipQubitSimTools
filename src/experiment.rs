@@ -48,7 +48,7 @@ impl RamseyExperiment {
                 }
 
                 experiment_results[[i, j]] = Simulator::new()
-                    .simulate_circuit(circuit, QubitArray::new(1, 0.), *guess_larmor, 100, 2)
+                    .simulate_circuit(circuit, QubitArray::new(1, 0., *guess_larmor), 100, 2)
                     .get_final_probability();
             }
         }
