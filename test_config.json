@@ -4,7 +4,7 @@
 	"circuit": { "filename": "circuit.json" },
 	"qubits": { 
 		"q1": {
-			"larmor": 0,
+			"larmor": [0, 1, 2, 3],
 			"guess_larmor": 0
 		}
 	}

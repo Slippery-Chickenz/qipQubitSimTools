@@ -1,6 +1,8 @@
-use std::fs;
+use std::{fs};
 use std::io::BufReader;
 
+use crate::{circuit_blueprint, qubit_array_blueprint};
+use crate::sweep_parameter::SweepParameter;
 use crate::{
     circuit::Circuit,
     circuit_blueprint::CircuitBlueprint,
@@ -8,6 +10,7 @@ use crate::{
     qubit_array::QubitArray,
     qubit_array_blueprint::QubitArrayBlueprint,
     simulator::Simulator,
+    simulation_times_blueprint::SimulationTimesBlueprint,
 };
 
 use ndarray::{Array2, ArrayD, IxDyn};
@@ -17,12 +20,13 @@ use hdf5::{H5Type, Result};
 
 use serde_json::{Map, Value};
 
+
 #[derive(Debug)]
 pub struct Experiment {
     circuit_blueprint: CircuitBlueprint,
     qubit_array_blueprint: QubitArrayBlueprint,
-    num_iterations: usize,
-    num_samples: usize,
+    simulation_times_blueprint: SimulationTimesBlueprint,
+    sweep_parameters: Vec<SweepParameter>,
 }
 
 impl Experiment {
@@ -50,26 +54,51 @@ impl Experiment {
             qubit_json = serde_json::from_reader(qubit_reader).unwrap();
         }
 
+        let mut sweep_parameters: Vec<SweepParameter> = vec![];
+
+        let (circuit_blueprint, mut circuit_sweep_parameters): (CircuitBlueprint, Vec<SweepParameter>) = CircuitBlueprint::from_json(circuit_json.as_object().unwrap());
+
+
+        for sweep_parameter in &mut circuit_sweep_parameters {
+            sweep_parameter.add_path("circuit".to_string());
+            sweep_parameter.reverse_path();
+        }
+        sweep_parameters.append(&mut circuit_sweep_parameters);
+
+        let (qubit_array_blueprint, mut qubit_array_sweep_parameters): (QubitArrayBlueprint, Vec<SweepParameter>) = QubitArrayBlueprint::from_json(qubit_json.as_object().unwrap());
+
+        for sweep_parameter in &mut qubit_array_sweep_parameters {
+            sweep_parameter.add_path("qubits".to_string());
+            sweep_parameter.reverse_path();
+        }
+        sweep_parameters.append(&mut qubit_array_sweep_parameters);
+
         return Experiment {
-            circuit_blueprint: CircuitBlueprint::from_json(circuit_json.as_object().unwrap()),
-            qubit_array_blueprint: QubitArrayBlueprint::from_json(qubit_json.as_object().unwrap()),
-            num_iterations: json_values["num_iterations"].as_u64().unwrap() as usize,
-            num_samples: json_values["num_samples"].as_u64().unwrap() as usize,
+            circuit_blueprint: circuit_blueprint,
+            qubit_array_blueprint: qubit_array_blueprint,
+            simulation_times_blueprint: SimulationTimesBlueprint::from_json(&json_values),
+            sweep_parameters: sweep_parameters,
         };
     }
     pub fn run_experiment(&self) -> Result<()> {
-
         // Dimensions of the results
         let results_dim: Vec<usize> = self.get_results_dimension();
 
         // Array of the results of the experiment
-        let results: ArrayD<Complex64> = Simulator::new().simulate_circuit(self.circuit_blueprint.get_circuit(), self.qubit_array_blueprint.get_qubit_array(), self.num_iterations, self.num_samples).get_probabilities().mapv(|x| Complex64::new(x, 0.)).into_dyn();
-
+        let results: ArrayD<Complex64> = Simulator::new()
+            .simulate_circuit(
+                self.circuit_blueprint.get_circuit(),
+                self.qubit_array_blueprint.get_qubit_array(),
+                self.simulation_times_blueprint.get_num_iterations(),
+                self.simulation_times_blueprint.get_num_samples(),
+            )
+            .get_probabilities()
+            .mapv(|x| Complex64::new(x, 0.))
+            .into_dyn();
 
         return Ok(());
     }
     fn save_results(&self, results: ArrayD<Complex64>) -> Result<()> {
-
         let file = hdf5::File::create("ramsey_results.h5")?; // open for writing
 
         // let group = file.create_group("parameters")?; // create a group
@@ -105,8 +134,8 @@ impl Experiment {
         let mut dim_vec: Vec<usize> = vec![];
 
         // If there is more than one sample then add a dimension of that size
-        if self.num_samples > 1 {
-            dim_vec.push(self.num_samples);
+        if self.simulation_times_blueprint.get_num_samples() > 1 {
+            dim_vec.push(self.simulation_times_blueprint.get_num_samples());
         }
 
         return dim_vec;

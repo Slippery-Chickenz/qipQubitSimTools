@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::gate::{CheckGateName, Gate, Idle};
+use crate::{
+    gate::{CheckGateName, Gate, Idle},
+    sweep_parameter::{SweepParameter},
+};
 
 use serde_json::{Map, Value};
 
@@ -11,15 +14,27 @@ pub struct GateBlueprint {
 }
 
 impl GateBlueprint {
-    pub fn from_json(name: String, json_values: &Map<String, Value>) -> GateBlueprint {
+    pub fn from_json(
+        name: String,
+        json_values: &Map<String, Value>,
+    ) -> (GateBlueprint, Vec<SweepParameter>) {
         let mut parameters: HashMap<String, f64> = HashMap::new();
+        let mut swept_parameters: Vec<SweepParameter> = vec![];
         for (key, value) in json_values.into_iter() {
-            parameters.insert(key.clone(), value.as_f64().unwrap());
+            if value.is_array() {
+                swept_parameters.push(SweepParameter::new(key.clone(), value.as_array().unwrap().iter().map(|x| x.as_f64().unwrap()).collect()));
+                parameters.insert(key.clone(), swept_parameters[swept_parameters.len() - 1].get_value(0));
+            } else {
+                parameters.insert(key.clone(), value.as_f64().unwrap());
+            }
         }
-        return GateBlueprint {
-            name: name,
-            parameters: parameters,
-        };
+        return (
+            GateBlueprint {
+                name: name,
+                parameters: parameters,
+            },
+            swept_parameters,
+        );
     }
     pub fn get_name(&self) -> &String {
         return &self.name;

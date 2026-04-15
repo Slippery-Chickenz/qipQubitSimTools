@@ -6,7 +6,7 @@ use crate::simulation_times::SimulationTimes;
 
 use ndarray::{Array1, Array2, Array3, Array4, Axis};
 use ndarray_linalg::trace::Trace;
-use num_complex::{ Complex64};
+use num_complex::Complex64;
 
 pub struct SimulationResults {
     simulation_times: Rc<SimulationTimes>,
@@ -78,14 +78,18 @@ impl SimulationResults {
         ]));
     }
     pub fn get_state_probabilities(&self, state: &Array1<Complex64>) -> Array1<f64> {
-        let mut probabilities: Array1<f64> = Array1::<f64>::zeros([self.simulation_times.get_num_samples()]);
+        let mut probabilities: Array1<f64> =
+            Array1::<f64>::zeros([self.simulation_times.get_num_samples()]);
         for i in 0..self.simulation_times.get_num_samples() {
             probabilities[[i]] = self.get_probability(i, state);
         }
-        return  probabilities;
+        return probabilities;
     }
     pub fn get_probabilities(&self) -> Array1<f64> {
-        return self.get_state_probabilities(&Array1::<Complex64>::from_vec(vec![Complex64::new(0., 0.), Complex64::new(1., 0.)]));
+        return self.get_state_probabilities(&Array1::<Complex64>::from_vec(vec![
+            Complex64::new(0., 0.),
+            Complex64::new(1., 0.),
+        ]));
     }
     pub fn save_bloch_coords_cart(&self, file_name: &str) -> Result<()> {
         let write_file: File = File::create(file_name).unwrap();
