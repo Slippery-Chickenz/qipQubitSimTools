@@ -31,8 +31,9 @@ fn main() {
     // );
     // ramsey_exp.run_experiment().unwrap();
 
-    let _test_experiment = Experiment::from_json("test_config.json");
-    dbg!(_test_experiment);
+    let mut test_experiment = Experiment::from_json("test_config.json");
+    dbg!(&test_experiment);
+    test_experiment.run_experiment().unwrap();
 }
 
 fn json_example() -> () {

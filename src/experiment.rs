@@ -1,17 +1,17 @@
-use std::{fs};
+use std::{fs, result};
 use std::io::BufReader;
 
-use crate::{circuit_blueprint, qubit_array_blueprint};
-use crate::sweep_parameter::SweepParameter;
+use crate::sweep_parameter::{self, SweepParameter};
 use crate::{
     circuit::Circuit,
     circuit_blueprint::CircuitBlueprint,
     gate::{Idle, PiO2X, PiO2Y},
     qubit_array::QubitArray,
     qubit_array_blueprint::QubitArrayBlueprint,
-    simulator::Simulator,
     simulation_times_blueprint::SimulationTimesBlueprint,
+    simulator::Simulator,
 };
+use crate::{circuit_blueprint, qubit_array_blueprint};
 
 use ndarray::{Array2, ArrayD, IxDyn};
 use num_complex::{Complex, Complex64};
@@ -19,7 +19,6 @@ use num_complex::{Complex, Complex64};
 use hdf5::{H5Type, Result};
 
 use serde_json::{Map, Value};
-
 
 #[derive(Debug)]
 pub struct Experiment {
@@ -56,8 +55,10 @@ impl Experiment {
 
         let mut sweep_parameters: Vec<SweepParameter> = vec![];
 
-        let (circuit_blueprint, mut circuit_sweep_parameters): (CircuitBlueprint, Vec<SweepParameter>) = CircuitBlueprint::from_json(circuit_json.as_object().unwrap());
-
+        let (circuit_blueprint, mut circuit_sweep_parameters): (
+            CircuitBlueprint,
+            Vec<SweepParameter>,
+        ) = CircuitBlueprint::from_json(circuit_json.as_object().unwrap());
 
         for sweep_parameter in &mut circuit_sweep_parameters {
             sweep_parameter.add_path("circuit".to_string());
@@ -65,7 +66,10 @@ impl Experiment {
         }
         sweep_parameters.append(&mut circuit_sweep_parameters);
 
-        let (qubit_array_blueprint, mut qubit_array_sweep_parameters): (QubitArrayBlueprint, Vec<SweepParameter>) = QubitArrayBlueprint::from_json(qubit_json.as_object().unwrap());
+        let (qubit_array_blueprint, mut qubit_array_sweep_parameters): (
+            QubitArrayBlueprint,
+            Vec<SweepParameter>,
+        ) = QubitArrayBlueprint::from_json(qubit_json.as_object().unwrap());
 
         for sweep_parameter in &mut qubit_array_sweep_parameters {
             sweep_parameter.add_path("qubits".to_string());
@@ -80,23 +84,55 @@ impl Experiment {
             sweep_parameters: sweep_parameters,
         };
     }
-    pub fn run_experiment(&self) -> Result<()> {
+    pub fn run_experiment(&mut self) -> Result<()> {
         // Dimensions of the results
         let results_dim: Vec<usize> = self.get_results_dimension();
 
-        // Array of the results of the experiment
-        let results: ArrayD<Complex64> = Simulator::new()
-            .simulate_circuit(
-                self.circuit_blueprint.get_circuit(),
-                self.qubit_array_blueprint.get_qubit_array(),
-                self.simulation_times_blueprint.get_num_iterations(),
-                self.simulation_times_blueprint.get_num_samples(),
-            )
-            .get_probabilities()
-            .mapv(|x| Complex64::new(x, 0.))
-            .into_dyn();
+        // Number of iterations to go through all the parameters
+        let mut num_experiment_iterations: usize = 1;
+        for i in &results_dim {
+            num_experiment_iterations *= i;
+        }
+
+        // Array for results of experiment
+        let mut results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
+
+        // Vector of the current index for each of the swept parameters
+        let mut sweep_parameter_indicies: Vec<usize> = results_dim.iter().map(|_| 0).collect();
+
+        for _i in 0..num_experiment_iterations {
+            let sim_result = Simulator::new()
+                .simulate_circuit(
+                    self.circuit_blueprint.get_circuit(),
+                    self.qubit_array_blueprint.get_qubit_array(),
+                    self.simulation_times_blueprint.get_num_iterations(),
+                    self.simulation_times_blueprint.get_num_samples(),
+                ).get_final_probability();
+            results[IxDyn(&sweep_parameter_indicies)] = sim_result;
+            for j in 0..sweep_parameter_indicies.len() {
+                sweep_parameter_indicies[j] += 1;
+                if sweep_parameter_indicies[j] >= self.sweep_parameters[j].values_len() {
+                    sweep_parameter_indicies[j] = 0;
+                }
+                else {
+                    break;
+                }
+            }
+            self.update_parameters(&sweep_parameter_indicies);
+        }
 
         return Ok(());
+    }
+    fn update_parameters(&mut self, sweep_parameter_indicies: &Vec<usize>) -> () {
+
+        for (i, sweep_parameter) in self.sweep_parameters.iter().enumerate() {
+            match sweep_parameter.get_path(0).as_str() {
+                "circuit" => self.circuit_blueprint.update_parameters(sweep_parameter, 1, sweep_parameter_indicies[i]),
+                "qubits" => self.qubit_array_blueprint.update_parameters(sweep_parameter, 1, sweep_parameter_indicies[i]),
+                _ => return,
+            }
+        }
+        return;
     }
     fn save_results(&self, results: ArrayD<Complex64>) -> Result<()> {
         let file = hdf5::File::create("ramsey_results.h5")?; // open for writing
@@ -133,10 +169,14 @@ impl Experiment {
         // Vector to hold the dimensions of the results
         let mut dim_vec: Vec<usize> = vec![];
 
-        // If there is more than one sample then add a dimension of that size
-        if self.simulation_times_blueprint.get_num_samples() > 1 {
-            dim_vec.push(self.simulation_times_blueprint.get_num_samples());
+        for sweep_parameter in &self.sweep_parameters {
+            dim_vec.push(sweep_parameter.values_len());
         }
+
+        // If there is more than one sample then add a dimension of that size
+        // if self.simulation_times_blueprint.get_num_samples() > 1 {
+        //     dim_vec.push(self.simulation_times_blueprint.get_num_samples());
+        // }
 
         return dim_vec;
     }

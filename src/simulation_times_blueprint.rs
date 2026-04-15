@@ -8,7 +8,10 @@ pub struct SimulationTimesBlueprint {
 
 impl SimulationTimesBlueprint {
     pub fn from_json(json_values: &Map<String, Value>) -> SimulationTimesBlueprint {
-        return SimulationTimesBlueprint { num_iterations: json_values["num_iterations"].as_u64().unwrap() as usize, num_samples: json_values["num_samples"].as_u64().unwrap() as usize };
+        return SimulationTimesBlueprint {
+            num_iterations: json_values["num_iterations"].as_u64().unwrap() as usize,
+            num_samples: json_values["num_samples"].as_u64().unwrap() as usize,
+        };
     }
     pub fn get_num_iterations(&self) -> usize {
         return self.num_iterations;

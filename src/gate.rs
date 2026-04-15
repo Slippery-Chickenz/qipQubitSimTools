@@ -58,7 +58,12 @@ impl PiO2X {
     pub fn new() -> Box<PiO2X> {
         return Box::new(PiO2X {});
     }
+    pub fn new_raw() -> PiO2X {
+        return PiO2X {};
+    }
 }
+
+default_name!(PiO2X);
 
 impl Gate for PiO2X {
     fn get_amplitude(&self, t: f64) -> f64 {
@@ -77,11 +82,16 @@ impl Gate for PiO2X {
 
 pub struct PiO2Y {}
 
+default_name!(PiO2Y);
+
 impl PiO2Y {
     const PI02Y_PULSE: ConstantPulse =
         ConstantPulse::new(1., 0., -(std::f64::consts::PI) / 2., 0.5);
     pub fn new() -> Box<PiO2Y> {
         return Box::new(PiO2Y {});
+    }
+    pub fn new_raw() -> PiO2Y {
+        return PiO2Y {};
     }
 }
 

@@ -1,13 +1,15 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
-use crate::{circuit::Circuit, gate, gate_blueprint::GateBlueprint, sweep_parameter::SweepParameter};
+use crate::{
+    circuit::Circuit, gate, gate_blueprint::GateBlueprint, sweep_parameter::SweepParameter,
+};
 
 use serde_json::{Map, Value};
 
 #[derive(Debug)]
 pub struct CircuitBlueprint {
     circuit_data: Vec<GateBlueprint>,
-    gate_directory: HashMap<String, usize>
+    gate_directory: HashMap<String, usize>,
 }
 
 impl CircuitBlueprint {
@@ -25,10 +27,11 @@ impl CircuitBlueprint {
         let mut gate_swept_parameters: Vec<SweepParameter> = vec![];
 
         for (i, gate) in order.iter().enumerate() {
-            let (gate_blueprint, mut swept_parameters): (GateBlueprint, Vec<SweepParameter>) = GateBlueprint::from_json(
-                gate.as_str().unwrap().to_string(),
-                &gate_map[gate.as_str().unwrap()].as_object().unwrap(),
-            );
+            let (gate_blueprint, mut swept_parameters): (GateBlueprint, Vec<SweepParameter>) =
+                GateBlueprint::from_json(
+                    gate.as_str().unwrap().to_string(),
+                    &gate_map[gate.as_str().unwrap()].as_object().unwrap(),
+                );
             let gate_name: String = gate_blueprint.get_name().clone() + "_" + &i.to_string();
             gate_directory.insert(gate_name.clone(), i);
             circuit_data.push(gate_blueprint);
@@ -38,10 +41,13 @@ impl CircuitBlueprint {
             gate_swept_parameters.append(&mut swept_parameters);
         }
 
-        return (CircuitBlueprint {
-            circuit_data: circuit_data,
-            gate_directory: gate_directory,
-        }, gate_swept_parameters);
+        return (
+            CircuitBlueprint {
+                circuit_data: circuit_data,
+                gate_directory: gate_directory,
+            },
+            gate_swept_parameters,
+        );
     }
     pub fn get_circuit(&self) -> Circuit {
         // Circuit object to construct
@@ -51,5 +57,9 @@ impl CircuitBlueprint {
             circuit.add_gate(gate_blueprint.get_gate());
         }
         return circuit;
+    }
+    pub fn update_parameters(&mut self, sweep_parameter: &SweepParameter, path_index: usize, value_index: usize) -> () {
+        self.circuit_data[self.gate_directory[sweep_parameter.get_path(path_index)]].update_parameters(sweep_parameter, 2, value_index);
+        return;
     }
 }

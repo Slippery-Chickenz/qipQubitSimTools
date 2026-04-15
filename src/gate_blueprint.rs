@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
 use crate::{
-    gate::{CheckGateName, Gate, Idle},
-    sweep_parameter::{SweepParameter},
+    gate::{CheckGateName, Gate, Idle, PiO2X, PiO2Y},
+    sweep_parameter::SweepParameter,
 };
 
+use serde::de::value;
 use serde_json::{Map, Value};
 
 #[derive(Debug)]
@@ -22,8 +23,19 @@ impl GateBlueprint {
         let mut swept_parameters: Vec<SweepParameter> = vec![];
         for (key, value) in json_values.into_iter() {
             if value.is_array() {
-                swept_parameters.push(SweepParameter::new(key.clone(), value.as_array().unwrap().iter().map(|x| x.as_f64().unwrap()).collect()));
-                parameters.insert(key.clone(), swept_parameters[swept_parameters.len() - 1].get_value(0));
+                swept_parameters.push(SweepParameter::new(
+                    key.clone(),
+                    value
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .map(|x| x.as_f64().unwrap())
+                        .collect(),
+                ));
+                parameters.insert(
+                    key.clone(),
+                    swept_parameters[swept_parameters.len() - 1].get_value(0),
+                );
             } else {
                 parameters.insert(key.clone(), value.as_f64().unwrap());
             }
@@ -45,11 +57,27 @@ impl GateBlueprint {
     pub fn get_gate(&self) -> Box<dyn Gate> {
         return try_convert_blueprint(self).unwrap();
     }
+    pub fn update_parameters(&mut self, sweep_parameter: &SweepParameter, path_index: usize, value_index: usize) -> () {
+        *self.parameters.get_mut(sweep_parameter.get_path(path_index)).unwrap() = sweep_parameter.get_value(value_index);
+        return;
+    }
 }
 
 impl From<&GateBlueprint> for Idle {
     fn from(blueprint: &GateBlueprint) -> Idle {
         return Idle::new_raw(blueprint.get("duration"));
+    }
+}
+
+impl From<&GateBlueprint> for PiO2X {
+    fn from(blueprint: &GateBlueprint) -> PiO2X {
+        return PiO2X::new_raw();
+    }
+}
+
+impl From<&GateBlueprint> for PiO2Y {
+    fn from(blueprint: &GateBlueprint) -> PiO2Y {
+        return PiO2Y::new_raw();
     }
 }
 
@@ -67,7 +95,11 @@ where
 
 fn try_convert_blueprint(mut blueprint: &GateBlueprint) -> Option<Box<dyn Gate>> {
     static DICT_LOADERS: &[fn(&GateBlueprint) -> Result<Box<dyn Gate>, &GateBlueprint>] =
-        &[try_convert_blueprint_to::<Idle>];
+        &[
+        try_convert_blueprint_to::<Idle>,
+        try_convert_blueprint_to::<PiO2X>,
+        try_convert_blueprint_to::<PiO2Y>,
+        ];
 
     for loader in DICT_LOADERS {
         match loader(blueprint) {
