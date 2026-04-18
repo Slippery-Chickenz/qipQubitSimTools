@@ -1,0 +1,24 @@
+{
+	"num_iterations": 1000,
+	"num_samples": 2,
+	"circuit": { 
+		"gates": {
+			"Idle": {
+				"duration": {
+					"linspace": [0, 2, 50]
+				}
+			},
+			"PiO2X": {},
+			"PiO2Y": {}
+		},
+		"order": ["PiO2X", "Idle", "PiO2Y"]
+	},
+	"qubits": { 
+		"q1": {
+			"larmor": {
+				"linspace" : [-1, 1, 50]
+			},
+			"guess_larmor": 0
+		}
+	}
+}

@@ -12,6 +12,7 @@ dependencies = [
  "ndarray-linalg",
  "num-complex",
  "openblas-src",
+ "rootfinder",
  "serde",
  "serde_json",
 ]
@@ -978,6 +979,12 @@ name = "regex-syntax"
 version = "0.8.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dc897dd8d9e8bd1ed8cdad82b5966c3e0ecae09fb1907d58efaa013543185d0a"
+
+[[package]]
+name = "rootfinder"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "681179499c79a88cad54836ccdf553cb716da412c5b66f5fd72c74a509894b82"
 
 [[package]]
 name = "rustix"

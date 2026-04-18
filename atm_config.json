@@ -1,0 +1,33 @@
+{
+	"num_iterations": 1000,
+	"num_samples": 2,
+	"circuit": { 
+		"gates": {
+			"Idle": {
+				"duration": {
+					"linspace": 0
+				}
+			},
+			"PiO2X": {},
+			"PiO2Y": {},
+			"ATMGate": {
+				"rise_time": 10,
+				"fall_time": 70,
+				"max_amplitude": 2,
+				"max_frequency": 1,
+				"rise_gradient": 0.95,
+				"fall_gradient": 0.02,
+				"duration": 100
+			}
+		},
+		"order": ["ATMGate"]
+	},
+	"qubits": { 
+		"q1": {
+			"larmor": {
+				"linspace" : [-1, 1, 500]
+			},
+			"guess_larmor": 0
+		}
+	}
+}

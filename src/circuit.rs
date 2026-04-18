@@ -5,7 +5,7 @@ use std::rc::Rc;
 use crate::gate::Gate;
 use crate::simulation_times::{SimulationTimes, UninitializedTimesError};
 
-use ndarray::Array3;
+use ndarray::{Array1, Array3};
 use num_complex::Complex64;
 
 pub struct Circuit {
@@ -66,7 +66,7 @@ impl Circuit {
                     Vec::with_capacity(sim_times.get_num_iterations_per_sample());
                 for t in sim_times.get_iteration_times_after_sample(i) {
                     temp_f += self.get_frequency(*t);
-                    temp_fs.push(temp_f);
+                    temp_fs.push(temp_f * sim_times.get_dt());
                 }
                 self.integrated_frequencies.push(temp_fs);
             }
@@ -105,7 +105,59 @@ impl Circuit {
 
         return hamiltonians;
     }
+    pub fn get_circuit_data(&mut self) -> (Array1<f64>,Array1<f64>,Array1<f64>,Array1<f64>) {
 
+        let time_steps: Array1<f64> = Array1::<f64>::linspace(0., self.duration, 10000);
+
+        self.set_simulation_times(Rc::new(SimulationTimes::new(self.duration, time_steps.len(), 2)));
+        self.integrate_frequencies();
+
+        let mut frequency_data: Array1<f64> = Array1::<f64>::zeros(time_steps.len());
+        let mut amplitude_data: Array1<f64> = Array1::<f64>::zeros(time_steps.len());
+        let mut pulse_data: Array1<f64> = Array1::<f64>::zeros(time_steps.len());
+
+        for (i, t) in time_steps.iter().enumerate() {
+            frequency_data[i] = self.get_frequency(*t);
+            amplitude_data[i] = self.get_amplitude(*t);
+            pulse_data[i] = amplitude_data[i] * PI * 0.5 * (2. * PI * self.get_integrated_frequency(0, i)+self.get_phase(*t)).cos();
+        }
+
+        self.simulation_times = None;
+        self.integrated_frequencies = vec![];
+        return (time_steps, frequency_data, amplitude_data, pulse_data);
+    }
+    pub fn save_circuit_data(&mut self) -> () {
+
+        let (time_data, frequency_data, amplitude_data, pulse_data) = self.get_circuit_data();
+
+        let file = hdf5::File::create("circuit_data.h5").unwrap(); // open for writing
+
+        let builder = file.new_dataset_builder();
+        let _ds = builder
+            .with_data(&time_data)
+            // finalize and write the dataset
+            .create("time_data").unwrap();
+
+        let builder = file.new_dataset_builder();
+        let _ds = builder
+            .with_data(&frequency_data)
+            // finalize and write the dataset
+            .create("frequency_data").unwrap();
+
+        let builder = file.new_dataset_builder();
+        let _ds = builder
+            .with_data(&amplitude_data)
+            // finalize and write the dataset
+            .create("amplitude_data").unwrap();
+
+        let builder = file.new_dataset_builder();
+        let _ds = builder
+            .with_data(&pulse_data)
+            // finalize and write the dataset
+            .create("pulse_data").unwrap();
+
+        return;
+    }
     fn get_amplitude(&self, time: f64) -> f64 {
         return self.gates[self.get_gate_index(time)].get_amplitude(time);
     }

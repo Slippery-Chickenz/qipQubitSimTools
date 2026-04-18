@@ -1,11 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap};
 
 use crate::{
-    gate::{CheckGateName, Gate, Idle, PiO2X, PiO2Y},
+    gate::{ATMGate, CheckGateName, Gate, Idle, PiO2X, PiO2Y},
     sweep_parameter::SweepParameter,
 };
 
-use serde::de::value;
 use serde_json::{Map, Value};
 
 #[derive(Debug)]
@@ -22,16 +21,9 @@ impl GateBlueprint {
         let mut parameters: HashMap<String, f64> = HashMap::new();
         let mut swept_parameters: Vec<SweepParameter> = vec![];
         for (key, value) in json_values.into_iter() {
-            if value.is_array() {
-                swept_parameters.push(SweepParameter::new(
-                    key.clone(),
-                    value
-                        .as_array()
-                        .unwrap()
-                        .iter()
-                        .map(|x| x.as_f64().unwrap())
-                        .collect(),
-                ));
+            if !value.is_number() {
+                swept_parameters.push(SweepParameter::from_json(key.clone(), value));
+
                 parameters.insert(
                     key.clone(),
                     swept_parameters[swept_parameters.len() - 1].get_value(0),
@@ -70,14 +62,20 @@ impl From<&GateBlueprint> for Idle {
 }
 
 impl From<&GateBlueprint> for PiO2X {
-    fn from(blueprint: &GateBlueprint) -> PiO2X {
+    fn from(_blueprint: &GateBlueprint) -> PiO2X {
         return PiO2X::new_raw();
     }
 }
 
 impl From<&GateBlueprint> for PiO2Y {
-    fn from(blueprint: &GateBlueprint) -> PiO2Y {
+    fn from(_blueprint: &GateBlueprint) -> PiO2Y {
         return PiO2Y::new_raw();
+    }
+}
+
+impl From<&GateBlueprint> for ATMGate {
+    fn from(blueprint: &GateBlueprint) -> ATMGate {
+        return ATMGate::new_raw(blueprint.get("rise_time"), blueprint.get("fall_time"), blueprint.get("max_amplitude"), blueprint.get("max_frequency"), blueprint.get("rise_gradient"), blueprint.get("fall_gradient"), blueprint.get("duration"))
     }
 }
 
@@ -99,6 +97,7 @@ fn try_convert_blueprint(mut blueprint: &GateBlueprint) -> Option<Box<dyn Gate>>
         try_convert_blueprint_to::<Idle>,
         try_convert_blueprint_to::<PiO2X>,
         try_convert_blueprint_to::<PiO2Y>,
+        try_convert_blueprint_to::<ATMGate>,
         ];
 
     for loader in DICT_LOADERS {

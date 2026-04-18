@@ -31,7 +31,6 @@ impl Simulator {
         qubit_array: QubitArray,
         num_iterations: usize,
         num_samples: usize,
-        guess_larmor: f64,
     ) -> () {
         self.circuit = Some(circuit);
         self.qubit_array = Some(qubit_array);
@@ -131,6 +130,7 @@ impl Simulator {
                     iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
                     iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
                 } else {
+
                     iter.1.index_axis_mut(Axis(0), 0).assign(
                         &expm(
                             &(Complex64::new(0., -1.)
