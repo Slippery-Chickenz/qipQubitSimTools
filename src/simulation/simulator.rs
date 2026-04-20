@@ -1,9 +1,6 @@
 use std::rc::Rc;
 
-use crate::{
-    circuit::Circuit, qubit_array::QubitArray, simulation_results::SimulationResults,
-    simulation_times::SimulationTimes,
-};
+use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes};
 
 use ndarray::{Array2, Array3, Array4, Axis};
 use ndarray_linalg::{OperationNorm, expm::expm};
@@ -93,7 +90,7 @@ impl Simulator {
             qubit_array.set_simulation_times(Rc::clone(&simulation_times));
 
             // Loop over every sample and evolve to the next sample
-            for i in 0..simulation_times.get_num_samples() {
+            for i in 0..simulation_times.get_num_samples() - 1 {
                 let evolution_operators: Array4<Complex64> = self.get_evolution_operator(i);
                 simulation_results.evolve_state(i, evolution_operators);
             }
@@ -121,7 +118,7 @@ impl Simulator {
             // Array of the Hamiltonians at each iteration to exponate into the eovlution operators
             let qubit_hamiltonians: Array3<Complex64> = circuit
                 .get_hamiltonian_operator(sample_num)
-                + qubit_array.get_detuning_hamiltonians();
+                + qubit_array.get_detuning_hamiltonians(sample_num);
 
             // Loop over all the hamiltonians and the outer axis of the evolution operators to assign
             for mut iter in qubit_hamiltonians

@@ -1,149 +1,8 @@
-use crate::pulse::{ConstantPulse, Pulse, RampPulse, TangentPulse};
+use crate::gates::{Gate, CheckGateName};
+use crate::default_name;
+use crate::pulses::{Pulse, Tangent, Ramp};
 
 use rootfinder::{Interval, root_bisection};
-
-/// Trait to guarentee that a gate can be converted into a string
-pub trait CheckGateName {
-    fn check_name(name: &str) -> bool;
-}
-
-/// Trait that must be implemented for any gate that is to be used within a quantum circuit.
-/// Contains functions to get the amplitude, frequency, and phase of the gate at any time within
-/// the duration of the gate. And one to get the duration of the gate.
-pub trait Gate {
-    fn get_amplitude(&self, t: f64) -> f64;
-    fn get_frequency(&self, t: f64) -> f64;
-    fn get_phase(&self, t: f64) -> f64;
-    fn get_duration(&self) -> f64;
-}
-
-/// Macro to make the check_name function and implement the CheckGateName trait for an arbitrary
-/// struct. By default it just makes the string name the name of the struct
-macro_rules! default_name {
-    ($n:ident) => {
-        impl CheckGateName for $n {
-            fn check_name(name: &str) -> bool {
-                return name == stringify!($n);
-            }
-        }
-    };
-}
-
-/// Struct for a gate which just idles
-pub struct Idle {
-    /// Duration to idle
-    duration: f64,
-}
-
-impl Idle {
-    /// Get a Box to an Idle gate given a duration
-    pub fn new(duration: f64) -> Box<Idle> {
-        return Box::new(Idle { duration });
-    }
-    /// Get a raw Idle gate object given a duration
-    pub fn new_raw(duration: f64) -> Idle {
-        return Idle { duration };
-    }
-}
-
-// Default name for the idle gate
-default_name!(Idle);
-
-impl Gate for Idle {
-    /// Amplitude for idle is 0
-    fn get_amplitude(&self, _t: f64) -> f64 {
-        return 0.;
-    }
-    /// Frequency for idle is 0
-    fn get_frequency(&self, _t: f64) -> f64 {
-        return 0.;
-    }
-    /// Phase for idle is 0
-    fn get_phase(&self, _t: f64) -> f64 {
-        return 0.;
-    }
-    /// Get the duration for the idle gate
-    fn get_duration(&self) -> f64 {
-        return self.duration;
-    }
-}
-
-/// Struct for a gate that performs a $\pi/2$ rotation around the +x axis
-pub struct PiO2X {}
-
-impl PiO2X {
-    /// The gate consists of a single on resonance constant pulse with amplitude of 1 for 0.5 us
-    const PI02X_PULSE: ConstantPulse = ConstantPulse::new(1., 0., 0., 0.5);
-    /// Get a box to a PiO2X gate
-    pub fn new() -> Box<PiO2X> {
-        return Box::new(PiO2X {});
-    }
-    /// Get a raw PiO2X object
-    pub fn new_raw() -> PiO2X {
-        return PiO2X {};
-    }
-}
-
-// Default name is "PiO2X"
-default_name!(PiO2X);
-
-impl Gate for PiO2X {
-    /// Amplitude from the single Pulse
-    fn get_amplitude(&self, t: f64) -> f64 {
-        return PiO2X::PI02X_PULSE.get_amplitude(t);
-    }
-    /// Frequency from the single Pulse
-    fn get_frequency(&self, t: f64) -> f64 {
-        return PiO2X::PI02X_PULSE.get_frequency(t);
-    }
-    /// Phase from the single Pulse
-    fn get_phase(&self, t: f64) -> f64 {
-        return PiO2X::PI02X_PULSE.get_phase(t);
-    }
-    /// Duration of the single Pulse
-    fn get_duration(&self) -> f64 {
-        return PiO2X::PI02X_PULSE.get_duration();
-    }
-}
-
-/// Struct for a gate that performs a $\pi / 2$ rotation around the +y axis
-pub struct PiO2Y {}
-
-// Default name is "PiO2Y"
-default_name!(PiO2Y);
-
-impl PiO2Y {
-    /// Gate only has a single constant pulse the same as PiO2X but phase shifted by $-\pi/2$
-    const PI02Y_PULSE: ConstantPulse =
-        ConstantPulse::new(1., 0., -(std::f64::consts::PI) / 2., 0.5);
-    /// Get a box to a PiO2Y gate
-    pub fn new() -> Box<PiO2Y> {
-        return Box::new(PiO2Y {});
-    }
-    /// Get a raw PiO2Y object
-    pub fn new_raw() -> PiO2Y {
-        return PiO2Y {};
-    }
-}
-
-impl Gate for PiO2Y {
-    /// Amplitude from the single pulse
-    fn get_amplitude(&self, t: f64) -> f64 {
-        return PiO2Y::PI02Y_PULSE.get_amplitude(t);
-    }
-    /// Frequency from the single pulse
-    fn get_frequency(&self, t: f64) -> f64 {
-        return PiO2Y::PI02Y_PULSE.get_frequency(t);
-    }
-    /// Phase from the single pulse
-    fn get_phase(&self, t: f64) -> f64 {
-        return PiO2Y::PI02Y_PULSE.get_phase(t);
-    }
-    /// Duration from the single pulse
-    fn get_duration(&self) -> f64 {
-        return PiO2Y::PI02Y_PULSE.get_duration();
-    }
-}
 
 /// Struct for a gate that implements the ATM pulse
 pub struct ATMGate {
@@ -192,7 +51,7 @@ impl ATMGate {
         let fall_a: f64 = fall_gradient / fall_b;
 
         // Append the tangent rise, the frequency ramp down, and the tangent fall
-        pulses.push(Box::new(TangentPulse::new(
+        pulses.push(Box::new(Tangent::new(
             rise_a,
             rise_b,
             0.,
@@ -200,13 +59,13 @@ impl ATMGate {
             0.,
             rise_duration,
         )));
-        pulses.push(Box::new(RampPulse::new(
+        pulses.push(Box::new(Ramp::new(
             (max_amplitude, max_amplitude),
             (max_frequency, 0.),
             (0., 0.),
             duration - rise_duration - fall_duration,
         )));
-        pulses.push(Box::new(TangentPulse::new(
+        pulses.push(Box::new(Tangent::new(
             -fall_a,
             fall_b,
             fall_duration,

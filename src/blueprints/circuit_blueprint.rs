@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
-use crate::{circuit::Circuit, gate_blueprint::GateBlueprint, sweep_parameter::SweepParameter};
+use crate::simulation::Circuit;
+use crate::blueprints::GateBlueprint;
+use crate::sweep_parameter::SweepParameter;
 
 use serde_json::{Map, Value};
 

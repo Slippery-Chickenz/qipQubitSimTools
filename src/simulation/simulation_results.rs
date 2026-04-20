@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::simulation_times::SimulationTimes;
+use crate::simulation::SimulationTimes;
 
 use ndarray::{Array1, Array2, Array3, Array4, Axis};
 use ndarray_linalg::trace::Trace;

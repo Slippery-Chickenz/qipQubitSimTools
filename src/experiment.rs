@@ -1,8 +1,8 @@
 use std::{fs, io::BufReader};
 
 use crate::{
-    circuit_blueprint::CircuitBlueprint, qubit_array_blueprint::QubitArrayBlueprint,
-    simulation_times_blueprint::SimulationTimesBlueprint, simulator::Simulator,
+    blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
+    simulation::Simulator,
     sweep_parameter::SweepParameter,
 };
 

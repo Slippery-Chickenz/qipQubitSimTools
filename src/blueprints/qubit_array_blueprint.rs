@@ -1,4 +1,6 @@
-use crate::{qubit_array::QubitArray, sweep_parameter::SweepParameter};
+use crate::blueprints::LarmorFrequencyBlueprint;
+use crate::sweep_parameter::SweepParameter;
+use crate::simulation::QubitArray;
 
 use serde_json::{Map, Value};
 
@@ -6,7 +8,7 @@ use serde_json::{Map, Value};
 #[derive(Debug)]
 pub struct QubitArrayBlueprint {
     /// Larmor value for the qubit
-    larmor: f64,
+    larmor: LarmorFrequencyBlueprint,
     /// Guess larmor for the qubit
     guess_larmor: f64,
 }
@@ -23,22 +25,31 @@ impl QubitArrayBlueprint {
         // Empty vector for the sweep parameters
         let mut swept_parameters: Vec<SweepParameter> = vec![];
 
-        // Store the larmor and guess lamrmor
-        let larmor: f64;
-        let guess_larmor: f64;
+        let (larmor, mut larmor_swept_parameters): (LarmorFrequencyBlueprint, Vec<SweepParameter>) =
+            LarmorFrequencyBlueprint::from_json(q1_values["larmor"].as_object().unwrap());
+
+        // Add to the path in the sweep parameter to track it for updates later
+        for sweep_parameter in &mut larmor_swept_parameters {
+            sweep_parameter.add_path("larmor".to_string());
+        }
+        // Append the sweep parameters from this gate to the overall
+        swept_parameters.append(&mut larmor_swept_parameters);
 
         // Get the larmor value from the map under the "larmor" key. If it is not a number then
         // assume it is an array and it must be swept over
-        if !q1_values["larmor"].is_number() {
-            swept_parameters.push(SweepParameter::from_json(
-                "larmor".to_string(),
-                &q1_values["larmor"],
-            ));
-            // If it is an array to sweep then just set it to the first item in the array to start
-            larmor = swept_parameters[swept_parameters.len() - 1].get_value(0);
-        } else {
-            larmor = q1_values["larmor"].as_f64().unwrap();
-        }
+        // if !q1_values["larmor"].is_number() {
+        //     swept_parameters.push(SweepParameter::from_json(
+        //         "larmor".to_string(),
+        //         &q1_values["larmor"],
+        //     ));
+        //     // If it is an array to sweep then just set it to the first item in the array to start
+        //     larmor = swept_parameters[swept_parameters.len() - 1].get_value(0);
+        // } else {
+        //     larmor = q1_values["larmor"].as_f64().unwrap();
+        // }
+
+        // Store the guess lamrmor
+        let guess_larmor: f64;
 
         // Same but for guess larmor. If it is not a number it must be an array to sweep over
         if !q1_values["guess_larmor"].is_number() {
@@ -69,13 +80,16 @@ impl QubitArrayBlueprint {
         // Match the path to be updated with either the guess larmor or the larmor and set it
         match sweep_parameter.get_path(path_index).as_str() {
             "guess_larmor" => self.guess_larmor = sweep_parameter.get_value(value_index),
-            "larmor" => self.larmor = sweep_parameter.get_value(value_index),
+            "larmor" => self
+                .larmor
+                .update_parameters(sweep_parameter, path_index + 1, value_index),
+            // "larmor" => self.larmor = sweep_parameter.get_value(value_index),
             _ => return,
         }
         return;
     }
     /// Get a qubit array object constructed from this blueprint
     pub fn get_qubit_array(&self) -> QubitArray {
-        return QubitArray::new(1, self.larmor, self.guess_larmor);
+        return QubitArray::new(1, self.larmor.get_larmor_frequency(), self.guess_larmor);
     }
 }

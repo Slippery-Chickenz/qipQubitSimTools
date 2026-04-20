@@ -1,9 +1,15 @@
 use std::collections::HashMap;
 
-use crate::{
-    gate::{ATMGate, CheckGateName, Gate, Idle, PiO2X, PiO2Y},
-    sweep_parameter::SweepParameter,
+use crate::gates::{
+    ATMGate,
+    Idle,
+    PiO2X,
+    PiO2Y,
+    Gate,
+    CheckGateName,
 };
+
+use crate::sweep_parameter::SweepParameter;
 
 use serde_json::{Map, Value};
 
@@ -106,12 +112,12 @@ impl From<&GateBlueprint> for ATMGate {
     /// Convert from a reference to a gate blueprint to an ATM Gate
     fn from(blueprint: &GateBlueprint) -> ATMGate {
         return ATMGate::new_raw(
-            blueprint.get("rise_time"),
-            blueprint.get("fall_time"),
             blueprint.get("max_amplitude"),
             blueprint.get("max_frequency"),
             blueprint.get("rise_gradient"),
             blueprint.get("fall_gradient"),
+            blueprint.get("rise_time"),
+            blueprint.get("fall_time"),
             blueprint.get("duration"),
         );
     }

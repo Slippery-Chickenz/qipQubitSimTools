@@ -1,5 +1,5 @@
 {
-	"num_iterations": 1000,
+	"num_iterations": 20000,
 	"num_samples": 2,
 	"circuit": { 
 		"gates": {
@@ -11,8 +11,8 @@
 			"PiO2X": {},
 			"PiO2Y": {},
 			"ATMGate": {
-				"rise_time": 10,
-				"fall_time": 70,
+				"rise_time": 20,
+				"fall_time": 60,
 				"max_amplitude": 2,
 				"max_frequency": 1,
 				"rise_gradient": 0.95,
@@ -25,7 +25,10 @@
 	"qubits": { 
 		"q1": {
 			"larmor": {
-				"linspace" : [-1, 1, 500]
+				"base_value": {
+					"linspace" : [-1.5, 1.5, 1000]
+				},
+				"1/f_power": 0.1
 			},
 			"guess_larmor": 0
 		}

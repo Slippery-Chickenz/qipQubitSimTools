@@ -5,7 +5,7 @@ use ndarray::Array1;
 
 /// Error returned if a function is called which needs simulation times that are not set
 #[derive(Debug, Clone)]
-pub struct UninitializedTimesError;
+pub(super) struct UninitializedTimesError;
 
 impl fmt::Display for UninitializedTimesError {
     /// Error message for uninitialized times
