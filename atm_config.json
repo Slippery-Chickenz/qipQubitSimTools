@@ -1,5 +1,5 @@
 {
-	"num_iterations": 20000,
+	"num_iterations": 1000,
 	"num_samples": 2,
 	"circuit": { 
 		"gates": {
@@ -28,7 +28,10 @@
 				"base_value": {
 					"linspace" : [-1.5, 1.5, 1000]
 				},
-				"1/f_power": 0.1
+				"1/f_power": 0
+			},
+			"channels": {
+				"dephasing_lifetime": 0
 			},
 			"guess_larmor": 0
 		}

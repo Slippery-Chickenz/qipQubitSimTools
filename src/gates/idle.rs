@@ -1,5 +1,5 @@
-use crate::gates::{Gate, CheckGateName};
 use crate::default_name;
+use crate::gates::{CheckGateName, Gate};
 
 /// Struct for a gate which just idles
 pub struct Idle {
@@ -39,4 +39,3 @@ impl Gate for Idle {
         return self.duration;
     }
 }
-

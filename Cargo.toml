@@ -15,6 +15,7 @@ hdf5 = { package = "hdf5-metno", version = "0.12.4", features = ["complex"]}
 rootfinder = "0.5.1"
 rand = "0.10.1"
 rustfft = "6.4.1"
+indicatif = "0.18.4"
 
 
 [lib]

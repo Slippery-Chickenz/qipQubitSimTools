@@ -1,12 +1,14 @@
+pub mod atm_gate;
+pub mod constant;
 pub mod idle;
 pub mod pi_o_2_x;
 pub mod pi_o_2_y;
-pub mod atm_gate;
 
+pub use atm_gate::ATMGate;
+pub use constant::Constant;
 pub use idle::Idle;
 pub use pi_o_2_x::PiO2X;
 pub use pi_o_2_y::PiO2Y;
-pub use atm_gate::ATMGate;
 
 /// Trait to guarentee that a gate can be converted into a string
 pub trait CheckGateName {
@@ -35,4 +37,3 @@ macro_rules! default_name {
         }
     };
 }
-

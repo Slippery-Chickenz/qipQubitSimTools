@@ -40,6 +40,7 @@ impl SimulationResults {
         &mut self,
         sample_num: usize,
         evolution_operators: Array4<Complex64>,
+        channel_coefficients: &Array2<Complex64>,
     ) -> () {
         // Copy the last state to evolve as the next sampled state
         let mut next_sample: Array2<Complex64> = self
@@ -52,6 +53,7 @@ impl SimulationResults {
             next_sample = iter
                 .index_axis(Axis(0), 0)
                 .dot(&next_sample.dot(&iter.index_axis(Axis(0), 1)));
+            next_sample *= channel_coefficients;
         }
         // Set the next sample to the evolved state
         self.density_matrices

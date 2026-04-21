@@ -7,10 +7,9 @@ use crate::{
 };
 
 use ndarray::{ArrayD, IxDyn};
-
 use hdf5::Result;
-
 use serde_json::{Map, Value};
+use indicatif::ProgressBar;
 
 /// Experiment to be run. Consists of a circuit, qubit array, and simulation times to simulate and
 /// then a vector of parameters and values to sweep across and run simulations for each combination
@@ -108,6 +107,9 @@ impl Experiment {
         // Vector of the current index for each of the swept parameters
         let mut sweep_parameter_indicies: Vec<usize> = results_dim.iter().map(|_| 0).collect();
 
+        // Make a progress bar to display how fast the experiment is going
+        let progress_bar: ProgressBar = ProgressBar::new(num_experiment_iterations as u64);
+        
         // Loop the total number of iterations needed to get through all swept values
         for _i in 0..num_experiment_iterations {
             // Construct and simulate the given circuit and qubit array and save the final
@@ -138,10 +140,12 @@ impl Experiment {
             }
             // Update the parameters to set the values at the given indicies
             self.update_parameters(&sweep_parameter_indicies);
+            progress_bar.inc(1);
         }
         // Save teh results and save the circuit data
         self.save_results(results, &mut filename.clone())?;
         self.circuit_blueprint.get_circuit().save_circuit_data();
+        progress_bar.finish();
         return Ok(());
     }
     /// Update the parameters for the blueprints for a given set of indicies. The indicies

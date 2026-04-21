@@ -5,7 +5,7 @@
 		"gates": {
 			"Idle": {
 				"duration": {
-					"linspace": [0, 2, 200]
+					"linspace": [0, 2, 100]
 				}
 			},
 			"PiO2X": {},
@@ -17,9 +17,12 @@
 		"q1": {
 			"larmor": {
 				"base_value": {
-					"linspace" : [-2, 2, 200]
+					"linspace" : [-2, 2, 100]
 				},
-				"1/f_power": 0.1
+				"1/f_power": 0
+			},
+			"channels": {
+				"dephasing_lifetime": 0
 			},
 			"guess_larmor": 0
 		}

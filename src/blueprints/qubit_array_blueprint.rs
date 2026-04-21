@@ -1,6 +1,6 @@
 use crate::blueprints::LarmorFrequencyBlueprint;
-use crate::sweep_parameter::SweepParameter;
 use crate::simulation::QubitArray;
+use crate::sweep_parameter::SweepParameter;
 
 use serde_json::{Map, Value};
 
@@ -9,6 +9,8 @@ use serde_json::{Map, Value};
 pub struct QubitArrayBlueprint {
     /// Larmor value for the qubit
     larmor: LarmorFrequencyBlueprint,
+    /// Lifetime for the non-unitary continuous dephasing effect
+    dephasing_lifetime: f64,
     /// Guess larmor for the qubit
     guess_larmor: f64,
 }
@@ -35,19 +37,6 @@ impl QubitArrayBlueprint {
         // Append the sweep parameters from this gate to the overall
         swept_parameters.append(&mut larmor_swept_parameters);
 
-        // Get the larmor value from the map under the "larmor" key. If it is not a number then
-        // assume it is an array and it must be swept over
-        // if !q1_values["larmor"].is_number() {
-        //     swept_parameters.push(SweepParameter::from_json(
-        //         "larmor".to_string(),
-        //         &q1_values["larmor"],
-        //     ));
-        //     // If it is an array to sweep then just set it to the first item in the array to start
-        //     larmor = swept_parameters[swept_parameters.len() - 1].get_value(0);
-        // } else {
-        //     larmor = q1_values["larmor"].as_f64().unwrap();
-        // }
-
         // Store the guess lamrmor
         let guess_larmor: f64;
 
@@ -62,9 +51,26 @@ impl QubitArrayBlueprint {
             guess_larmor = q1_values["guess_larmor"].as_f64().unwrap();
         }
 
+        // Store the dephasing_lifetime
+        let dephasing_lifetime: f64;
+
+        // Same but for guess larmor. If it is not a number it must be an array to sweep over
+        if !q1_values["channels"]["dephasing_lifetime"].is_number() {
+            swept_parameters.push(SweepParameter::from_json(
+                "dephasing_lifetime".to_string(),
+                &q1_values["channels"]["dephasing_lifetime"],
+            ));
+            dephasing_lifetime = swept_parameters[swept_parameters.len() - 1].get_value(0);
+        } else {
+            dephasing_lifetime = q1_values["channels"]["dephasing_lifetime"]
+                .as_f64()
+                .unwrap();
+        }
+
         return (
             QubitArrayBlueprint {
                 larmor: larmor,
+                dephasing_lifetime: dephasing_lifetime,
                 guess_larmor: guess_larmor,
             },
             swept_parameters,
@@ -90,6 +96,11 @@ impl QubitArrayBlueprint {
     }
     /// Get a qubit array object constructed from this blueprint
     pub fn get_qubit_array(&self) -> QubitArray {
-        return QubitArray::new(1, self.larmor.get_larmor_frequency(), self.guess_larmor);
+        return QubitArray::new(
+            1,
+            self.larmor.get_larmor_frequency(),
+            self.dephasing_lifetime,
+            self.guess_larmor,
+        );
     }
 }

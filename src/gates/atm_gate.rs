@@ -1,6 +1,6 @@
-use crate::gates::{Gate, CheckGateName};
 use crate::default_name;
-use crate::pulses::{Pulse, Tangent, Ramp};
+use crate::gates::{CheckGateName, Gate};
+use crate::pulses::{Pulse, Ramp, Tangent};
 
 use rootfinder::{Interval, root_bisection};
 

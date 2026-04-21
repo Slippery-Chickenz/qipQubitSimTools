@@ -2,9 +2,9 @@ pub mod constant;
 pub mod ramp;
 pub mod tangent;
 
-pub use tangent::Tangent;
-pub use ramp::Ramp;
 pub use constant::Constant;
+pub use ramp::Ramp;
+pub use tangent::Tangent;
 
 /// Trait to be implemented to be used as a pulse that makes up a gate
 pub trait Pulse {

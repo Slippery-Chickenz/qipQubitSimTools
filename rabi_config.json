@@ -1,0 +1,34 @@
+{
+	"num_iterations": 1000,
+	"num_samples": 2,
+	"circuit": { 
+		"gates": {
+			"Idle": {
+				"duration": 0
+			},
+			"PiO2X": {},
+			"PiO2Y": {},
+			"Constant": {
+				"amplitude": 1,
+				"frequency": 0,
+				"phase": 0,
+				"duration": {
+					"linspace": [0, 5.25, 200]
+				}
+			}
+		},
+		"order": ["Constant"]
+	},
+	"qubits": { 
+		"q1": {
+			"larmor": {
+				"base_value": 0,
+				"1/f_power": 0
+			},
+			"channels": {
+				"dephasing_lifetime": 0.5
+			},
+			"guess_larmor": 0
+		}
+	}
+}

@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes};
+use crate::{simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes}};
 
 use ndarray::{Array2, Array3, Array4, Axis};
 use ndarray_linalg::{OperationNorm, expm::expm};
@@ -89,10 +89,12 @@ impl Simulator {
             circuit.set_simulation_times(Rc::clone(&simulation_times));
             qubit_array.set_simulation_times(Rc::clone(&simulation_times));
 
+            let channel_coefficients: Array2<Complex64> = qubit_array.get_channel_coefficients().mapv(|x| Complex64::new(x, 0.));
+
             // Loop over every sample and evolve to the next sample
             for i in 0..simulation_times.get_num_samples() - 1 {
                 let evolution_operators: Array4<Complex64> = self.get_evolution_operator(i);
-                simulation_results.evolve_state(i, evolution_operators);
+                simulation_results.evolve_state(i, evolution_operators, &channel_coefficients);
             }
             return simulation_results;
         }

@@ -1,6 +1,6 @@
-use crate::gates::{Gate, CheckGateName};
-use crate::pulses::{Pulse, Constant};
 use crate::default_name;
+use crate::gates::{CheckGateName, Gate};
+use crate::pulses::{Constant, Pulse};
 
 /// Struct for a gate that performs a $\pi/2$ rotation around the +x axis
 pub struct PiO2X {}

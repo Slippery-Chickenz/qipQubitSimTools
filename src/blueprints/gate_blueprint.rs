@@ -1,13 +1,6 @@
 use std::collections::HashMap;
 
-use crate::gates::{
-    ATMGate,
-    Idle,
-    PiO2X,
-    PiO2Y,
-    Gate,
-    CheckGateName,
-};
+use crate::gates::{ATMGate, CheckGateName, Constant, Gate, Idle, PiO2X, PiO2Y};
 
 use crate::sweep_parameter::SweepParameter;
 
@@ -94,6 +87,18 @@ impl From<&GateBlueprint> for Idle {
     }
 }
 
+impl From<&GateBlueprint> for Constant {
+    /// Convert from a reference to a gate blueprint to a Constant gate
+    fn from(blueprint: &GateBlueprint) -> Constant {
+        return Constant::new_raw(
+            blueprint.get("amplitude"),
+            blueprint.get("frequency"),
+            blueprint.get("phase"),
+            blueprint.get("duration"),
+        );
+    }
+}
+
 impl From<&GateBlueprint> for PiO2X {
     /// Convert from a reference to a gate blueprint to a PiO2X Gate
     fn from(_blueprint: &GateBlueprint) -> PiO2X {
@@ -144,6 +149,7 @@ fn try_convert_blueprint(mut blueprint: &GateBlueprint) -> Option<Box<dyn Gate>>
     // List of functiosn to try and use to convert to a Gate
     static DICT_LOADERS: &[fn(&GateBlueprint) -> Result<Box<dyn Gate>, &GateBlueprint>] = &[
         try_convert_blueprint_to::<Idle>,
+        try_convert_blueprint_to::<Constant>,
         try_convert_blueprint_to::<PiO2X>,
         try_convert_blueprint_to::<PiO2Y>,
         try_convert_blueprint_to::<ATMGate>,
