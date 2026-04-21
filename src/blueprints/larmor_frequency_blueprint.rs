@@ -1,5 +1,5 @@
 use crate::simulation::LarmorFrequency;
-use crate::sweep_parameter::SweepParameter;
+use crate::experiment::SweepParameter;
 
 use serde_json::{Map, Value};
 

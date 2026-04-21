@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::blueprints::GateBlueprint;
 use crate::simulation::Circuit;
-use crate::sweep_parameter::SweepParameter;
+use crate::experiment::SweepParameter;
 
 use serde_json::{Map, Value};
 

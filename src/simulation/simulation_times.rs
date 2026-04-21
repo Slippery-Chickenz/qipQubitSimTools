@@ -31,15 +31,15 @@ impl SimulationTimes {
     /// the number of samples
     pub fn new(duration: f64, num_iterations: usize, num_samples: usize) -> SimulationTimes {
         // Sample times will be equally spaced throughout the duration
-        let sample_times: Vec<f64> = Array1::<f64>::linspace(0., duration, num_samples).to_vec();
+        let mut sample_times: Vec<f64> = Array1::<f64>::linspace(0., duration, num_samples.max(2)).to_vec();
 
         // Iteration times should be a 2d vector. First axis is the sample number and the second is
         // the iteration within that sample
         let mut iterations_times: Vec<Vec<f64>> = vec![];
         // Calculate the dt for the times
-        let dt: f64 = duration / (((num_samples - 1) * num_iterations) as f64);
+        let dt: f64 = duration / (((sample_times.len() - 1) * num_iterations) as f64);
         // Loop over the number of samples to fill in the iteration times
-        for i in 0..(num_samples - 1) {
+        for i in 0..(sample_times.len() - 1) {
             // Next set of times is the number of iteratiosn between the current sample time and
             // the next one. The final time is without dt because the iterations are time steps not
             // time stamps
@@ -48,6 +48,12 @@ impl SimulationTimes {
                     .to_vec();
             iterations_times.push(next_times);
         }
+
+        // If there is only supposed to be one sample then remove the starting sample
+        if num_samples == 1 {
+            sample_times.swap_remove(0);
+        }
+
         return SimulationTimes {
             iteration_times: iterations_times,
             sample_times: sample_times,
@@ -64,7 +70,7 @@ impl SimulationTimes {
     }
     /// Get the number of samples that are saved
     pub fn get_num_samples(&self) -> usize {
-        return self.sample_times.len();
+        return self.sample_times.len().max(2);
     }
     /// Get the number of iterations between each sample
     pub fn get_num_iterations_per_sample(&self) -> usize {

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::gates::{ATMGate, CheckGateName, Constant, Gate, Idle, PiO2X, PiO2Y};
 
-use crate::sweep_parameter::SweepParameter;
+use crate::experiment::SweepParameter;
 
 use serde_json::{Map, Value};
 

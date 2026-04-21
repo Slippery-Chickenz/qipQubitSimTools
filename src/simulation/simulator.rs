@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use crate::{simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes}};
+use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes};
 
 use ndarray::{Array2, Array3, Array4, Axis};
 use ndarray_linalg::{OperationNorm, expm::expm};
@@ -93,8 +93,15 @@ impl Simulator {
 
             // Loop over every sample and evolve to the next sample
             for i in 0..simulation_times.get_num_samples() - 1 {
-                let evolution_operators: Array4<Complex64> = self.get_evolution_operator(i);
+                //let evolution_operators: Array4<Complex64> = self.get_evolution_operator(i);
+                let evolution_operators: Array4<Complex64> = Simulator::get_evolution_operator(circuit, qubit_array, simulation_times, i);
                 simulation_results.evolve_state(i, evolution_operators, &channel_coefficients);
+            }
+
+            // If there is only a single sample time then the results should only save the ending
+            // state not the starting state
+            if simulation_times.get_sample_times().len() == 1 {
+                simulation_results.remove_starting_sample();
             }
             return simulation_results;
         }
@@ -104,11 +111,12 @@ impl Simulator {
     /// axis is the iteration number, second axis is for the either side of the evolution of the
     /// density matrix (index 0 is $e^iHdt$, index 1 is $e^-iHdt$). Final 2 axes are the 2x2
     /// evolution matrices
-    fn get_evolution_operator(&self, sample_num: usize) -> Array4<Complex64> {
-        // Check if the circuit, qubit array, and simulation times are set
-        if let (Some(circuit), Some(qubit_array), Some(simulation_times)) =
-            (&self.circuit, &self.qubit_array, &self.simulation_times)
-        {
+    // fn get_evolution_operator(&self, sample_num: usize) -> Array4<Complex64> {
+    fn get_evolution_operator(circuit: &Circuit, qubit_array: &QubitArray, simulation_times: &SimulationTimes, sample_num: usize) -> Array4<Complex64> {
+        // // Check if the circuit, qubit array, and simulation times are set
+        // if let (Some(circuit), Some(qubit_array), Some(simulation_times)) =
+        //     (&self.circuit, &self.qubit_array, &self.simulation_times)
+        // {
             // Array to set and return the evolution operators
             let mut evolution_operators: Array4<Complex64> = Array4::<Complex64>::zeros([
                 simulation_times.get_num_iterations_per_sample(),
@@ -131,7 +139,7 @@ impl Simulator {
                 // This is mostly because the expm function will panic if not. Should be fixed by
                 // just propagating the error out from the expm function
                 let a_one_norm = iter.0.map(|x| x.abs()).opnorm_one().unwrap();
-                if a_one_norm < f64::EPSILON * 2. {
+                if simulation_times.get_dt() == 0. || a_one_norm < f64::EPSILON * 2. {
                     iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
                     iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
                 } else {
@@ -155,7 +163,7 @@ impl Simulator {
                 }
             }
             return evolution_operators;
-        }
-        panic!();
+        // }
+        // panic!();
     }
 }

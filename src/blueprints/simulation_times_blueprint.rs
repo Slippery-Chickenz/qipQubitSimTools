@@ -15,7 +15,7 @@ impl SimulationTimesBlueprint {
         // Just get the number of iterations and samples as u64 from the map
         return SimulationTimesBlueprint {
             num_iterations: json_values["num_iterations"].as_u64().unwrap() as usize,
-            num_samples: json_values["num_samples"].as_u64().unwrap() as usize,
+            num_samples: json_values["output"]["num_samples"].as_u64().unwrap() as usize,
         };
     }
     /// Get the number of iterations from the blueprint

@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::simulation::SimulationTimes;
 
-use ndarray::{Array1, Array2, Array3, Array4, Axis};
+use ndarray::{Array1, Array2, Array3, Array4, Axis, s};
 use ndarray_linalg::trace::Trace;
 use num_complex::Complex64;
 
@@ -100,9 +100,9 @@ impl SimulationResults {
     pub fn get_state_probabilities(&self, state: &Array1<Complex64>) -> Array1<f64> {
         // Make the array of probabilities to be the length of the number of samples
         let mut probabilities: Array1<f64> =
-            Array1::<f64>::zeros([self.simulation_times.get_num_samples()]);
+            Array1::<f64>::zeros([self.density_matrices.shape()[0]]);
         // Loop over all the number of samples and set the probabilities
-        for i in 0..self.simulation_times.get_num_samples() {
+        for i in 0..self.density_matrices.shape()[0] {
             probabilities[[i]] = self.get_probability(i, state);
         }
         return probabilities;
@@ -120,5 +120,11 @@ impl SimulationResults {
             2. * self.density_matrices[[sample_num, 1, 0]].im,
             2. * self.density_matrices[[sample_num, 0, 0]].re - 1.,
         );
+    }
+    pub fn remove_starting_sample(&mut self) -> () {
+        self.density_matrices = self.density_matrices.clone().slice_move(s![1.., .., ..]);
+        // Should try and use index axis inplace instead
+        let unused: usize = 2;
+        return;
     }
 }

@@ -1,6 +1,9 @@
 {
 	"num_iterations": 1000,
 	"num_samples": 2,
+	"output": {
+		"num_samples": 2
+	},
 	"circuit": { 
 		"gates": {
 			"Idle": {

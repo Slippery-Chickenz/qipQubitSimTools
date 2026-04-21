@@ -1,6 +1,8 @@
 {
 	"num_iterations": 1000,
-	"num_samples": 2,
+	"output": {
+		"num_samples": 4
+	},
 	"circuit": { 
 		"gates": {
 			"Idle": {
@@ -13,7 +15,7 @@
 				"frequency": 0,
 				"phase": 0,
 				"duration": {
-					"linspace": [0, 5.25, 200]
+					"linspace": [0, 6, 200]
 				}
 			}
 		},
@@ -26,7 +28,7 @@
 				"1/f_power": 0
 			},
 			"channels": {
-				"dephasing_lifetime": 0.5
+				"dephasing_lifetime": 0
 			},
 			"guess_larmor": 0
 		}

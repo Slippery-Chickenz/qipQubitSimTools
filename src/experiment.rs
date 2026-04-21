@@ -1,12 +1,19 @@
 use std::{fs, io::BufReader};
+use std::rc::Rc;
+
+mod sweep_parameter;
+mod experiment_results;
+
+pub use sweep_parameter::SweepParameter;
+
+use experiment_results::{ExperimentResult, get_experiment_result_from_json};
 
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
     simulation::Simulator,
-    sweep_parameter::SweepParameter,
 };
 
-use ndarray::{ArrayD, IxDyn};
+use ndarray::{ArrayD};
 use hdf5::Result;
 use serde_json::{Map, Value};
 use indicatif::ProgressBar;
@@ -23,7 +30,9 @@ pub struct Experiment {
     /// Blueprint to construct simulation times to run the simulation on
     simulation_times_blueprint: SimulationTimesBlueprint,
     /// Vector of parameters to sweep across and run the simulation at each value
-    sweep_parameters: Vec<SweepParameter>,
+    sweep_parameters: Rc<Vec<SweepParameter>>,
+    /// Object to store and save the results in. Dynamic depending on what is defined to save
+    results: Box<dyn ExperimentResult>,
 }
 
 impl Experiment {
@@ -83,11 +92,15 @@ impl Experiment {
         }
         sweep_parameters.append(&mut qubit_array_sweep_parameters);
 
+        // Rc of sweep parameters to save here and also send to results
+        let rc_sweep_parameters: Rc<Vec<SweepParameter>> = Rc::new(sweep_parameters);
+
         return Experiment {
             circuit_blueprint: circuit_blueprint,
             qubit_array_blueprint: qubit_array_blueprint,
             simulation_times_blueprint: SimulationTimesBlueprint::from_json(&json_values),
-            sweep_parameters: sweep_parameters,
+            sweep_parameters: Rc::clone(&rc_sweep_parameters),
+            results: get_experiment_result_from_json(&json_values["output"].as_object().unwrap(), Rc::clone(&rc_sweep_parameters)),
         };
     }
     /// Run the experiment defined in this class and save the results to the given filename
@@ -102,7 +115,7 @@ impl Experiment {
         }
 
         // Array for results of experiment
-        let mut results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
+        // let mut results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
 
         // Vector of the current index for each of the swept parameters
         let mut sweep_parameter_indicies: Vec<usize> = results_dim.iter().map(|_| 0).collect();
@@ -120,10 +133,11 @@ impl Experiment {
                     self.qubit_array_blueprint.get_qubit_array(),
                     self.simulation_times_blueprint.get_num_iterations(),
                     self.simulation_times_blueprint.get_num_samples(),
-                )
-                .get_final_probability();
+                );
+                // .get_final_probability();
             // Set the value in the results
-            results[IxDyn(&sweep_parameter_indicies)] = sim_result;
+            // results[IxDyn(&sweep_parameter_indicies)] = sim_result;
+            self.results.add_simulation_result(&sweep_parameter_indicies, sim_result);
             // Loop over the indicies of the swept parameters and increase them
             for j in 0..sweep_parameter_indicies.len() {
                 // Increase the parameter index
@@ -143,7 +157,8 @@ impl Experiment {
             progress_bar.inc(1);
         }
         // Save teh results and save the circuit data
-        self.save_results(results, &mut filename.clone())?;
+        self.results.save(filename.clone())?;
+        // self.save_results(results, &mut filename.clone())?;
         self.circuit_blueprint.get_circuit().save_circuit_data();
         progress_bar.finish();
         return Ok(());
@@ -204,7 +219,7 @@ impl Experiment {
         // Vector to hold the dimensions of the results
         let mut dim_vec: Vec<usize> = vec![];
         // Loop over the sweep parameters and add the len of the values as the length of the dimension
-        for sweep_parameter in &self.sweep_parameters {
+        for sweep_parameter in &*self.sweep_parameters {
             dim_vec.push(sweep_parameter.values_len());
         }
         return dim_vec;
