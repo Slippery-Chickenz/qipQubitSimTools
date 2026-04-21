@@ -2,18 +2,19 @@ use std::{fs, io::BufReader};
 use std::rc::Rc;
 
 mod sweep_parameter;
+mod probability_results;
 mod experiment_results;
+mod bloch_coord_results;
 
 pub use sweep_parameter::SweepParameter;
 
-use experiment_results::{ExperimentResult, get_experiment_result_from_json};
+use experiment_results::{ExperimentResults};
 
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
     simulation::Simulator,
 };
 
-use ndarray::{ArrayD};
 use hdf5::Result;
 use serde_json::{Map, Value};
 use indicatif::ProgressBar;
@@ -32,7 +33,8 @@ pub struct Experiment {
     /// Vector of parameters to sweep across and run the simulation at each value
     sweep_parameters: Rc<Vec<SweepParameter>>,
     /// Object to store and save the results in. Dynamic depending on what is defined to save
-    results: Box<dyn ExperimentResult>,
+    results: ExperimentResults,
+    // results: Box<dyn ExperimentResult>,
 }
 
 impl Experiment {
@@ -100,7 +102,8 @@ impl Experiment {
             qubit_array_blueprint: qubit_array_blueprint,
             simulation_times_blueprint: SimulationTimesBlueprint::from_json(&json_values),
             sweep_parameters: Rc::clone(&rc_sweep_parameters),
-            results: get_experiment_result_from_json(&json_values["output"].as_object().unwrap(), Rc::clone(&rc_sweep_parameters)),
+            results: ExperimentResults::from_json(&json_values["output"].as_object().unwrap(), Rc::clone(&rc_sweep_parameters)),
+            // results: get_experiment_result_from_json(&json_values["output"].as_object().unwrap(), Rc::clone(&rc_sweep_parameters)),
         };
     }
     /// Run the experiment defined in this class and save the results to the given filename
@@ -137,7 +140,7 @@ impl Experiment {
                 // .get_final_probability();
             // Set the value in the results
             // results[IxDyn(&sweep_parameter_indicies)] = sim_result;
-            self.results.add_simulation_result(&sweep_parameter_indicies, sim_result);
+            self.results.add_simulation_result(&sweep_parameter_indicies, &sim_result);
             // Loop over the indicies of the swept parameters and increase them
             for j in 0..sweep_parameter_indicies.len() {
                 // Increase the parameter index
@@ -185,34 +188,6 @@ impl Experiment {
             }
         }
         return;
-    }
-    /// Save a given array of results to an HDF5 file. The results are N Dimensional where N should
-    /// be the number of swept parameters. The size in each dimension corresponds to the number of
-    /// values for the parameter across that axis. The file is saved under the given filename
-    fn save_results(&self, results: ArrayD<f64>, filename: &mut String) -> Result<()> {
-        // Add the .h5 extension to the filename
-        filename.push_str(".h5");
-
-        // Open an HDF5 file under the given name and make a parameters group
-        let file = hdf5::File::create(filename)?;
-        let group = file.create_group("parameters")?;
-
-        // Loop over all the swept parameters in this experiment
-        for (i, sweep_parameter) in self.sweep_parameters.iter().enumerate() {
-            // Construct a builder for this parameter
-            let builder = group.new_dataset_builder();
-            // Build a dataset with the values this parameter is swept over
-            let parameter_ds = builder
-                .with_data(&sweep_parameter.get_values())
-                .create(sweep_parameter.get_full_path().as_str())?;
-            // Create at attribute for this parameter and write which number axis this parameter is
-            let attr = parameter_ds.new_attr::<usize>().shape([1]).create("axis")?;
-            attr.write(&[i])?;
-        }
-        // Make a builder and put the results data set into the file
-        let builder = file.new_dataset_builder();
-        let _ds = builder.with_data(&results).create("results")?;
-        return Ok(());
     }
     // Get the dimensions for the results vector
     fn get_results_dimension(&self) -> Vec<usize> {

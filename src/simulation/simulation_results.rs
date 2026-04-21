@@ -114,7 +114,23 @@ impl SimulationResults {
             Complex64::new(1., 0.),
         ]));
     }
-    pub fn get_bloch_coords_cart(&self, sample_num: usize) -> (f64, f64, f64) {
+    pub fn get_bloch_coords_cart(&self) -> (Array1<f64>, Array1<f64>, Array1<f64>) {
+
+        // Coordinates to return
+        let mut x_coords: Array1<f64> = Array1::<f64>::zeros(self.density_matrices.shape()[0]);
+        let mut y_coords: Array1<f64> = Array1::<f64>::zeros(self.density_matrices.shape()[0]);
+        let mut z_coords: Array1<f64> = Array1::<f64>::zeros(self.density_matrices.shape()[0]);
+
+        // Loop over all samples and get/set the coordinates
+        for i in 0..self.density_matrices.shape()[0] {
+            let (x, y, z): (f64, f64, f64) = self.get_bloch_coord_cart(i);
+            x_coords[i] = x;
+            y_coords[i] = y;
+            z_coords[i] = z;
+        }
+        return (x_coords, y_coords, z_coords);
+    }
+    pub fn get_bloch_coord_cart(&self, sample_num: usize) -> (f64, f64, f64) {
         return (
             2. * self.density_matrices[[sample_num, 1, 0]].re,
             2. * self.density_matrices[[sample_num, 1, 0]].im,
@@ -123,8 +139,6 @@ impl SimulationResults {
     }
     pub fn remove_starting_sample(&mut self) -> () {
         self.density_matrices = self.density_matrices.clone().slice_move(s![1.., .., ..]);
-        // Should try and use index axis inplace instead
-        let unused: usize = 2;
         return;
     }
 }
