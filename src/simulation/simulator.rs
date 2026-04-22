@@ -2,9 +2,8 @@ use std::rc::Rc;
 
 use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes};
 
-use ndarray::{Array2, Array3, Array4, Axis};
-use ndarray_linalg::{OperationNorm, expm::expm};
-use num_complex::{Complex64, ComplexFloat};
+use ndarray::Array2;
+use num_complex::Complex64;
 
 /// Simulator for a given quantum circuit on an array of qubits
 pub struct Simulator {
@@ -34,14 +33,15 @@ impl Simulator {
         &mut self,
         circuit: Circuit,
         qubit_array: QubitArray,
-        num_iterations: usize,
+        // num_iterations: usize,
+        step_size: f64,
         num_samples: usize,
     ) -> () {
         self.circuit = Some(circuit);
         self.qubit_array = Some(qubit_array);
         self.simulation_times = Some(Rc::new(SimulationTimes::new(
             self.circuit.as_ref().unwrap().get_duration(),
-            num_iterations,
+            step_size,
             num_samples,
         )));
         return;
@@ -51,14 +51,15 @@ impl Simulator {
         &mut self,
         circuit: Circuit,
         qubit_array: QubitArray,
-        num_iterations: usize,
+        //num_iterations: usize,
+        step_size: f64,
         num_samples: usize,
     ) -> SimulationResults {
         self.circuit = Some(circuit);
         self.qubit_array = Some(qubit_array);
         self.simulation_times = Some(Rc::new(SimulationTimes::new(
             self.circuit.as_ref().unwrap().get_duration(),
-            num_iterations,
+            step_size,
             num_samples,
         )));
         return self.simulate_current_circuit();
@@ -89,74 +90,101 @@ impl Simulator {
             circuit.set_simulation_times(Rc::clone(&simulation_times));
             qubit_array.set_simulation_times(Rc::clone(&simulation_times));
 
-            let channel_coefficients: Array2<Complex64> = qubit_array
-                .get_channel_coefficients()
-                .mapv(|x| Complex64::new(x, 0.));
+            let mut qubit_state: Array2<Complex64> = qubit_array.get_density_matrix().clone();
 
-            // Loop over every sample and evolve to the next sample
-            for i in 0..simulation_times.get_num_samples() - 1 {
-                //let evolution_operators: Array4<Complex64> = self.get_evolution_operator(i);
-                let evolution_operators: Array4<Complex64> =
-                    Simulator::get_evolution_operator(circuit, qubit_array, simulation_times, i);
-                simulation_results.evolve_state(i, evolution_operators, &channel_coefficients);
+            // Indicies of iteration times to save each sample at
+            let mut sample_indicies: Vec<usize> = simulation_times.get_sample_indices().clone();
+
+            // If the first index is 0 then save the starting state
+            if sample_indicies[0] == 0 {
+                simulation_results.save_state(0, qubit_state.clone());
+            } else {
+                sample_indicies.insert(0, 0);
             }
 
-            // If there is only a single sample time then the results should only save the ending
-            // state not the starting state
-            if simulation_times.get_sample_times().len() == 1 {
-                simulation_results.remove_starting_sample();
+            // Temporary state to store the previous state in
+            let mut prev_state: Array2<Complex64> = qubit_state.clone();
+
+            // Loop over all the sample indices and evolve from one sample to the next
+            for i in 0..sample_indicies.len() - 1 {
+                for t_index in sample_indicies[i]..sample_indicies[i + 1] {
+                    let hamiltonian_operator: Array2<Complex64> =
+                        Simulator::get_hamiltonian_operator(circuit, qubit_array, t_index);
+
+                    qubit_state += &(Complex64::new(0., -simulation_times.get_dt())
+                        * (hamiltonian_operator.dot(&prev_state)
+                            - prev_state.dot(&hamiltonian_operator)));
+                    prev_state = qubit_state.clone();
+                }
+                simulation_results.save_state(i, qubit_state.clone())
             }
+
             return simulation_results;
         }
         panic!();
     }
-    /// Get the evolution operators to go from given sample n to n+1. Returns a 4D Array. The first
-    /// axis is the iteration number, second axis is for the either side of the evolution of the
-    /// density matrix (index 0 is $e^iHdt$, index 1 is $e^-iHdt$). Final 2 axes are the 2x2
-    /// evolution matrices
-    // fn get_evolution_operator(&self, sample_num: usize) -> Array4<Complex64> {
-    fn get_evolution_operator(
+
+    // fn get_hamiltonian_operators(circuit: &Circuit, qubit_array: &QubitArray, sample_num: usize) -> Array3<Complex64> {
+    //     // Array of the Hamiltonians at each iteration to exponate into the eovlution operators
+    //     return circuit.get_hamiltonian_operator(sample_num)
+    //         + qubit_array.get_detuning_hamiltonians(sample_num);
+    // }
+    fn get_hamiltonian_operator(
         circuit: &Circuit,
         qubit_array: &QubitArray,
-        simulation_times: &SimulationTimes,
-        sample_num: usize,
-    ) -> Array4<Complex64> {
-        // Array to set and return the evolution operators
-        let mut evolution_operators: Array4<Complex64> =
-            Array4::<Complex64>::zeros([simulation_times.get_num_iterations_per_sample(), 2, 2, 2]);
-
-        // Array of the Hamiltonians at each iteration to exponate into the eovlution operators
-        let qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num)
-            + qubit_array.get_detuning_hamiltonians(sample_num);
-
-        // Loop over all the hamiltonians and the outer axis of the evolution operators to assign
-        for mut iter in qubit_hamiltonians
-            .outer_iter()
-            .zip(evolution_operators.outer_iter_mut())
-        {
-            // Checking to make sure the one norm of the hamiltonian is above the f64 epsilon.
-            // This is mostly because the expm function will panic if not. Should be fixed by
-            // just propagating the error out from the expm function
-            let a_one_norm = iter.0.map(|x| x.abs()).opnorm_one().unwrap();
-            if simulation_times.get_dt() == 0. || a_one_norm < f64::EPSILON * 2. {
-                iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
-                iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
-            } else {
-                // Assign both the left and right evolution operators
-                iter.1.index_axis_mut(Axis(0), 0).assign(
-                    &expm(
-                        &(Complex64::new(0., -1.) * simulation_times.get_dt() * iter.0.to_owned()),
-                    )
-                    .0,
-                );
-                iter.1.index_axis_mut(Axis(0), 1).assign(
-                    &expm(
-                        &(Complex64::new(0., 1.) * simulation_times.get_dt() * iter.0.to_owned()),
-                    )
-                    .0,
-                );
-            }
-        }
-        return evolution_operators;
+        time_index: usize,
+    ) -> Array2<Complex64> {
+        // Array of the Hamiltonian at the specified time
+        return circuit.get_hamiltonian_operator(time_index)
+            + qubit_array.get_detuning_hamiltonian(time_index);
     }
+    // Get the evolution operators to go from given sample n to n+1. Returns a 4D Array. The first
+    // axis is the iteration number, second axis is for the either side of the evolution of the
+    // density matrix (index 0 is $e^iHdt$, index 1 is $e^-iHdt$). Final 2 axes are the 2x2
+    // evolution matrices
+    // fn get_evolution_operator(&self, sample_num: usize) -> Array4<Complex64> {
+    // fn get_evolution_operator(
+    //     circuit: &Circuit,
+    //     qubit_array: &QubitArray,
+    //     simulation_times: &SimulationTimes,
+    //     sample_num: usize,
+    // ) -> Array4<Complex64> {
+    //     // Array to set and return the evolution operators
+    //     let mut evolution_operators: Array4<Complex64> =
+    //         Array4::<Complex64>::zeros([simulation_times.get_num_iterations_per_sample(), 2, 2, 2]);
+    //
+    //     // Array of the Hamiltonians at each iteration to exponate into the eovlution operators
+    //     let qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num)
+    //         + qubit_array.get_detuning_hamiltonians(sample_num);
+    //
+    //     // Loop over all the hamiltonians and the outer axis of the evolution operators to assign
+    //     for mut iter in qubit_hamiltonians
+    //         .outer_iter()
+    //         .zip(evolution_operators.outer_iter_mut())
+    //     {
+    //         // Checking to make sure the one norm of the hamiltonian is above the f64 epsilon.
+    //         // This is mostly because the expm function will panic if not. Should be fixed by
+    //         // just propagating the error out from the expm function
+    //         let a_one_norm = iter.0.map(|x| x.abs()).opnorm_one().unwrap();
+    //         if simulation_times.get_dt() == 0. || a_one_norm < f64::EPSILON * 2. {
+    //             iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
+    //             iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
+    //         } else {
+    //             // Assign both the left and right evolution operators
+    //             iter.1.index_axis_mut(Axis(0), 0).assign(
+    //                 &expm(
+    //                     &(Complex64::new(0., -1.) * simulation_times.get_dt() * iter.0.to_owned()),
+    //                 )
+    //                 .0,
+    //             );
+    //             iter.1.index_axis_mut(Axis(0), 1).assign(
+    //                 &expm(
+    //                     &(Complex64::new(0., 1.) * simulation_times.get_dt() * iter.0.to_owned()),
+    //                 )
+    //                 .0,
+    //             );
+    //         }
+    //     }
+    //     return evolution_operators;
+    // }
 }

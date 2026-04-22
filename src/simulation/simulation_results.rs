@@ -34,6 +34,13 @@ impl SimulationResults {
             density_matrices: density_matrices,
         };
     }
+    pub fn save_state(&mut self, sample_num: usize, state: Array2<Complex64>) -> () {
+        // Set the next sample to the evolved state
+        self.density_matrices
+            .index_axis_mut(Axis(0), sample_num + 1)
+            .assign(&state);
+        return;
+    }
     /// Given a set of evolution operators take a sample number and evolve it and save it as the
     /// next sample.
     pub fn evolve_state(
@@ -59,6 +66,32 @@ impl SimulationResults {
         self.density_matrices
             .index_axis_mut(Axis(0), sample_num + 1)
             .assign(&next_sample);
+        return;
+    }
+    pub fn evolve_state_hamiltonian(
+        &mut self,
+        sample_num: usize,
+        hamiltonians: Array3<Complex64>,
+        dt: f64,
+    ) -> () {
+        // Copy the last state to evolve as the next sampled state
+        let mut next_sample: Array2<Complex64> = self
+            .density_matrices
+            .index_axis(Axis(0), sample_num)
+            .clone()
+            .to_owned();
+        let mut prev_state: Array2<Complex64> = next_sample.clone();
+        // Loop over the evolution operators and dot them on either side of the density matrix to evolve
+        for iter in hamiltonians.outer_iter() {
+            next_sample +=
+                &(Complex64::new(0., -dt) * (iter.dot(&prev_state) - prev_state.dot(&iter)));
+            prev_state = next_sample.clone();
+        }
+        // Set the next sample to the evolved state
+        self.density_matrices
+            .index_axis_mut(Axis(0), sample_num + 1)
+            .assign(&next_sample);
+
         return;
     }
     /// Get all the sampled density matrices

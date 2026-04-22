@@ -5,6 +5,8 @@ use serde_json::{Map, Value};
 pub struct SimulationTimesBlueprint {
     /// Number of iterations per sample
     num_iterations: usize,
+    /// Step size for each iteration
+    step_size: f64,
     /// Number of samples to save
     num_samples: usize,
 }
@@ -15,6 +17,7 @@ impl SimulationTimesBlueprint {
         // Just get the number of iterations and samples as u64 from the map
         return SimulationTimesBlueprint {
             num_iterations: json_values["num_iterations"].as_u64().unwrap() as usize,
+            step_size: json_values["step_size"].as_f64().unwrap(),
             num_samples: json_values["output"]["num_samples"].as_u64().unwrap() as usize,
         };
     }
@@ -25,5 +28,9 @@ impl SimulationTimesBlueprint {
     /// Get the number of samples from the blueprint
     pub fn get_num_samples(&self) -> usize {
         return self.num_samples;
+    }
+    /// Get the step size for the blueprint
+    pub fn get_step_size(&self) -> f64 {
+        return self.step_size;
     }
 }

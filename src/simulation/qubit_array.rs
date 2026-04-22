@@ -5,7 +5,7 @@ use super::simulation_times::UninitializedTimesError;
 use crate::simulation::{LarmorFrequency, SimulationTimes};
 
 use ndarray::linalg::kron;
-use ndarray::{Array1, Array2, Array3, array};
+use ndarray::{Array2, array};
 use num_complex::Complex64;
 
 /// Qubit array to be used in a simulation. Holds the number of qubits (currently only supports 1)
@@ -68,32 +68,19 @@ impl QubitArray {
     }
     /// Get the detuning Hamiltonian for the qubit array. Just a 2x2 array with the detuning value
     /// (guess - larmor) for each time step in the simulation times
-    pub fn get_detuning_hamiltonians(&self, sample_num: usize) -> Array3<Complex64> {
+    pub fn get_detuning_hamiltonian(&self, time_index: usize) -> Array2<Complex64> {
         // Detuning between guess and qubit. Factor of pi is to convert to angular frequency
         // combined with 1/2 factor from S_z gate
-        let detuning: Array1<f64> =
-            (self.larmor.get_larmor_frequencies(sample_num) - self.guess_larmor) * -PI;
+        let detuning: f64 =
+            (self.larmor.get_larmor_frequency(time_index) - self.guess_larmor) * -PI;
 
-        // This just makes an Array3 with the outer axis being the side of the number of samples
-        // and the inner axes are the 2x2 detuning matrix. Only the diagonal options are non-zero
-        // and they are set to the detuning
-        let detuning_hamiltonian: Array3<Complex64> = Array3::<Complex64>::from_shape_fn(
-            (
-                self.simulation_times
-                    .as_ref()
-                    .ok_or(UninitializedTimesError)
-                    .unwrap()
-                    .get_num_iterations_per_sample(),
-                2,
-                2,
-            ),
-            |(i, j, k)| {
+        let detuning_hamiltonian: Array2<Complex64> =
+            Array2::<Complex64>::from_shape_fn((2, 2), |(i, j)| {
                 Complex64::new(
-                    f64::from(-(i32::try_from(j + k).unwrap() - 1)) * detuning[i],
+                    f64::from(-(i32::try_from(i + j).unwrap() - 1)) * detuning,
                     0.,
                 )
-            },
-        );
+            });
         return detuning_hamiltonian;
     }
     pub fn get_channel_coefficients(&mut self) -> Array2<f64> {

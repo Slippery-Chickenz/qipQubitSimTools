@@ -1,7 +1,6 @@
 use std::fmt;
-use std::fmt::Write as _;
 
-use ndarray::Array1;
+use ndarray::{Array1, Array2};
 
 /// Error returned if a function is called which needs simulation times that are not set
 #[derive(Debug, Clone)]
@@ -18,10 +17,13 @@ impl fmt::Display for UninitializedTimesError {
 /// of samples along with the dt per time step. If the number of samples is 4 and the number of
 /// iterations is 25 then there would be 100 total time steps
 pub struct SimulationTimes {
-    /// Number of iterations per sample
-    iteration_times: Vec<Vec<f64>>,
+    /// Time values at each iteration
+    // iteration_times: Vec<Vec<f64>>,
+    iteration_times: Array2<f64>,
     /// Number of samples to save
-    sample_times: Vec<f64>,
+    // sample_times: Vec<f64>,
+    /// Indicies of the samples in the iteration times vector
+    sample_indices: Vec<usize>,
     /// Time difference between iterations
     dt: f64,
 }
@@ -29,35 +31,34 @@ pub struct SimulationTimes {
 impl SimulationTimes {
     /// Make a new SimulationTimes object given a duration, number of iterations per sample and
     /// the number of samples
-    pub fn new(duration: f64, num_iterations: usize, num_samples: usize) -> SimulationTimes {
-        // Sample times will be equally spaced throughout the duration
-        let mut sample_times: Vec<f64> =
-            Array1::<f64>::linspace(0., duration, num_samples.max(2)).to_vec();
+    // pub fn new(duration: f64, num_iterations: usize, num_samples: usize) -> SimulationTimes {
+    pub fn new(duration: f64, step_size: f64, num_samples: usize) -> SimulationTimes {
+        // dt for each iteration is the step size
+        let dt: f64 = step_size;
 
-        // Iteration times should be a 2d vector. First axis is the sample number and the second is
-        // the iteration within that sample
-        let mut iterations_times: Vec<Vec<f64>> = vec![];
-        // Calculate the dt for the times
-        let dt: f64 = duration / (((sample_times.len() - 1) * num_iterations) as f64);
-        // Loop over the number of samples to fill in the iteration times
-        for i in 0..(sample_times.len() - 1) {
-            // Next set of times is the number of iteratiosn between the current sample time and
-            // the next one. The final time is without dt because the iterations are time steps not
-            // time stamps
-            let next_times: Vec<f64> =
-                Array1::<f64>::linspace(sample_times[i], sample_times[i + 1] - dt, num_iterations)
-                    .to_vec();
-            iterations_times.push(next_times);
+        // Iteration times without sub timings for fourth order runge kutta
+        let temp_iteration_times: Array1<f64> = Array1::<f64>::range(0., duration, dt);
+
+        // Set the iteration times based on the step size and duration of the simulation
+        let mut iteration_times: Array2<f64> =
+            Array2::<f64>::zeros([temp_iteration_times.len(), 4]);
+        iteration_times.column_mut(0).assign(&temp_iteration_times);
+
+        // Indices in the iteration times for each sample to be saved at
+        // let mut sample_times: Array1<f64> = Array1::<f64>::zeros(num_samples);
+        let mut sample_indicies: Vec<usize> = vec![];
+
+        if num_samples != 1 {
+            let sample_index_spacing: usize = (iteration_times.shape()[0] + (num_samples - 2)) / (num_samples - 1);
+            for i in (0..iteration_times.shape()[0]).step_by(sample_index_spacing) {
+                sample_indicies.push(i);
+            }
         }
 
-        // If there is only supposed to be one sample then remove the starting sample
-        if num_samples == 1 {
-            sample_times.swap_remove(0);
-        }
-
+        sample_indicies.push(iteration_times.shape()[0]);
         return SimulationTimes {
-            iteration_times: iterations_times,
-            sample_times: sample_times,
+            iteration_times: iteration_times,
+            sample_indices: sample_indicies,
             dt: dt,
         };
     }
@@ -66,49 +67,26 @@ impl SimulationTimes {
         return self.dt;
     }
     /// Get the times that each sample are taken at
-    pub fn get_sample_times(&self) -> &Vec<f64> {
-        return &self.sample_times;
+    // pub fn get_sample_times(&self) -> &Vec<f64> {
+    //     return &self.sample_times;
+    // }
+    pub fn get_sample_indices(&self) -> &Vec<usize> {
+        return &self.sample_indices;
     }
     /// Get the number of samples that are saved
     pub fn get_num_samples(&self) -> usize {
-        return self.sample_times.len().max(2);
-    }
-    /// Get the number of iterations between each sample
-    pub fn get_num_iterations_per_sample(&self) -> usize {
-        return self.iteration_times[0].len();
+        return self.sample_indices.len();
     }
     /// Get all the iteration times
-    pub fn get_iteration_times(&self) -> &Vec<Vec<f64>> {
+    pub fn get_iteration_times(&self) -> &Array2<f64> {
         return &self.iteration_times;
     }
-    /// Get the iteration times after a specific sample number
-    pub fn get_iteration_times_after_sample(&self, sample_num: usize) -> &Vec<f64> {
-        return &(self.iteration_times[sample_num]);
+    /// Get a specific iteration time based on an index
+    pub fn get_iteration_time(&self, index: usize) -> f64 {
+        return self.iteration_times[[index, 0]];
     }
-}
-
-impl fmt::Display for SimulationTimes {
-    /// Pretty display for the sample times
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let mut print_str: String = String::from("");
-
-        print_str.push_str("\nIteration Times:\n---------------------\n");
-        for times in &self.iteration_times {
-            print_str.push_str("[");
-            for el in times {
-                write!(&mut print_str, " {},", el)?;
-            }
-            print_str.pop();
-            print_str.push_str("]\n");
-        }
-
-        print_str.push_str("--------------------\nSample Times:\n---------------------\n[");
-        for el in &self.sample_times {
-            write!(&mut print_str, " {},", el)?;
-        }
-        print_str.pop();
-        print_str.push_str("]\n");
-
-        write!(f, "{}", print_str)
+    /// Get the number of iterations for the simulation
+    pub fn get_num_iterations(&self) -> usize {
+        return self.iteration_times.len();
     }
 }

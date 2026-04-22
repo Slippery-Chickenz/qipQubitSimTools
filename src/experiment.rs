@@ -136,7 +136,8 @@ impl Experiment {
             let sim_result = Simulator::new().simulate_circuit(
                 self.circuit_blueprint.get_circuit(),
                 self.qubit_array_blueprint.get_qubit_array(),
-                self.simulation_times_blueprint.get_num_iterations(),
+                // self.simulation_times_blueprint.get_num_iterations(),
+                self.simulation_times_blueprint.get_step_size(),
                 self.simulation_times_blueprint.get_num_samples(),
             );
             // .get_final_probability();
@@ -165,7 +166,7 @@ impl Experiment {
         // Save teh results and save the circuit data
         self.results.save(filename.clone())?;
         // self.save_results(results, &mut filename.clone())?;
-        self.circuit_blueprint.get_circuit().save_circuit_data();
+        // self.circuit_blueprint.get_circuit().save_circuit_data();
         progress_bar.finish();
         return Ok(());
     }

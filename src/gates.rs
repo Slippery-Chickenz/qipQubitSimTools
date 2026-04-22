@@ -3,16 +3,16 @@ pub mod constant;
 pub mod idle;
 pub mod pi;
 pub mod pi_o_2_x;
-pub mod pi_x;
 pub mod pi_o_2_y;
+pub mod pi_x;
 pub mod pi_y;
 
 pub use atm_gate::ATMGate;
 pub use constant::Constant;
 pub use idle::Idle;
 pub use pi_o_2_x::PiO2X;
-pub use pi_x::PiX;
 pub use pi_o_2_y::PiO2Y;
+pub use pi_x::PiX;
 pub use pi_y::PiY;
 
 /// Trait to guarentee that a gate can be converted into a string

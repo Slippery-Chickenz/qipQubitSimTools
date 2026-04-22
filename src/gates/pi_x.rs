@@ -39,4 +39,3 @@ impl Gate for PiX {
         return PiX::PI_X_PULSE.get_duration();
     }
 }
-

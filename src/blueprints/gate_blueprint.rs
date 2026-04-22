@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::gates::{ATMGate, CheckGateName, Constant, Gate, Idle, PiO2X, PiX, PiO2Y, PiY};
+use crate::gates::{ATMGate, CheckGateName, Constant, Gate, Idle, PiO2X, PiO2Y, PiX, PiY};
 
 use crate::experiment::SweepParameter;
 
@@ -126,7 +126,6 @@ impl From<&GateBlueprint> for PiY {
         return PiY::new_raw();
     }
 }
-
 
 impl From<&GateBlueprint> for ATMGate {
     /// Convert from a reference to a gate blueprint to an ATM Gate

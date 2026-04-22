@@ -1,7 +1,8 @@
 {
-	"num_iterations": 100,
+	"num_iterations": 1000,
+	"step_size": 0.001,
 	"output": {
-		"num_samples": 100,
+		"num_samples": 50,
 		"state": true,
 		"bloch_coords": true
 	},
@@ -21,7 +22,8 @@
 				"duration": 0.505
 			}
 		},
-		"order": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"]
+		"uorder": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"],
+		"order": ["PiO2X"]
 	},
 	"qubits": { 
 		"q1": {
@@ -30,7 +32,7 @@
 				"1/f_power": 0
 			},
 			"channels": {
-				"dephasing_lifetime": 0.5
+				"dephasing_lifetime": 0
 			},
 			"guess_larmor": 0
 		}

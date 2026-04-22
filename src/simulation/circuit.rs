@@ -6,7 +6,7 @@ use super::simulation_times::UninitializedTimesError;
 use crate::gates::Gate;
 use crate::simulation::SimulationTimes;
 
-use ndarray::{Array1, Array2, Array3};
+use ndarray::{Array1, Array2};
 use num_complex::Complex64;
 
 /// Quantum circuit to be simulated
@@ -20,7 +20,8 @@ pub struct Circuit {
     /// For the circuit to be simulated the frequency of each gate must be integrated over all the
     /// time steps. This is a vector of vectors. The outer vector is the sample number those
     /// frequencies are for. The inner vector is for the specific time step.
-    integrated_frequencies: Array2<f64>,
+    // integrated_frequencies: Array2<f64>,
+    integrated_frequencies: Array1<f64>,
 }
 
 impl Circuit {
@@ -29,7 +30,7 @@ impl Circuit {
         return Circuit {
             gates: vec![],
             duration: 0.,
-            integrated_frequencies: Array2::<f64>::zeros([1, 1]),
+            integrated_frequencies: Array1::<f64>::zeros(0),
             simulation_times: None,
         };
     }
@@ -79,23 +80,13 @@ impl Circuit {
     fn integrate_frequencies(&mut self) -> () {
         // Cannot integrate frequencies without simulation times
         if let Some(sim_times) = &self.simulation_times {
-            self.integrated_frequencies = Array2::<f64>::zeros([
-                sim_times.get_num_samples() - 1,
-                sim_times.get_num_iterations_per_sample(),
-            ]);
+            self.integrated_frequencies = Array1::<f64>::zeros(sim_times.get_num_iterations());
             let mut temp_f: f64 = 0.; // Temporary frequency that is the integrated value
 
             // Outer axis is looped over number of samples
-            for i in 0..sim_times.get_num_samples() - 1 {
-                // Inner axis loops over the number of iterations for this sample
-                for (j, t) in sim_times
-                    .get_iteration_times_after_sample(i)
-                    .iter()
-                    .enumerate()
-                {
-                    temp_f += self.get_frequency(*t);
-                    self.integrated_frequencies[[i, j]] = temp_f;
-                }
+            for (i, t) in sim_times.get_iteration_times().iter().enumerate() {
+                temp_f += self.get_frequency(*t);
+                self.integrated_frequencies[i] = temp_f;
             }
             // Multiply by dt for integration
             self.integrated_frequencies *= sim_times.get_dt();
@@ -108,41 +99,31 @@ impl Circuit {
     /// given is n then this will return the hamiltonian operators for iterations between n and n+1.
     /// This hamiltonian is just the pulse component and is denoted as:
     /// $$ H = \frac{\Omega(t)}{2} 2\pi (\cos(2\pi \int f(t) + \phi(t))S_x + \sin(2\pi \int f(t) + \phi(t))S_y) $$
-    pub fn get_hamiltonian_operator(&self, sample_num: usize) -> Array3<Complex64> {
-
+    pub fn get_hamiltonian_operator(&self, time_index: usize) -> Array2<Complex64> {
         // If simulation times are not set then we error
         if let Some(sim_times) = &self.simulation_times {
-
-            // Times to step over to evolve to the next sample
-            let sample_times: &Vec<f64> =  sim_times.get_iteration_times_after_sample(sample_num);
-
             // Array of hamiltonians at each time step
             // Outer axis is the iteration number
             // Below that are the 2x2 Hamiltonians for the single qubit gates
-            let mut hamiltonians: Array3<Complex64> =
-                Array3::<Complex64>::zeros([self.integrated_frequencies.shape()[1], 2, 2]);
+            let mut hamiltonian: Array2<Complex64> = Array2::<Complex64>::zeros([2, 2]);
 
-            // Loop through the index and time for the simulation times at this sample
-            for (i, t) in sample_times
-                .iter()
-                .enumerate()
-            {
-                // Amplitude, frequency, and phase for this time step in the circuit
-                let amplitude: f64 = self.get_amplitude(*t);
-                let frequency: f64 = self.get_integrated_frequency(sample_num, i);
-                let phase: f64 = self.get_phase(*t);
+            let t: f64 = sim_times.get_iteration_time(time_index);
 
-                // Set hamiltonian values
-                hamiltonians[[i, 0, 1]] = Complex64::new(
-                    amplitude * PI * 0.5 * (2. * PI * frequency + phase).cos(),
-                    amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin(),
-                );
-                hamiltonians[[i, 1, 0]] = Complex64::new(
-                    amplitude * PI * 0.5 * (2. * PI * frequency + phase).cos(),
-                    -amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin(),
-                );
-            }
-            return hamiltonians;
+            // Amplitude, frequency, and phase for this time step in the circuit
+            let amplitude: f64 = self.get_amplitude(t);
+            let frequency: f64 = self.get_integrated_frequency(time_index);
+            let phase: f64 = self.get_phase(t);
+
+            // Set hamiltonian values
+            hamiltonian[[0, 1]] = Complex64::new(
+                amplitude * PI * 0.5 * (2. * PI * frequency + phase).cos(),
+                amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin(),
+            );
+            hamiltonian[[1, 0]] = Complex64::new(
+                amplitude * PI * 0.5 * (2. * PI * frequency + phase).cos(),
+                -amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin(),
+            );
+            return hamiltonian;
         }
         panic!("{}", UninitializedTimesError);
     }
@@ -156,7 +137,8 @@ impl Circuit {
         // Temporarily set the simulation times to get properly integrated frequencies
         self.set_simulation_times(Rc::new(SimulationTimes::new(
             self.duration,
-            time_steps.len(),
+            0.1,
+            // time_steps.len(),
             2,
         )));
         self.integrate_frequencies();
@@ -173,12 +155,12 @@ impl Circuit {
             pulse_data[i] = amplitude_data[i]
                 * PI
                 * 0.5
-                * (2. * PI * self.get_integrated_frequency(0, i) + self.get_phase(*t)).cos();
+                * (2. * PI * self.get_integrated_frequency(i) + self.get_phase(*t)).cos();
         }
 
         // Reset the simulation times and integrated frequencies
         self.simulation_times = None;
-        self.integrated_frequencies = Array2::<f64>::zeros([1, 1]);
+        self.integrated_frequencies = Array1::<f64>::zeros(0);
         return (time_steps, frequency_data, amplitude_data, pulse_data);
     }
     /// Saves the circuit data to an HDF5 file to be plotted elsewhere. HDF5 file just has 4 data
@@ -219,8 +201,8 @@ impl Circuit {
         return self.gates[self.get_gate_index(time)].get_frequency(time);
     }
     // Get the integrated frequency of the circuit at a time
-    fn get_integrated_frequency(&self, sample_num: usize, time_index: usize) -> f64 {
-        return self.integrated_frequencies[[sample_num, time_index]];
+    fn get_integrated_frequency(&self, time_index: usize) -> f64 {
+        return self.integrated_frequencies[time_index];
     }
     // Get the phase of the circuit at a time
     fn get_phase(&self, time: f64) -> f64 {
