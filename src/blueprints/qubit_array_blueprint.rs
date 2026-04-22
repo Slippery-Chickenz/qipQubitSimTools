@@ -1,6 +1,6 @@
 use crate::blueprints::LarmorFrequencyBlueprint;
-use crate::simulation::QubitArray;
 use crate::experiment::SweepParameter;
+use crate::simulation::QubitArray;
 
 use serde_json::{Map, Value};
 

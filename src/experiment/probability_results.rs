@@ -4,9 +4,9 @@ pub use super::SweepParameter;
 use super::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResults;
 
-use ndarray::{Array1, ArrayD, IxDyn, Ix1, SliceInfo, SliceInfoElem, IntoDimension};
-use serde_json::{Map, Value};
 use hdf5::{Group, Result};
+use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
+use serde_json::{Map, Value};
 
 pub struct ProbabilityResults {
     /// Multi-Dimensional array to store the results of the sweep in
@@ -18,7 +18,6 @@ impl ProbabilityResults {
         json_values: &Map<String, Value>,
         sweep_parameters: Rc<Vec<SweepParameter>>,
     ) -> ProbabilityResults {
-
         // Vector to hold the dimensions of the results
         let mut results_dim: Vec<usize> = vec![];
         // Loop over the sweep parameters and add the len of the values as the length of the dimension
@@ -37,8 +36,11 @@ impl ProbabilityResults {
 }
 
 impl ExperimentResult for ProbabilityResults {
-    fn add_simulation_result(&mut self, sweep_parameter_indices: &Vec<usize>, simulation_result: &SimulationResults) -> () {
-
+    fn add_simulation_result(
+        &mut self,
+        sweep_parameter_indices: &Vec<usize>,
+        simulation_result: &SimulationResults,
+    ) -> () {
         let probabilities: Array1<f64> = simulation_result.get_probabilities();
         if probabilities.len() == 1 {
             self.results[sweep_parameter_indices.clone().into_dimension()] = probabilities[0];
@@ -51,10 +53,14 @@ impl ExperimentResult for ProbabilityResults {
             slice_info_vec.push(SliceInfoElem::Index(index.clone() as isize));
         }
 
-        slice_info_vec.push(SliceInfoElem::Slice { start: 0, end: None, step: 1 });
+        slice_info_vec.push(SliceInfoElem::Slice {
+            start: 0,
+            end: None,
+            step: 1,
+        });
 
-
-        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> = SliceInfo::try_from(slice_info_vec).unwrap();
+        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
+            SliceInfo::try_from(slice_info_vec).unwrap();
         self.results.slice_mut(slice_info).assign(&probabilities);
         return;
     }

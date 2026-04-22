@@ -1,0 +1,38 @@
+{
+	"num_iterations": 100,
+	"output": {
+		"num_samples": 100,
+		"state": true,
+		"bloch_coords": true
+	},
+	"circuit": { 
+		"gates": {
+			"Idle": {
+				"duration": 0.25
+			},
+			"PiO2X": {},
+			"PiX": {},
+			"PiO2Y": {},
+			"PiY": {},
+			"Constant": {
+				"amplitude": 1,
+				"frequency": 0,
+				"phase": -2.3561945,
+				"duration": 0.505
+			}
+		},
+		"order": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"]
+	},
+	"qubits": { 
+		"q1": {
+			"larmor": {
+				"base_value": 0,
+				"1/f_power": 0
+			},
+			"channels": {
+				"dephasing_lifetime": 0.5
+			},
+			"guess_larmor": 0
+		}
+	}
+}

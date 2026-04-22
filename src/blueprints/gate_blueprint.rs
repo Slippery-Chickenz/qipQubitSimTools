@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::gates::{ATMGate, CheckGateName, Constant, Gate, Idle, PiO2X, PiO2Y};
+use crate::gates::{ATMGate, CheckGateName, Constant, Gate, Idle, PiO2X, PiX, PiO2Y, PiY};
 
 use crate::experiment::SweepParameter;
 
@@ -106,12 +106,27 @@ impl From<&GateBlueprint> for PiO2X {
     }
 }
 
+impl From<&GateBlueprint> for PiX {
+    /// Convert from a reference to a gate blueprint to a PiO2X Gate
+    fn from(_blueprint: &GateBlueprint) -> PiX {
+        return PiX::new_raw();
+    }
+}
+
 impl From<&GateBlueprint> for PiO2Y {
     /// Convert from a reference to a gate blueprint to a PiO2Y Gate
     fn from(_blueprint: &GateBlueprint) -> PiO2Y {
         return PiO2Y::new_raw();
     }
 }
+
+impl From<&GateBlueprint> for PiY {
+    /// Convert from a reference to a gate blueprint to a PiO2X Gate
+    fn from(_blueprint: &GateBlueprint) -> PiY {
+        return PiY::new_raw();
+    }
+}
+
 
 impl From<&GateBlueprint> for ATMGate {
     /// Convert from a reference to a gate blueprint to an ATM Gate
@@ -151,7 +166,9 @@ fn try_convert_blueprint(mut blueprint: &GateBlueprint) -> Option<Box<dyn Gate>>
         try_convert_blueprint_to::<Idle>,
         try_convert_blueprint_to::<Constant>,
         try_convert_blueprint_to::<PiO2X>,
+        try_convert_blueprint_to::<PiX>,
         try_convert_blueprint_to::<PiO2Y>,
+        try_convert_blueprint_to::<PiY>,
         try_convert_blueprint_to::<ATMGate>,
     ];
     // Loop over the functiosn and try each one to convert

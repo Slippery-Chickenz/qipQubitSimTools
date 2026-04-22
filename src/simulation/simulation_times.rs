@@ -31,7 +31,8 @@ impl SimulationTimes {
     /// the number of samples
     pub fn new(duration: f64, num_iterations: usize, num_samples: usize) -> SimulationTimes {
         // Sample times will be equally spaced throughout the duration
-        let mut sample_times: Vec<f64> = Array1::<f64>::linspace(0., duration, num_samples.max(2)).to_vec();
+        let mut sample_times: Vec<f64> =
+            Array1::<f64>::linspace(0., duration, num_samples.max(2)).to_vec();
 
         // Iteration times should be a 2d vector. First axis is the sample number and the second is
         // the iteration within that sample

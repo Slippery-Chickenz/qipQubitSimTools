@@ -1,10 +1,9 @@
-use std::{env};
+use std::env;
 
 extern crate blas_src;
 extern crate serde_json;
 
 use qip_qst::experiment::Experiment;
-
 
 fn main() {
     unsafe {

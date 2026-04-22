@@ -1,14 +1,14 @@
-use std::{fs, io::BufReader};
 use std::rc::Rc;
+use std::{fs, io::BufReader};
 
-mod sweep_parameter;
-mod probability_results;
-mod experiment_results;
 mod bloch_coord_results;
+mod experiment_results;
+mod probability_results;
+mod sweep_parameter;
 
 pub use sweep_parameter::SweepParameter;
 
-use experiment_results::{ExperimentResults};
+use experiment_results::ExperimentResults;
 
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
@@ -16,8 +16,8 @@ use crate::{
 };
 
 use hdf5::Result;
-use serde_json::{Map, Value};
 use indicatif::ProgressBar;
+use serde_json::{Map, Value};
 
 /// Experiment to be run. Consists of a circuit, qubit array, and simulation times to simulate and
 /// then a vector of parameters and values to sweep across and run simulations for each combination
@@ -102,7 +102,10 @@ impl Experiment {
             qubit_array_blueprint: qubit_array_blueprint,
             simulation_times_blueprint: SimulationTimesBlueprint::from_json(&json_values),
             sweep_parameters: Rc::clone(&rc_sweep_parameters),
-            results: ExperimentResults::from_json(&json_values["output"].as_object().unwrap(), Rc::clone(&rc_sweep_parameters)),
+            results: ExperimentResults::from_json(
+                &json_values["output"].as_object().unwrap(),
+                Rc::clone(&rc_sweep_parameters),
+            ),
             // results: get_experiment_result_from_json(&json_values["output"].as_object().unwrap(), Rc::clone(&rc_sweep_parameters)),
         };
     }
@@ -125,22 +128,22 @@ impl Experiment {
 
         // Make a progress bar to display how fast the experiment is going
         let progress_bar: ProgressBar = ProgressBar::new(num_experiment_iterations as u64);
-        
+
         // Loop the total number of iterations needed to get through all swept values
         for _i in 0..num_experiment_iterations {
             // Construct and simulate the given circuit and qubit array and save the final
             // probability ot be in the -Z state
-            let sim_result = Simulator::new()
-                .simulate_circuit(
-                    self.circuit_blueprint.get_circuit(),
-                    self.qubit_array_blueprint.get_qubit_array(),
-                    self.simulation_times_blueprint.get_num_iterations(),
-                    self.simulation_times_blueprint.get_num_samples(),
-                );
-                // .get_final_probability();
+            let sim_result = Simulator::new().simulate_circuit(
+                self.circuit_blueprint.get_circuit(),
+                self.qubit_array_blueprint.get_qubit_array(),
+                self.simulation_times_blueprint.get_num_iterations(),
+                self.simulation_times_blueprint.get_num_samples(),
+            );
+            // .get_final_probability();
             // Set the value in the results
             // results[IxDyn(&sweep_parameter_indicies)] = sim_result;
-            self.results.add_simulation_result(&sweep_parameter_indicies, &sim_result);
+            self.results
+                .add_simulation_result(&sweep_parameter_indicies, &sim_result);
             // Loop over the indicies of the swept parameters and increase them
             for j in 0..sweep_parameter_indicies.len() {
                 // Increase the parameter index

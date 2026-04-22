@@ -89,12 +89,15 @@ impl Simulator {
             circuit.set_simulation_times(Rc::clone(&simulation_times));
             qubit_array.set_simulation_times(Rc::clone(&simulation_times));
 
-            let channel_coefficients: Array2<Complex64> = qubit_array.get_channel_coefficients().mapv(|x| Complex64::new(x, 0.));
+            let channel_coefficients: Array2<Complex64> = qubit_array
+                .get_channel_coefficients()
+                .mapv(|x| Complex64::new(x, 0.));
 
             // Loop over every sample and evolve to the next sample
             for i in 0..simulation_times.get_num_samples() - 1 {
                 //let evolution_operators: Array4<Complex64> = self.get_evolution_operator(i);
-                let evolution_operators: Array4<Complex64> = Simulator::get_evolution_operator(circuit, qubit_array, simulation_times, i);
+                let evolution_operators: Array4<Complex64> =
+                    Simulator::get_evolution_operator(circuit, qubit_array, simulation_times, i);
                 simulation_results.evolve_state(i, evolution_operators, &channel_coefficients);
             }
 
@@ -112,58 +115,48 @@ impl Simulator {
     /// density matrix (index 0 is $e^iHdt$, index 1 is $e^-iHdt$). Final 2 axes are the 2x2
     /// evolution matrices
     // fn get_evolution_operator(&self, sample_num: usize) -> Array4<Complex64> {
-    fn get_evolution_operator(circuit: &Circuit, qubit_array: &QubitArray, simulation_times: &SimulationTimes, sample_num: usize) -> Array4<Complex64> {
-        // // Check if the circuit, qubit array, and simulation times are set
-        // if let (Some(circuit), Some(qubit_array), Some(simulation_times)) =
-        //     (&self.circuit, &self.qubit_array, &self.simulation_times)
-        // {
-            // Array to set and return the evolution operators
-            let mut evolution_operators: Array4<Complex64> = Array4::<Complex64>::zeros([
-                simulation_times.get_num_iterations_per_sample(),
-                2,
-                2,
-                2,
-            ]);
+    fn get_evolution_operator(
+        circuit: &Circuit,
+        qubit_array: &QubitArray,
+        simulation_times: &SimulationTimes,
+        sample_num: usize,
+    ) -> Array4<Complex64> {
+        // Array to set and return the evolution operators
+        let mut evolution_operators: Array4<Complex64> =
+            Array4::<Complex64>::zeros([simulation_times.get_num_iterations_per_sample(), 2, 2, 2]);
 
-            // Array of the Hamiltonians at each iteration to exponate into the eovlution operators
-            let qubit_hamiltonians: Array3<Complex64> = circuit
-                .get_hamiltonian_operator(sample_num)
-                + qubit_array.get_detuning_hamiltonians(sample_num);
+        // Array of the Hamiltonians at each iteration to exponate into the eovlution operators
+        let qubit_hamiltonians: Array3<Complex64> = circuit.get_hamiltonian_operator(sample_num)
+            + qubit_array.get_detuning_hamiltonians(sample_num);
 
-            // Loop over all the hamiltonians and the outer axis of the evolution operators to assign
-            for mut iter in qubit_hamiltonians
-                .outer_iter()
-                .zip(evolution_operators.outer_iter_mut())
-            {
-                // Checking to make sure the one norm of the hamiltonian is above the f64 epsilon.
-                // This is mostly because the expm function will panic if not. Should be fixed by
-                // just propagating the error out from the expm function
-                let a_one_norm = iter.0.map(|x| x.abs()).opnorm_one().unwrap();
-                if simulation_times.get_dt() == 0. || a_one_norm < f64::EPSILON * 2. {
-                    iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
-                    iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
-                } else {
-                    // Assign both the left and right evolution operators
-                    iter.1.index_axis_mut(Axis(0), 0).assign(
-                        &expm(
-                            &(Complex64::new(0., -1.)
-                                * simulation_times.get_dt()
-                                * iter.0.to_owned()),
-                        )
-                        .0,
-                    );
-                    iter.1.index_axis_mut(Axis(0), 1).assign(
-                        &expm(
-                            &(Complex64::new(0., 1.)
-                                * simulation_times.get_dt()
-                                * iter.0.to_owned()),
-                        )
-                        .0,
-                    );
-                }
+        // Loop over all the hamiltonians and the outer axis of the evolution operators to assign
+        for mut iter in qubit_hamiltonians
+            .outer_iter()
+            .zip(evolution_operators.outer_iter_mut())
+        {
+            // Checking to make sure the one norm of the hamiltonian is above the f64 epsilon.
+            // This is mostly because the expm function will panic if not. Should be fixed by
+            // just propagating the error out from the expm function
+            let a_one_norm = iter.0.map(|x| x.abs()).opnorm_one().unwrap();
+            if simulation_times.get_dt() == 0. || a_one_norm < f64::EPSILON * 2. {
+                iter.1.index_axis_mut(Axis(0), 0).assign(&Array2::eye(2));
+                iter.1.index_axis_mut(Axis(0), 1).assign(&Array2::eye(2));
+            } else {
+                // Assign both the left and right evolution operators
+                iter.1.index_axis_mut(Axis(0), 0).assign(
+                    &expm(
+                        &(Complex64::new(0., -1.) * simulation_times.get_dt() * iter.0.to_owned()),
+                    )
+                    .0,
+                );
+                iter.1.index_axis_mut(Axis(0), 1).assign(
+                    &expm(
+                        &(Complex64::new(0., 1.) * simulation_times.get_dt() * iter.0.to_owned()),
+                    )
+                    .0,
+                );
             }
-            return evolution_operators;
-        // }
-        // panic!();
+        }
+        return evolution_operators;
     }
 }

@@ -109,17 +109,21 @@ impl Circuit {
     /// This hamiltonian is just the pulse component and is denoted as:
     /// $$ H = \frac{\Omega(t)}{2} 2\pi (\cos(2\pi \int f(t) + \phi(t))S_x + \sin(2\pi \int f(t) + \phi(t))S_y) $$
     pub fn get_hamiltonian_operator(&self, sample_num: usize) -> Array3<Complex64> {
-        // Array of hamiltonians at each time step
-        // Outer axis is the iteration number
-        // Below that are the 2x2 Hamiltonians for the single qubit gates
-        let mut hamiltonians: Array3<Complex64> =
-            Array3::<Complex64>::zeros([self.integrated_frequencies.shape()[1], 2, 2]);
 
         // If simulation times are not set then we error
         if let Some(sim_times) = &self.simulation_times {
+
+            // Times to step over to evolve to the next sample
+            let sample_times: &Vec<f64> =  sim_times.get_iteration_times_after_sample(sample_num);
+
+            // Array of hamiltonians at each time step
+            // Outer axis is the iteration number
+            // Below that are the 2x2 Hamiltonians for the single qubit gates
+            let mut hamiltonians: Array3<Complex64> =
+                Array3::<Complex64>::zeros([self.integrated_frequencies.shape()[1], 2, 2]);
+
             // Loop through the index and time for the simulation times at this sample
-            for (i, t) in sim_times
-                .get_iteration_times_after_sample(sample_num)
+            for (i, t) in sample_times
                 .iter()
                 .enumerate()
             {
@@ -138,11 +142,9 @@ impl Circuit {
                     -amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin(),
                 );
             }
-        } else {
-            eprintln!("{}", UninitializedTimesError);
+            return hamiltonians;
         }
-
-        return hamiltonians;
+        panic!("{}", UninitializedTimesError);
     }
     /// Get the data needed to plot out the circuit. Returns 4 values: times for each data point,
     /// frequency data, amplitude_data, and combined pulse data (Real values of (0, 1) matrix
@@ -228,7 +230,7 @@ impl Circuit {
     fn get_gate_index(&self, mut time: f64) -> usize {
         for (i, gate) in self.gates.iter().enumerate() {
             let gate_duration: f64 = gate.get_duration();
-            if time <= gate_duration {
+            if (time - gate_duration) <= 1e-10 {
                 return i;
             }
             time -= gate_duration;

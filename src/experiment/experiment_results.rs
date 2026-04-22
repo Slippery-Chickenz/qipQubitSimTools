@@ -3,14 +3,18 @@ use std::rc::Rc;
 use super::SweepParameter;
 use crate::simulation::SimulationResults;
 
-use super::probability_results::ProbabilityResults;
 use super::bloch_coord_results::BlochCoordResults;
+use super::probability_results::ProbabilityResults;
 
-use serde_json::{Map, Value};
 use hdf5::{Group, Result};
+use serde_json::{Map, Value};
 
 pub trait ExperimentResult {
-    fn add_simulation_result(&mut self, sweep_parameter_indices: &Vec<usize>, simulation_result: &SimulationResults) -> ();
+    fn add_simulation_result(
+        &mut self,
+        sweep_parameter_indices: &Vec<usize>,
+        simulation_result: &SimulationResults,
+    ) -> ();
     fn save(&self, group: &Group) -> Result<()>;
 }
 
@@ -27,29 +31,43 @@ pub struct ExperimentResults {
 }
 
 impl ExperimentResults {
-    pub fn from_json(json_values: &Map<String, Value>, sweep_parameters: Rc<Vec<SweepParameter>>) -> ExperimentResults {
-
+    pub fn from_json(
+        json_values: &Map<String, Value>,
+        sweep_parameters: Rc<Vec<SweepParameter>>,
+    ) -> ExperimentResults {
         let mut results: Vec<Box<dyn ExperimentResult>> = vec![];
 
         if json_values.contains_key("state") {
-            results.push(Box::new(ProbabilityResults::from_json(json_values, Rc::clone(&sweep_parameters))));
+            results.push(Box::new(ProbabilityResults::from_json(
+                json_values,
+                Rc::clone(&sweep_parameters),
+            )));
         }
         if json_values.contains_key("bloch_coords") {
             if json_values["bloch_coords"].as_bool().unwrap() {
-                results.push(Box::new(BlochCoordResults::from_json(json_values, Rc::clone(&sweep_parameters))));
+                results.push(Box::new(BlochCoordResults::from_json(
+                    json_values,
+                    Rc::clone(&sweep_parameters),
+                )));
             }
         }
 
-        return ExperimentResults { results: results, sweep_parameters: sweep_parameters }
+        return ExperimentResults {
+            results: results,
+            sweep_parameters: sweep_parameters,
+        };
     }
-    pub fn add_simulation_result(&mut self, sweep_parameter_indices: &Vec<usize>, simulation_result: &SimulationResults) -> () {
+    pub fn add_simulation_result(
+        &mut self,
+        sweep_parameter_indices: &Vec<usize>,
+        simulation_result: &SimulationResults,
+    ) -> () {
         for result in &mut self.results {
             result.add_simulation_result(sweep_parameter_indices, simulation_result);
         }
         return;
     }
     pub fn save(&self, mut filename: String) -> Result<()> {
-
         // Add the .h5 extension to the filename
         filename.push_str(".h5");
 
