@@ -96,8 +96,8 @@ impl LarmorFrequency {
         }
         return;
     }
-    pub fn get_larmor_frequency(&self, index: usize) -> f64 {
-        return self.larmor_values[index];
+    pub fn get_larmor_frequency(&self, _time: f64) -> f64 {
+        return self.base_larmor;
     }
     pub fn get_larmor_frequencies(&self) -> &Array1<f64> {
         return &self.larmor_values;

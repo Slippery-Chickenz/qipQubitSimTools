@@ -37,7 +37,7 @@ impl SimulationResults {
     pub fn save_state(&mut self, sample_num: usize, state: Array2<Complex64>) -> () {
         // Set the next sample to the evolved state
         self.density_matrices
-            .index_axis_mut(Axis(0), sample_num + 1)
+            .index_axis_mut(Axis(0), sample_num)
             .assign(&state);
         return;
     }

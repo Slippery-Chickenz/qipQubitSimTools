@@ -1,5 +1,5 @@
 {
-	"num_iterations": 10000,
+	"step_size": 0.01,
 	"output": {
 		"num_samples": 1,
 		"state": true,
@@ -17,7 +17,7 @@
 			"ATMGate": {
 				"rise_time": 10,
 				"fall_time": 70,
-				"max_amplitude": 1,
+				"max_amplitude": 2,
 				"max_frequency": 1,
 				"rise_gradient": 0.95,
 				"fall_gradient": 0.02,
@@ -30,7 +30,7 @@
 		"q1": {
 			"larmor": {
 				"base_value": {
-					"linspace" : [-1.25, 1.25, 100]
+					"linspace" : [-1.25, 1.25, 500]
 				},
 				"1/f_power": 0
 			},

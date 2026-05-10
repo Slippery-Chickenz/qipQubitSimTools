@@ -1,14 +1,14 @@
 {
-	"num_iterations": 1000,
+	"step_size": 0.001,
 	"output": {
-		"num_samples": 1,
+		"num_samples": 500,
 		"state": true,
 		"bloch_coords": true
 	},
 	"circuit": { 
 		"gates": {
 			"Idle": {
-				"duration": 0
+				"duration": 2
 			},
 			"PiO2X": {},
 			"PiO2Y": {},
@@ -16,9 +16,7 @@
 				"amplitude": 1,
 				"frequency": 0,
 				"phase": 0,
-				"duration": {
-					"linspace": [0, 10, 200]
-				}
+				"duration": 10
 			}
 		},
 		"order": ["Constant"]
@@ -30,7 +28,7 @@
 				"1/f_power": 0
 			},
 			"channels": {
-				"dephasing_lifetime": 0.5
+				"dephasing_lifetime": 0.0
 			},
 			"guess_larmor": 0
 		}

@@ -67,12 +67,9 @@ impl ExperimentResults {
         }
         return;
     }
-    pub fn save(&self, mut filename: String) -> Result<()> {
-        // Add the .h5 extension to the filename
-        filename.push_str(".h5");
-
+    pub fn save(&self, filename: &str) -> Result<()> {
         // Open an HDF5 file under the given name and make a parameters group
-        let file = hdf5::File::create(filename)?;
+        let file = hdf5::File::create(filename.to_string() + ".h5")?;
         let group = file.create_group("parameters")?;
 
         // Loop over all the swept parameters in this experiment

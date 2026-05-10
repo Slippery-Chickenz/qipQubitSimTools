@@ -110,7 +110,7 @@ impl Experiment {
         };
     }
     /// Run the experiment defined in this class and save the results to the given filename
-    pub fn run_experiment(&mut self, filename: &String) -> Result<()> {
+    pub fn run_experiment(&mut self, filename: &str) -> Result<()> {
         // Dimensions of the results
         let results_dim: Vec<usize> = self.get_results_dimension();
 
@@ -164,7 +164,7 @@ impl Experiment {
             progress_bar.inc(1);
         }
         // Save teh results and save the circuit data
-        self.results.save(filename.clone())?;
+        self.results.save(filename)?;
         // self.save_results(results, &mut filename.clone())?;
         // self.circuit_blueprint.get_circuit().save_circuit_data();
         progress_bar.finish();

@@ -20,8 +20,9 @@ pub struct Circuit {
     /// For the circuit to be simulated the frequency of each gate must be integrated over all the
     /// time steps. This is a vector of vectors. The outer vector is the sample number those
     /// frequencies are for. The inner vector is for the specific time step.
-    // integrated_frequencies: Array2<f64>,
     integrated_frequencies: Array1<f64>,
+    frequency: f64,
+    time: f64,
 }
 
 impl Circuit {
@@ -32,6 +33,8 @@ impl Circuit {
             duration: 0.,
             integrated_frequencies: Array1::<f64>::zeros(0),
             simulation_times: None,
+            frequency: 0.,
+            time: 0.,
         };
     }
     /// Create a new circuit object with the gates given in a vector
@@ -99,33 +102,32 @@ impl Circuit {
     /// given is n then this will return the hamiltonian operators for iterations between n and n+1.
     /// This hamiltonian is just the pulse component and is denoted as:
     /// $$ H = \frac{\Omega(t)}{2} 2\pi (\cos(2\pi \int f(t) + \phi(t))S_x + \sin(2\pi \int f(t) + \phi(t))S_y) $$
-    pub fn get_hamiltonian_operator(&self, time_index: usize) -> Array2<Complex64> {
-        // If simulation times are not set then we error
-        if let Some(sim_times) = &self.simulation_times {
-            // Array of hamiltonians at each time step
-            // Outer axis is the iteration number
-            // Below that are the 2x2 Hamiltonians for the single qubit gates
-            let mut hamiltonian: Array2<Complex64> = Array2::<Complex64>::zeros([2, 2]);
+    pub fn get_hamiltonian_operator(&mut self, time: f64) -> Array2<Complex64> {
+        // Array of hamiltonians at each time step
+        // Outer axis is the iteration number
+        // Below that are the 2x2 Hamiltonians for the single qubit gates
+        let mut hamiltonian: Array2<Complex64> = Array2::<Complex64>::zeros([2, 2]);
 
-            let t: f64 = sim_times.get_iteration_time(time_index);
+        //let t: f64 = sim_times.get_iteration_time(time_index);
+        let t: f64 = time;
 
-            // Amplitude, frequency, and phase for this time step in the circuit
-            let amplitude: f64 = self.get_amplitude(t);
-            let frequency: f64 = self.get_integrated_frequency(time_index);
-            let phase: f64 = self.get_phase(t);
+        // Amplitude, frequency, and phase for this time step in the circuit
+        let amplitude: f64 = self.get_amplitude(t);
+        // let frequency: f64 = self.get_integrated_frequency(time_index);
+        self.frequency += self.get_frequency(t) * (t - self.time);
+        self.time = t;
+        let phase: f64 = self.get_phase(t);
 
-            // Set hamiltonian values
-            hamiltonian[[0, 1]] = Complex64::new(
-                amplitude * PI * 0.5 * (2. * PI * frequency + phase).cos(),
-                amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin(),
-            );
-            hamiltonian[[1, 0]] = Complex64::new(
-                amplitude * PI * 0.5 * (2. * PI * frequency + phase).cos(),
-                -amplitude * PI * 0.5 * (2. * PI * frequency + phase).sin(),
-            );
-            return hamiltonian;
-        }
-        panic!("{}", UninitializedTimesError);
+        // Set hamiltonian values
+        hamiltonian[[0, 1]] = Complex64::new(
+            amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).cos(),
+            amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).sin(),
+        );
+        hamiltonian[[1, 0]] = Complex64::new(
+            amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).cos(),
+            -amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).sin(),
+        );
+        return hamiltonian;
     }
     /// Get the data needed to plot out the circuit. Returns 4 values: times for each data point,
     /// frequency data, amplitude_data, and combined pulse data (Real values of (0, 1) matrix
@@ -209,14 +211,18 @@ impl Circuit {
         return self.gates[self.get_gate_index(time)].get_phase(time);
     }
     // Get the index in the gates vector of the gate which is playing at a given time
-    fn get_gate_index(&self, mut time: f64) -> usize {
+    fn get_gate_index(&self, time: f64) -> usize {
+        let mut gate_time: f64 = time.clone();
         for (i, gate) in self.gates.iter().enumerate() {
             let gate_duration: f64 = gate.get_duration();
-            if (time - gate_duration) <= 1e-10 {
+            if (gate_time - gate_duration) <= 1e-10 {
                 return i;
             }
-            time -= gate_duration;
+            gate_time -= gate_duration;
         }
-        panic!("Tried to get gate index for time past the durration of the circuit.")
+        panic!(
+            "Tried to get gate index for time past the durration of the circuit. {}",
+            time
+        );
     }
 }

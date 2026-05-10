@@ -13,15 +13,11 @@ impl fmt::Display for UninitializedTimesError {
     }
 }
 
-/// Struct to hold the times for a simulation. The number of iterations per sample and the number
-/// of samples along with the dt per time step. If the number of samples is 4 and the number of
-/// iterations is 25 then there would be 100 total time steps
+/// Struct to hold the times for a simulation and the indices of the time values at which the
+/// samples should be saved.
 pub struct SimulationTimes {
     /// Time values at each iteration
-    // iteration_times: Vec<Vec<f64>>,
     iteration_times: Array2<f64>,
-    /// Number of samples to save
-    // sample_times: Vec<f64>,
     /// Indicies of the samples in the iteration times vector
     sample_indices: Vec<usize>,
     /// Time difference between iterations
@@ -29,15 +25,10 @@ pub struct SimulationTimes {
 }
 
 impl SimulationTimes {
-    /// Make a new SimulationTimes object given a duration, number of iterations per sample and
-    /// the number of samples
-    // pub fn new(duration: f64, num_iterations: usize, num_samples: usize) -> SimulationTimes {
+    /// Make a new SimulationTimes object given a duration, step size and number of samples to save
     pub fn new(duration: f64, step_size: f64, num_samples: usize) -> SimulationTimes {
-        // dt for each iteration is the step size
-        let dt: f64 = step_size;
-
         // Iteration times without sub timings for fourth order runge kutta
-        let temp_iteration_times: Array1<f64> = Array1::<f64>::range(0., duration, dt);
+        let temp_iteration_times: Array1<f64> = Array1::<f64>::range(0., duration, step_size);
 
         // Set the iteration times based on the step size and duration of the simulation
         let mut iteration_times: Array2<f64> =
@@ -45,13 +36,12 @@ impl SimulationTimes {
         iteration_times.column_mut(0).assign(&temp_iteration_times);
 
         // Indices in the iteration times for each sample to be saved at
-        // let mut sample_times: Array1<f64> = Array1::<f64>::zeros(num_samples);
         let mut sample_indicies: Vec<usize> = vec![];
 
         if num_samples != 1 {
-            let sample_index_spacing: usize = (iteration_times.shape()[0] + (num_samples - 2)) / (num_samples - 1);
-            for i in (0..iteration_times.shape()[0]).step_by(sample_index_spacing) {
-                sample_indicies.push(i);
+            let sample_index_spacing: usize = iteration_times.shape()[0] / (num_samples - 1);
+            for i in 0..num_samples - 1 {
+                sample_indicies.push(i * sample_index_spacing);
             }
         }
 
@@ -59,17 +49,14 @@ impl SimulationTimes {
         return SimulationTimes {
             iteration_times: iteration_times,
             sample_indices: sample_indicies,
-            dt: dt,
+            dt: step_size,
         };
     }
     /// Get the dt for each time step
     pub fn get_dt(&self) -> f64 {
         return self.dt;
     }
-    /// Get the times that each sample are taken at
-    // pub fn get_sample_times(&self) -> &Vec<f64> {
-    //     return &self.sample_times;
-    // }
+    /// Get the indices where each sample is saved
     pub fn get_sample_indices(&self) -> &Vec<usize> {
         return &self.sample_indices;
     }
