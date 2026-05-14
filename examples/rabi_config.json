@@ -24,7 +24,8 @@
 	"qubits": { 
 		"q1": {
 			"larmor": 0,
-			"guess_larmor": 0
+			"guess_larmor": 0,
+			"decoherence": 0.5
 		}
 	}
 }

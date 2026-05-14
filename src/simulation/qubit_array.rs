@@ -3,8 +3,8 @@ use std::rc::Rc;
 
 use crate::simulation::SimulationTimes;
 
-use ndarray::linalg::kron;
 use ndarray::Array2;
+use ndarray::linalg::kron;
 use num_complex::Complex64;
 
 /// Qubit array to be used in a simulation. Holds the number of qubits (currently only supports 1)
@@ -19,6 +19,8 @@ pub struct QubitArray {
     larmor: f64,
     /// Guess at the larmor value for the qubits
     guess_larmor: f64,
+    /// Coefficient to determine how strong decoherence is
+    decoherence: f64,
     /// Simulation times for the simulation
     simulation_times: Option<Rc<SimulationTimes>>,
 }
@@ -26,11 +28,7 @@ pub struct QubitArray {
 impl QubitArray {
     /// Get a QubitArray object with a given number of qubits with a certain larmor and guess
     /// larmor. This sets the starting density matrix to be in the +z state e.g. (1, 0)
-    pub fn new(
-        num_qubits: u32,
-        larmor: f64,
-        guess_larmor: f64,
-    ) -> QubitArray {
+    pub fn new(num_qubits: u32, larmor: f64, guess_larmor: f64, decoherence: f64) -> QubitArray {
         // Set the density matrix as a kronecker product of the +z state for each qubit
         let mut density_matrix: Array2<Complex64> = Array2::<Complex64>::zeros((2, 2));
         density_matrix[[0, 0]] = Complex64::new(1., 0.);
@@ -44,6 +42,7 @@ impl QubitArray {
             density_matrix: density_matrix,
             larmor: larmor,
             guess_larmor: guess_larmor,
+            decoherence: decoherence,
             simulation_times: None,
         };
     }
@@ -76,5 +75,9 @@ impl QubitArray {
                 )
             });
         return detuning_hamiltonian;
+    }
+    ///  Get the decoherence strength of the qubits
+    pub fn get_decoherence(&self) -> f64 {
+        return self.decoherence;
     }
 }

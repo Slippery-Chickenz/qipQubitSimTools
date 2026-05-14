@@ -165,7 +165,7 @@ impl Simulator {
         let jump_operator_conj: Array2<Complex64> =
             jump_operator.clone().mapv(|x| x.conj()).reversed_axes();
 
-        let dephasing_intensity: Complex64 = Complex64::new(0.5, 0.);
+        let dephasing_intensity: Complex64 = Complex64::new(qubit_array.get_decoherence(), 0.);
 
         let environment_term: Array2<Complex64> = 0.5
             * dephasing_intensity
