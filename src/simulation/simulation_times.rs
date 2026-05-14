@@ -1,6 +1,6 @@
 use std::fmt;
 
-use ndarray::{Array1, Array2};
+use ndarray::Array1;
 
 /// Error returned if a function is called which needs simulation times that are not set
 #[derive(Debug, Clone)]
@@ -17,7 +17,7 @@ impl fmt::Display for UninitializedTimesError {
 /// samples should be saved.
 pub struct SimulationTimes {
     /// Time values at each iteration
-    iteration_times: Array2<f64>,
+    iteration_times: Array1<f64>,
     /// Indicies of the samples in the iteration times vector
     sample_indices: Vec<usize>,
     /// Time difference between iterations
@@ -28,12 +28,8 @@ impl SimulationTimes {
     /// Make a new SimulationTimes object given a duration, step size and number of samples to save
     pub fn new(duration: f64, step_size: f64, num_samples: usize) -> SimulationTimes {
         // Iteration times without sub timings for fourth order runge kutta
-        let temp_iteration_times: Array1<f64> = Array1::<f64>::range(0., duration, step_size);
-
-        // Set the iteration times based on the step size and duration of the simulation
-        let mut iteration_times: Array2<f64> =
-            Array2::<f64>::zeros([temp_iteration_times.len(), 4]);
-        iteration_times.column_mut(0).assign(&temp_iteration_times);
+        let iteration_times: Array1<f64> =
+            Array1::<f64>::range(0., duration + step_size, step_size);
 
         // Indices in the iteration times for each sample to be saved at
         let mut sample_indicies: Vec<usize> = vec![];
@@ -56,6 +52,10 @@ impl SimulationTimes {
     pub fn get_dt(&self) -> f64 {
         return self.dt;
     }
+    /// Get the total duration of the simulation
+    pub fn get_duration(&self) -> f64 {
+        return *self.iteration_times.last().unwrap_or(&0.);
+    }
     /// Get the indices where each sample is saved
     pub fn get_sample_indices(&self) -> &Vec<usize> {
         return &self.sample_indices;
@@ -65,12 +65,12 @@ impl SimulationTimes {
         return self.sample_indices.len();
     }
     /// Get all the iteration times
-    pub fn get_iteration_times(&self) -> &Array2<f64> {
+    pub fn get_iteration_times(&self) -> &Array1<f64> {
         return &self.iteration_times;
     }
     /// Get a specific iteration time based on an index
     pub fn get_iteration_time(&self, index: usize) -> f64 {
-        return self.iteration_times[[index, 0]];
+        return self.iteration_times[index];
     }
     /// Get the number of iterations for the simulation
     pub fn get_num_iterations(&self) -> usize {

@@ -1,12 +1,8 @@
-use std::rc::Rc;
-
-pub use super::SweepParameter;
 use super::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResults;
 
 use hdf5::{Group, Result};
 use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
-use serde_json::{Map, Value};
 
 pub struct BlochCoordResults {
     /// Multi-Dimensional array to store the results of the sweep in
@@ -16,19 +12,10 @@ pub struct BlochCoordResults {
 }
 
 impl BlochCoordResults {
-    pub fn from_json(
-        json_values: &Map<String, Value>,
-        sweep_parameters: Rc<Vec<SweepParameter>>,
-    ) -> BlochCoordResults {
-        // Vector to hold the dimensions of the results
-        let mut results_dim: Vec<usize> = vec![];
-        // Loop over the sweep parameters and add the len of the values as the length of the dimension
-        for sweep_parameter in &*sweep_parameters {
-            results_dim.push(sweep_parameter.values_len());
-        }
-
-        if json_values["num_samples"].as_u64().unwrap() > 1 {
-            results_dim.push(json_values["num_samples"].as_u64().unwrap() as usize);
+    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize) -> BlochCoordResults {
+        // If there is more than one sample add that as a dimension
+        if num_samples > 1 {
+            results_dim.push(num_samples);
         }
 
         // Array for results of experiment

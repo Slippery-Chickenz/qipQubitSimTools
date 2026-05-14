@@ -2,6 +2,7 @@ use std::rc::Rc;
 use std::{fs, io::BufReader};
 
 mod bloch_coord_results;
+mod duration_result;
 mod experiment_results;
 mod probability_results;
 mod sweep_parameter;

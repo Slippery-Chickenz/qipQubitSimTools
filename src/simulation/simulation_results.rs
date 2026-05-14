@@ -102,6 +102,10 @@ impl SimulationResults {
     pub fn get_simulation_times(&self) -> Rc<SimulationTimes> {
         return Rc::clone(&self.simulation_times);
     }
+    /// Get the duration of the simulation
+    pub fn get_duration(&self) -> f64 {
+        return self.simulation_times.get_duration();
+    }
     /// Get the probability that a certain sample number is in a given state
     pub fn get_probability(&self, sample_num: usize, state: &Array1<Complex64>) -> f64 {
         // Calculate the projection operator for the given state

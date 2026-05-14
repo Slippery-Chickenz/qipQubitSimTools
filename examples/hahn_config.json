@@ -1,14 +1,14 @@
 {
-	"step_size": 0.001,
+	"step_size": 0.01,
 	"output": {
-		"num_samples": 500,
+		"num_samples": 100,
 		"state": true,
 		"bloch_coords": true
 	},
 	"circuit": { 
 		"gates": {
 			"Idle": {
-				"duration": 2
+				"duration": { "linspace" : [0, 2, 100] }
 			},
 			"PiO2X": {},
 			"PiO2Y": {},
@@ -21,7 +21,7 @@
 		"q1": {
 			"larmor": 0,
 			"guess_larmor": 0,
-			"decoherence": 0
+			"decoherence": 0.1
 		}
 	}
 }
