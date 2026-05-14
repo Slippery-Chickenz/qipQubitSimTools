@@ -1,22 +1,21 @@
 {
-	"step_size": 0.0001,
+	"step_size": 0.01,
 	"output": {
 		"num_samples": 1,
 		"state": true,
-		"bloch_coords": true
+		"bloch_coords": false
 	},
 	"circuit": { 
 		"gates": {
 			"Idle": {
-				"type": "Idle",
-				"duration": { "linspace" : [0, 5, 200] }
+				"duration": {
+					"linspace": [0, 10, 100]
+				}
 			},
 			"PiO2X": {},
-			"PiO2Y": {},
-			"PiX": {},
-			"PiY": {}
+			"PiO2Y": {}
 		},
-		"order": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"]
+		"order": ["PiO2X", "Idle", "PiO2X"]
 	},
 	"qubits": { 
 		"q1": {

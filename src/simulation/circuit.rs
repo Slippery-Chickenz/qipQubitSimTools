@@ -221,8 +221,8 @@ impl Circuit {
             gate_time -= gate_duration;
         }
         panic!(
-            "Tried to get gate index for time past the durration of the circuit. {}",
-            time
+            "Tried to get gate index for time past the durration of the circuit. Time: {}, Duration: {}",
+            time, self.duration
         );
     }
 }

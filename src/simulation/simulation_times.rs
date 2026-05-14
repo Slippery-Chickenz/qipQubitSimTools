@@ -29,7 +29,7 @@ impl SimulationTimes {
     pub fn new(duration: f64, step_size: f64, num_samples: usize) -> SimulationTimes {
         // Iteration times without sub timings for fourth order runge kutta
         let iteration_times: Array1<f64> =
-            Array1::<f64>::range(0., duration + step_size, step_size);
+            Array1::<f64>::range(0., duration, step_size);
 
         // Indices in the iteration times for each sample to be saved at
         let mut sample_indicies: Vec<usize> = vec![];
@@ -54,7 +54,7 @@ impl SimulationTimes {
     }
     /// Get the total duration of the simulation
     pub fn get_duration(&self) -> f64 {
-        return *self.iteration_times.last().unwrap_or(&0.);
+        return *self.iteration_times.last().unwrap_or(&0.) + self.dt;
     }
     /// Get the indices where each sample is saved
     pub fn get_sample_indices(&self) -> &Vec<usize> {

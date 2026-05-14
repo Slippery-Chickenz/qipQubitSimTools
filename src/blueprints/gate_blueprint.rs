@@ -10,7 +10,7 @@ use serde_json::{Map, Value};
 #[derive(Debug)]
 pub struct GateBlueprint {
     /// Name of the gate as a string
-    name: String,
+    gate_type: String,
     /// Parameters and values to use for those parameters when constructing the gate
     parameters: HashMap<String, f64>,
 }
@@ -20,7 +20,7 @@ impl GateBlueprint {
     /// and values for those parameters. Returns the GateBlueprint alongside a vector of parameters
     /// that are defined to be swept over
     pub fn from_json(
-        name: String,
+        gate_type: String,
         json_values: &Map<String, Value>,
     ) -> (GateBlueprint, Vec<SweepParameter>) {
         // Parameters to construct the gate with
@@ -31,7 +31,7 @@ impl GateBlueprint {
         // Loop through all the keys and valeus in the json map given
         for (key, value) in json_values.into_iter() {
             // If value is not a number then it must be something to be swept over
-            if !value.is_number() {
+            if value.is_object(){
                 // Add a new sweep parameter defined with the key name and the values in the json
                 swept_parameters.push(SweepParameter::from_json(key.clone(), value));
                 // Add the parameter to the blueprint with the value set to the first defined in
@@ -40,22 +40,22 @@ impl GateBlueprint {
                     key.clone(),
                     swept_parameters[swept_parameters.len() - 1].get_value(0),
                 );
-            } else {
+            } else if value.is_number() {
                 // If it is a number then just insert it into the blueprint
                 parameters.insert(key.clone(), value.as_f64().unwrap());
             }
         }
         return (
             GateBlueprint {
-                name: name,
+                gate_type: gate_type,
                 parameters: parameters,
             },
             swept_parameters,
         );
     }
     /// Get the name  of the gate this is a blueprint for
-    pub fn get_name(&self) -> &String {
-        return &self.name;
+    pub fn get_type(&self) -> &String {
+        return &self.gate_type;
     }
     /// Get the value of a specific parameter key
     pub fn get(&self, key: &str) -> f64 {
@@ -150,7 +150,7 @@ where
     T: Gate + CheckGateName + 'static,
     for<'a> &'a GateBlueprint: Into<T>,
 {
-    if T::check_name(blueprint.get_name()) {
+    if T::check_name(blueprint.get_type()) {
         Ok(Box::new(blueprint.into()))
     } else {
         Err(blueprint)
