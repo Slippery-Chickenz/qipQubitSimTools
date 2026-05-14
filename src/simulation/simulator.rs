@@ -3,7 +3,7 @@ use std::rc::Rc;
 use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes};
 
 use ndarray::Array2;
-use num_complex::{Complex, Complex64};
+use num_complex::Complex64;
 
 /// Simulator for a given quantum circuit on an array of qubits
 pub struct Simulator {
@@ -154,7 +154,7 @@ impl Simulator {
         density_matrix: &Array2<Complex64>,
     ) -> Array2<Complex64> {
         let hamiltonian: Array2<Complex64> =
-            circuit.get_hamiltonian_operator(time) + qubit_array.get_detuning_hamiltonian(time);
+            circuit.get_hamiltonian_operator(time) + qubit_array.get_detuning_hamiltonian();
 
         let system_term: Array2<Complex64> = Complex64::new(0., -1.)
             * (hamiltonian.dot(density_matrix) - density_matrix.dot(&hamiltonian));

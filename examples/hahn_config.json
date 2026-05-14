@@ -12,14 +12,10 @@
 			},
 			"PiO2X": {},
 			"PiO2Y": {},
-			"Constant": {
-				"amplitude": 1,
-				"frequency": 0,
-				"phase": 0,
-				"duration": 10
-			}
+			"PiX": {},
+			"PiY": {}
 		},
-		"order": ["Constant"]
+		"order": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"]
 	},
 	"qubits": { 
 		"q1": {
