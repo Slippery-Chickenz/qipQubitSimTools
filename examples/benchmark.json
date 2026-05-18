@@ -1,0 +1,27 @@
+{
+	"step_size": 0.01,
+	"output": {
+		"num_samples": 1,
+		"state": true,
+		"bloch_coords": false
+	},
+	"circuit": { 
+		"gates": {
+			"Idle": {
+				"duration": {
+					"linspace": [0, 2, 100]
+				}
+			},
+			"PiO2X": {},
+			"PiO2Y": {}
+		},
+		"order": ["PiO2X", "Idle", "PiO2Y"]
+	},
+	"qubits": { 
+		"q1": {
+			"larmor": { "linspace" : [-2, 2, 100] },
+			"guess_larmor": 0,
+			"decoherence": 0.0
+		}
+	}
+}

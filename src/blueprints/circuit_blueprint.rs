@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::blueprints::{GateBlueprint, circuit_blueprint};
+use crate::blueprints::GateBlueprint;
 use crate::experiment::SweepParameter;
 use crate::simulation::Circuit;
 

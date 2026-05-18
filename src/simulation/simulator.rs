@@ -62,10 +62,37 @@ impl Simulator {
             step_size,
             num_samples,
         )));
-        return self.simulate_current_circuit();
+        return self.run();
     }
-    /// Simulate the current set circuit and return the simulation results.
-    pub fn simulate_current_circuit(&mut self) -> SimulationResults {
+    /// Simulate the circuit currently set
+    pub fn run(&mut self) -> SimulationResults {
+
+        let mut simulation_results: SimulationResults = self.prepare_simulation();
+        let mut sample_indicies: Vec<usize> = self.simulation_times.as_mut().unwrap().get_sample_indices().clone();
+
+        let mut save_offset: usize = 1;
+        if sample_indicies.len() == 1 {
+            save_offset = 0;
+        }
+
+        let mut qubit_state: Array2<Complex64> = simulation_results.get_density_matrix(0);
+
+        // If the first index is 0 then save the starting state
+        if sample_indicies[0] == 0 {
+            simulation_results.save_state(0, qubit_state.clone());
+        } else {
+            sample_indicies.insert(0, 0);
+        }
+
+        // Loop over all the sample indices and evolve from one sample to the next
+        for i in 0..sample_indicies.len() - 1 {
+            qubit_state = self.evolve_qubit(qubit_state, sample_indicies[i], sample_indicies[i + 1] - 1);
+            simulation_results.save_state(i + save_offset, qubit_state.clone());
+        }
+        return simulation_results;
+    }
+    fn prepare_simulation(&mut self) -> SimulationResults {
+
         // If any of the circuit, qubit array, or simulation times are not set then panic
         if let (Some(circuit), Some(qubit_array), Some(simulation_times)) = (
             self.circuit.as_mut(),
@@ -73,7 +100,7 @@ impl Simulator {
             self.simulation_times.as_mut(),
         ) {
             // Make an empty simulation results to return
-            let mut simulation_results: SimulationResults = SimulationResults::new(
+            let simulation_results = SimulationResults::new(
                 Rc::clone(&simulation_times),
                 qubit_array.get_density_matrix(),
             );
@@ -90,62 +117,63 @@ impl Simulator {
             circuit.set_simulation_times(Rc::clone(&simulation_times));
             qubit_array.set_simulation_times(Rc::clone(&simulation_times));
 
-            let mut qubit_state: Array2<Complex64> = qubit_array.get_density_matrix().clone();
+            // qubit_state = qubit_array.get_density_matrix().clone();
 
             // Indicies of iteration times to save each sample at
-            let mut sample_indicies: Vec<usize> = simulation_times.get_sample_indices().clone();
-
-            let mut save_offset: usize = 1;
-            if sample_indicies.len() == 1 {
-                save_offset = 0;
-            }
-
-            // If the first index is 0 then save the starting state
-            if sample_indicies[0] == 0 {
-                simulation_results.save_state(0, qubit_state.clone());
-            } else {
-                sample_indicies.insert(0, 0);
-            }
-
-            let dt: f64 = simulation_times.get_dt();
-
-            // Loop over all the sample indices and evolve from one sample to the next
-            for i in 0..sample_indicies.len() - 1 {
-                for t_index in sample_indicies[i]..(sample_indicies[i + 1] - 1) {
-                    let time = simulation_times.get_iteration_time(t_index);
-
-                    // Four coefficients for Runge Kutta
-                    let k_1: Array2<Complex64> =
-                        Simulator::get_lindblad_operator(circuit, qubit_array, time, &qubit_state);
-                    let k_2: Array2<Complex64> = Simulator::get_lindblad_operator(
-                        circuit,
-                        qubit_array,
-                        time + (dt / 2.),
-                        &(&qubit_state + (&k_1 * (dt / 2.))),
-                    );
-                    let k_3: Array2<Complex64> = Simulator::get_lindblad_operator(
-                        circuit,
-                        qubit_array,
-                        time + (dt / 2.),
-                        &(&qubit_state + (&k_2 * (dt / 2.))),
-                    );
-                    let k_4: Array2<Complex64> = Simulator::get_lindblad_operator(
-                        circuit,
-                        qubit_array,
-                        time + dt,
-                        &(&qubit_state + (&k_3 * dt)),
-                    );
-
-                    let next_state =
-                        qubit_state + (k_1 + (k_2 * 2.) + (k_3 * 2.) + k_4) * (dt / 6.);
-                    qubit_state = next_state;
-                }
-                simulation_results.save_state(i + save_offset, qubit_state.clone());
-            }
+            // sample_indicies = simulation_times.get_sample_indices().clone();
             return simulation_results;
         }
-        panic!();
+        panic!("Nothin to simulate");
     }
+    /// Evolve a given state between two time indicies
+    fn evolve_qubit(
+        &mut self,
+        mut density_matrix: Array2<Complex64>,
+        t_start: usize,
+        t_end: usize
+    ) -> Array2<Complex64> {
+
+        // If any of the circuit, qubit array, or simulation times are not set then panic
+        if let (Some(circuit), Some(qubit_array), Some(simulation_times)) = (
+            self.circuit.as_mut(),
+            self.qubit_array.as_mut(),
+            self.simulation_times.as_mut(),
+        ) {
+
+            let dt: f64 = simulation_times.get_dt();
+            for t_index in t_start..t_end {
+                let time = simulation_times.get_iteration_time(t_index);
+
+                // Four coefficients for Runge Kutta
+                let k_1: Array2<Complex64> =
+                    Simulator::get_lindblad_operator(circuit, qubit_array, time, &density_matrix);
+                let k_2: Array2<Complex64> = Simulator::get_lindblad_operator(
+                    circuit,
+                    qubit_array,
+                    time + (dt / 2.),
+                    &(&density_matrix + (&k_1 * (dt / 2.))),
+                );
+                let k_3: Array2<Complex64> = Simulator::get_lindblad_operator(
+                    circuit,
+                    qubit_array,
+                    time + (dt / 2.),
+                    &(&density_matrix + (&k_2 * (dt / 2.))),
+                );
+                let k_4: Array2<Complex64> = Simulator::get_lindblad_operator(
+                    circuit,
+                    qubit_array,
+                    time + dt,
+                    &(&density_matrix + (&k_3 * dt)),
+                );
+
+                let next_state =
+                    density_matrix + (k_1 + (k_2 * 2.) + (k_3 * 2.) + k_4) * (dt / 6.);
+                density_matrix = next_state;
+            }
+        }
+        return density_matrix;
+    }
+
     /// Get the lindblad operator for the defined circuit at a specific time
     fn get_lindblad_operator(
         circuit: &mut Circuit,

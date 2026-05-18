@@ -98,6 +98,10 @@ impl SimulationResults {
     pub fn get_density_matrices(&self) -> &Array3<Complex64> {
         return &self.density_matrices;
     }
+    /// Get all the sampled density matrices
+    pub fn get_density_matrix(&self, index: usize) -> Array2<Complex64> {
+        return self.density_matrices.index_axis(Axis(0), index).clone().to_owned();
+    }
     /// Get the simulation times for these results
     pub fn get_simulation_times(&self) -> Rc<SimulationTimes> {
         return Rc::clone(&self.simulation_times);

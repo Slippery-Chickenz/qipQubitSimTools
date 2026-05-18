@@ -31,6 +31,10 @@ impl SimulationTimes {
         let iteration_times: Array1<f64> =
             Array1::<f64>::range(0., duration, step_size);
 
+        if num_samples >= iteration_times.len() {
+            panic!("Not enough iteration times for the desired number of samples");
+        }
+
         // Indices in the iteration times for each sample to be saved at
         let mut sample_indicies: Vec<usize> = vec![];
 
