@@ -28,8 +28,7 @@ impl SimulationTimes {
     /// Make a new SimulationTimes object given a duration, step size and number of samples to save
     pub fn new(duration: f64, step_size: f64, num_samples: usize) -> SimulationTimes {
         // Iteration times without sub timings for fourth order runge kutta
-        let iteration_times: Array1<f64> =
-            Array1::<f64>::range(0., duration, step_size);
+        let iteration_times: Array1<f64> = Array1::<f64>::range(0., duration, step_size);
 
         if num_samples >= iteration_times.len() {
             panic!("Not enough iteration times for the desired number of samples");

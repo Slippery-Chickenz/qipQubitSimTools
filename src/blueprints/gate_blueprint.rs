@@ -31,7 +31,7 @@ impl GateBlueprint {
         // Loop through all the keys and valeus in the json map given
         for (key, value) in json_values.into_iter() {
             // If value is not a number then it must be something to be swept over
-            if value.is_object(){
+            if value.is_object() {
                 // Add a new sweep parameter defined with the key name and the values in the json
                 swept_parameters.push(SweepParameter::from_json(key.clone(), value));
                 // Add the parameter to the blueprint with the value set to the first defined in

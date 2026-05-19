@@ -22,7 +22,6 @@ impl CircuitBlueprint {
     /// only the circuit blueprint but also a vector of parameters set in the json values to be
     /// swept over.
     pub fn from_json(json_values: &Map<String, Value>) -> (CircuitBlueprint, Vec<SweepParameter>) {
-
         // Ordered vector of gate names to construct the circuit
         let mut circuit_data: Vec<String> = vec![];
         // Map the circuit name strings to a blueprint to construct the circuit objects
@@ -40,7 +39,6 @@ impl CircuitBlueprint {
         // Loop over the array of gates
         // for (i, gate) in order.iter().enumerate() {
         for (gate_name, gate_values) in json_values["gates"].as_object().unwrap().iter() {
-
             let gate_data: &Map<String, Value> = gate_values.as_object().unwrap();
 
             // String representing the name of the gate to add
@@ -58,10 +56,7 @@ impl CircuitBlueprint {
 
             // Get a blueprint and the swept parameters for the given gate defined by the string
             let (gate_blueprint, mut swept_parameters): (GateBlueprint, Vec<SweepParameter>) =
-                GateBlueprint::from_json(
-                    gate_type.to_string(),
-                    gate_data,
-                );
+                GateBlueprint::from_json(gate_type.to_string(), gate_data);
 
             gate_directory.insert(gate_name.to_string(), gate_blueprint);
 
@@ -95,7 +90,10 @@ impl CircuitBlueprint {
         path_index: usize,
         value_index: usize,
     ) -> () {
-        self.gate_directory.get_mut(sweep_parameter.get_path(path_index)).unwrap().update_parameters(sweep_parameter, 2, value_index);
+        self.gate_directory
+            .get_mut(sweep_parameter.get_path(path_index))
+            .unwrap()
+            .update_parameters(sweep_parameter, 2, value_index);
         return;
     }
 }

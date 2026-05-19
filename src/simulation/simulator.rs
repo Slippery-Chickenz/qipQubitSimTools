@@ -1,6 +1,8 @@
 use std::rc::Rc;
 
-use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes};
+use crate::simulation::{
+    Circuit, QubitArray, SimulationResults, SimulationTimes, simulation_results,
+};
 
 use ndarray::Array2;
 use num_complex::Complex64;
@@ -33,7 +35,6 @@ impl Simulator {
         &mut self,
         circuit: Circuit,
         qubit_array: QubitArray,
-        // num_iterations: usize,
         step_size: f64,
         num_samples: usize,
     ) -> () {
@@ -51,7 +52,6 @@ impl Simulator {
         &mut self,
         circuit: Circuit,
         qubit_array: QubitArray,
-        //num_iterations: usize,
         step_size: f64,
         num_samples: usize,
     ) -> SimulationResults {
@@ -66,9 +66,8 @@ impl Simulator {
     }
     /// Simulate the circuit currently set
     pub fn run(&mut self) -> SimulationResults {
-
-        let mut simulation_results: SimulationResults = self.prepare_simulation();
-        let mut sample_indicies: Vec<usize> = self.simulation_times.as_mut().unwrap().get_sample_indices().clone();
+        let (mut simulation_results, mut sample_indicies): (SimulationResults, Vec<usize>) =
+            self.prepare_simulation();
 
         let mut save_offset: usize = 1;
         if sample_indicies.len() == 1 {
@@ -86,13 +85,13 @@ impl Simulator {
 
         // Loop over all the sample indices and evolve from one sample to the next
         for i in 0..sample_indicies.len() - 1 {
-            qubit_state = self.evolve_qubit(qubit_state, sample_indicies[i], sample_indicies[i + 1] - 1);
+            qubit_state =
+                self.evolve_qubit(qubit_state, sample_indicies[i], sample_indicies[i + 1] - 1);
             simulation_results.save_state(i + save_offset, qubit_state.clone());
         }
         return simulation_results;
     }
-    fn prepare_simulation(&mut self) -> SimulationResults {
-
+    fn prepare_simulation(&mut self) -> (SimulationResults, Vec<usize>) {
         // If any of the circuit, qubit array, or simulation times are not set then panic
         if let (Some(circuit), Some(qubit_array), Some(simulation_times)) = (
             self.circuit.as_mut(),
@@ -117,11 +116,14 @@ impl Simulator {
             circuit.set_simulation_times(Rc::clone(&simulation_times));
             qubit_array.set_simulation_times(Rc::clone(&simulation_times));
 
-            // qubit_state = qubit_array.get_density_matrix().clone();
-
-            // Indicies of iteration times to save each sample at
-            // sample_indicies = simulation_times.get_sample_indices().clone();
-            return simulation_results;
+            return (
+                simulation_results,
+                self.simulation_times
+                    .as_mut()
+                    .unwrap()
+                    .get_sample_indices()
+                    .clone(),
+            );
         }
         panic!("Nothin to simulate");
     }
@@ -130,16 +132,14 @@ impl Simulator {
         &mut self,
         mut density_matrix: Array2<Complex64>,
         t_start: usize,
-        t_end: usize
+        t_end: usize,
     ) -> Array2<Complex64> {
-
         // If any of the circuit, qubit array, or simulation times are not set then panic
         if let (Some(circuit), Some(qubit_array), Some(simulation_times)) = (
             self.circuit.as_mut(),
             self.qubit_array.as_mut(),
             self.simulation_times.as_mut(),
         ) {
-
             let dt: f64 = simulation_times.get_dt();
             for t_index in t_start..t_end {
                 let time = simulation_times.get_iteration_time(t_index);
@@ -166,8 +166,7 @@ impl Simulator {
                     &(&density_matrix + (&k_3 * dt)),
                 );
 
-                let next_state =
-                    density_matrix + (k_1 + (k_2 * 2.) + (k_3 * 2.) + k_4) * (dt / 6.);
+                let next_state = density_matrix + (k_1 + (k_2 * 2.) + (k_3 * 2.) + k_4) * (dt / 6.);
                 density_matrix = next_state;
             }
         }
