@@ -1,7 +1,7 @@
 {
 	"step_size": 0.001,
 	"output": {
-		"num_samples": 500,
+		"num_samples": 10,
 		"state": true,
 		"bloch_coords": true
 	},

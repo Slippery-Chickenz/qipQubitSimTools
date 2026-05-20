@@ -3,7 +3,7 @@ use std::rc::Rc;
 
 use crate::simulation::SimulationTimes;
 
-use ndarray::Array2;
+use ndarray::{Array1, Array2};
 use ndarray::linalg::kron;
 use num_complex::Complex64;
 
@@ -14,7 +14,7 @@ pub struct QubitArray {
     /// Number of qubits in the array (currently only supports 1)
     num_qubts: u32,
     /// Starting density matrix of the qubits
-    density_matrix: Array2<Complex64>,
+    density_matrix: Array1<Complex64>,
     /// Larmor value of the qubit
     larmor: f64,
     /// Guess at the larmor value for the qubits
@@ -30,13 +30,8 @@ impl QubitArray {
     /// larmor. This sets the starting density matrix to be in the +z state e.g. (1, 0)
     pub fn new(num_qubits: u32, larmor: f64, guess_larmor: f64, decoherence: f64) -> QubitArray {
         // Set the density matrix as a kronecker product of the +z state for each qubit
-        let mut density_matrix: Array2<Complex64> = Array2::<Complex64>::zeros((2, 2));
-        density_matrix[[0, 0]] = Complex64::new(1., 0.);
-        let temp_matrix: Array2<Complex64> = density_matrix.clone();
-        for _i in 0..num_qubits - 1 {
-            density_matrix = kron(&density_matrix, &temp_matrix);
-        }
-
+        let mut density_matrix: Array1<Complex64> = Array1::<Complex64>::zeros(4);
+        density_matrix[0] = Complex64::new(1., 0.);
         return QubitArray {
             num_qubts: num_qubits,
             density_matrix: density_matrix,
@@ -53,7 +48,7 @@ impl QubitArray {
         return;
     }
     /// Get the density_matrix that represents the starting state for the qubits
-    pub fn get_density_matrix(&self) -> &Array2<Complex64> {
+    pub fn get_starting_state(&self) -> &Array1<Complex64> {
         return &self.density_matrix;
     }
     /// Get the number of qubits (currently only 1)

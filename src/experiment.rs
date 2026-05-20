@@ -13,7 +13,7 @@ use experiment_results::ExperimentResults;
 
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
-    simulation::Simulator,
+    simulation::{Simulator, runge_kutta_evolve},
 };
 
 use hdf5::Result;
@@ -121,9 +121,6 @@ impl Experiment {
             num_experiment_iterations *= i;
         }
 
-        // Array for results of experiment
-        // let mut results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
-
         // Vector of the current index for each of the swept parameters
         let mut sweep_parameter_indicies: Vec<usize> = results_dim.iter().map(|_| 0).collect();
 
@@ -134,16 +131,14 @@ impl Experiment {
         for _i in 0..num_experiment_iterations {
             // Construct and simulate the given circuit and qubit array and save the final
             // probability ot be in the -Z state
-            let sim_result = Simulator::new().simulate_circuit(
+            let sim_result = Simulator::simulate_circuit(
                 self.circuit_blueprint.get_circuit(),
                 self.qubit_array_blueprint.get_qubit_array(),
-                // self.simulation_times_blueprint.get_num_iterations(),
                 self.simulation_times_blueprint.get_step_size(),
                 self.simulation_times_blueprint.get_num_samples(),
+                runge_kutta_evolve,
             );
-            // .get_final_probability();
             // Set the value in the results
-            // results[IxDyn(&sweep_parameter_indicies)] = sim_result;
             self.results
                 .add_simulation_result(&sweep_parameter_indicies, &sim_result);
             // Loop over the indicies of the swept parameters and increase them
@@ -164,10 +159,8 @@ impl Experiment {
             self.update_parameters(&sweep_parameter_indicies);
             progress_bar.inc(1);
         }
-        // Save teh results and save the circuit data
+        // Save the results and save the circuit data
         self.results.save(filename)?;
-        // self.save_results(results, &mut filename.clone())?;
-        // self.circuit_blueprint.get_circuit().save_circuit_data();
         progress_bar.finish();
         return Ok(());
     }
