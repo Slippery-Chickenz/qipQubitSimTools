@@ -1,21 +1,24 @@
 use std::rc::Rc;
 
-use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes};
+use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes, SimulationMethod};
 
 use ndarray::{Array1, Array2};
 use num_complex::Complex64;
 
 /// Simulator for a given quantum circuit on an array of qubits
-pub struct Simulator {
+pub struct Simulator<Method: SimulationMethod> 
+{
     /// Circuit to be simulated
     circuit: Circuit,
     /// Array of qubits for the circuit to be simulated on
     qubit_array: QubitArray,
     /// Times and samples for the simulation to be run and saved at
     simulation_times: Rc<SimulationTimes>,
+    /// Method used to simulate response
+    simulation_method: Method
 }
 
-impl Simulator {
+impl<Method: SimulationMethod> Simulator<Method> {
     /// Make an empty simulator object
     // Set the circuit, qubit array, and simulation times to be simulated. The number of qubits in
     // the circuit and qubit array must be the same (currently only 1 qubit is supported). The
@@ -78,7 +81,8 @@ impl Simulator {
 
         // Loop over all the sample indices and evolve from one sample to the next
         for i in 0..iteration_indicies.len() - 1 {
-            dbg!(simulation_results.get_probability(0, ));
+            // dbg!(simulation_results.get_probability(0, &Array1::<Complex64>::from_vec(vec![Complex64::new(1., 0.), Complex64::new(0., 0.)])));
+            // dbg!(&qubit_state);
             qubit_state = evolution_func(
                 &mut self.circuit,
                 &self.qubit_array,
