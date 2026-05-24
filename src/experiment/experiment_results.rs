@@ -1,7 +1,7 @@
 use std::rc::Rc;
 
 use super::SweepParameter;
-use crate::simulation::SimulationResults;
+use crate::simulation::SimulationResultGetter;
 
 use super::bloch_coord_results::BlochCoordResults;
 use super::duration_result::DurationResult;
@@ -14,7 +14,7 @@ pub trait ExperimentResult {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &SimulationResults,
+        simulation_result: &dyn SimulationResultGetter,
     ) -> ();
     fn save(&self, group: &Group) -> Result<()>;
 }
@@ -78,7 +78,7 @@ impl ExperimentResults {
     pub fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &SimulationResults,
+        simulation_result: &dyn SimulationResultGetter,
     ) -> () {
         for result in &mut self.results {
             result.add_simulation_result(sweep_parameter_indices, simulation_result);

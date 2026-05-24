@@ -4,7 +4,6 @@ use std::rc::Rc;
 use crate::simulation::SimulationTimes;
 
 use ndarray::{Array1, Array2};
-use ndarray::linalg::kron;
 use num_complex::Complex64;
 
 /// Qubit array to be used in a simulation. Holds the number of qubits (currently only supports 1)
@@ -14,7 +13,7 @@ pub struct QubitArray {
     /// Number of qubits in the array (currently only supports 1)
     num_qubts: u32,
     /// Starting density matrix of the qubits
-    density_matrix: Array1<Complex64>,
+    starting_state: Array1<Complex64>,
     /// Larmor value of the qubit
     larmor: f64,
     /// Guess at the larmor value for the qubits
@@ -34,7 +33,7 @@ impl QubitArray {
         density_matrix[0] = Complex64::new(1., 0.);
         return QubitArray {
             num_qubts: num_qubits,
-            density_matrix: density_matrix,
+            starting_state: density_matrix,
             larmor: larmor,
             guess_larmor: guess_larmor,
             decoherence: decoherence,
@@ -49,7 +48,7 @@ impl QubitArray {
     }
     /// Get the density_matrix that represents the starting state for the qubits
     pub fn get_starting_state(&self) -> &Array1<Complex64> {
-        return &self.density_matrix;
+        return &self.starting_state;
     }
     /// Get the number of qubits (currently only 1)
     pub fn get_num_qubits(&self) -> u32 {

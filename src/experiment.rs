@@ -11,14 +11,22 @@ pub use sweep_parameter::SweepParameter;
 
 use experiment_results::ExperimentResults;
 
+use crate::simulation::{RKMethod, RKVectorizedMethod};
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
-    simulation::{Simulator, runge_kutta_evolve},
+    simulation::Simulator,
 };
 
 use hdf5::Result;
 use indicatif::ProgressBar;
 use serde_json::{Map, Value};
+
+#[derive(Debug)]
+enum SimulationMethodType {
+    RKMethod,
+    RKVectorizedMethod,
+}
+
 
 /// Experiment to be run. Consists of a circuit, qubit array, and simulation times to simulate and
 /// then a vector of parameters and values to sweep across and run simulations for each combination
@@ -35,7 +43,8 @@ pub struct Experiment {
     sweep_parameters: Rc<Vec<SweepParameter>>,
     /// Object to store and save the results in. Dynamic depending on what is defined to save
     results: ExperimentResults,
-    // results: Box<dyn ExperimentResult>,
+    /// Simulation method to run the experiment with
+    simulation_method: SimulationMethodType,
 }
 
 impl Experiment {
@@ -47,6 +56,17 @@ impl Experiment {
 
         // Json values read in from the file
         let mut json_values: Map<String, Value> = serde_json::from_reader(reader).unwrap();
+
+        // String representing the simulation method to use. If there is no string resort to RKMethod
+        let sim_method_string: &str = json_values.get("method").unwrap_or_default().as_str().unwrap_or("");
+        let sim_method: SimulationMethodType;
+        match sim_method_string {
+            "RK" => sim_method = SimulationMethodType::RKMethod,
+            "RKVectorized" => sim_method = SimulationMethodType::RKVectorizedMethod,
+            _ => sim_method = SimulationMethodType::RKMethod,
+        }
+
+        dbg!(&sim_method);
 
         // There should be a map of values for the circuit blueprint under the "circuit" key
         let mut circuit_json: Value = json_values.remove("circuit").unwrap();
@@ -107,7 +127,7 @@ impl Experiment {
                 &json_values["output"].as_object().unwrap(),
                 Rc::clone(&rc_sweep_parameters),
             ),
-            // results: get_experiment_result_from_json(&json_values["output"].as_object().unwrap(), Rc::clone(&rc_sweep_parameters)),
+            simulation_method: sim_method
         };
     }
     /// Run the experiment defined in this class and save the results to the given filename
@@ -131,16 +151,30 @@ impl Experiment {
         for _i in 0..num_experiment_iterations {
             // Construct and simulate the given circuit and qubit array and save the final
             // probability ot be in the -Z state
-            let sim_result = Simulator::simulate_circuit(
+            // let sim_result: DensityMatrixResult = Simulator::<RKMethod>::simulate_circuit(
+            //     self.circuit_blueprint.get_circuit(),
+            //     self.qubit_array_blueprint.get_qubit_array(),
+            //     self.simulation_times_blueprint.get_step_size(),
+            //     self.simulation_times_blueprint.get_num_samples(),
+            // );
+            // // Set the value in the results
+            // self.results
+            //     .add_simulation_result(&sweep_parameter_indicies, &sim_result);
+            //
+            match self.simulation_method {
+                SimulationMethodType::RKMethod => self.results.add_simulation_result(&sweep_parameter_indicies, &Simulator::<RKMethod>::simulate_circuit(
                 self.circuit_blueprint.get_circuit(),
                 self.qubit_array_blueprint.get_qubit_array(),
                 self.simulation_times_blueprint.get_step_size(),
                 self.simulation_times_blueprint.get_num_samples(),
-                runge_kutta_evolve,
-            );
-            // Set the value in the results
-            self.results
-                .add_simulation_result(&sweep_parameter_indicies, &sim_result);
+                )),
+                SimulationMethodType::RKVectorizedMethod => self.results.add_simulation_result(&sweep_parameter_indicies, &Simulator::<RKVectorizedMethod>::simulate_circuit(
+                self.circuit_blueprint.get_circuit(),
+                self.qubit_array_blueprint.get_qubit_array(),
+                self.simulation_times_blueprint.get_step_size(),
+                self.simulation_times_blueprint.get_num_samples(),
+                )),
+            }
             // Loop over the indicies of the swept parameters and increase them
             for j in 0..sweep_parameter_indicies.len() {
                 // Increase the parameter index

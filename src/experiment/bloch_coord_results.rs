@@ -1,5 +1,5 @@
 use super::experiment_results::ExperimentResult;
-use crate::simulation::SimulationResults;
+use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
 use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
@@ -32,7 +32,7 @@ impl ExperimentResult for BlochCoordResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &SimulationResults,
+        simulation_result: &dyn SimulationResultGetter,
     ) -> () {
         let (x_coords, y_coords, z_coords): (Array1<f64>, Array1<f64>, Array1<f64>) =
             simulation_result.get_bloch_coords_cart();

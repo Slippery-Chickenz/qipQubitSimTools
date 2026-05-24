@@ -1,9 +1,8 @@
 use super::experiment_results::ExperimentResult;
-use crate::simulation::SimulationResults;
+use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
 use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
-use num_complex::Complex64;
 
 pub struct ProbabilityResults {
     /// Multi-Dimensional array to store the results of the sweep in
@@ -26,10 +25,9 @@ impl ExperimentResult for ProbabilityResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &SimulationResults,
+        simulation_result: &dyn SimulationResultGetter,
     ) -> () {
         let probabilities: Array1<f64> = simulation_result.get_probabilities();
-        dbg!(simulation_result.get_probability(0, &Array1::<Complex64>::from_vec(vec![Complex64::new(1., 0.), Complex64::new(0., 0.)])));
         if probabilities.len() == 1 {
             self.results[sweep_parameter_indices.clone().into_dimension()] = probabilities[0];
             return;

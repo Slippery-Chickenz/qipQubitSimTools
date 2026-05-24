@@ -1,21 +1,19 @@
-use std::rc::Rc;
+use std::{marker::PhantomData, rc::Rc};
 
-use crate::simulation::{Circuit, QubitArray, SimulationResults, SimulationTimes, SimulationMethod};
-
-use ndarray::{Array1, Array2};
-use num_complex::Complex64;
+use crate::simulation::{
+    Circuit, QubitArray, SimulationMethod, SimulationResultSaver, SimulationTimes,
+};
 
 /// Simulator for a given quantum circuit on an array of qubits
-pub struct Simulator<Method: SimulationMethod> 
-{
+pub struct Simulator<Method: SimulationMethod> {
     /// Circuit to be simulated
     circuit: Circuit,
     /// Array of qubits for the circuit to be simulated on
     qubit_array: QubitArray,
     /// Times and samples for the simulation to be run and saved at
     simulation_times: Rc<SimulationTimes>,
-    /// Method used to simulate response
-    simulation_method: Method
+    /// Phantom data to store the type of method we use to simulate the circuit
+    simulation_method: PhantomData<Method>,
 }
 
 impl<Method: SimulationMethod> Simulator<Method> {
@@ -30,60 +28,39 @@ impl<Method: SimulationMethod> Simulator<Method> {
         qubit_array: QubitArray,
         step_size: f64,
         num_samples: usize,
-    ) -> Simulator {
+    ) -> Simulator<Method> {
         let duration: f64 = circuit.get_duration();
-        return Simulator {
+        return Simulator::<Method> {
             circuit: circuit,
             qubit_array: qubit_array,
             simulation_times: Rc::new(SimulationTimes::new(duration, step_size, num_samples)),
+            simulation_method: PhantomData,
         };
     }
     /// Simulate a given circuit, on a given qubit array, with the given numbers of samples, and iterations
-    pub fn simulate_circuit<F>(
+    pub fn simulate_circuit(
         circuit: Circuit,
         qubit_array: QubitArray,
         step_size: f64,
         num_samples: usize,
-        evolution_func: F,
-    ) -> SimulationResults
-    where
-        F: Fn(
-            &mut Circuit,
-            &QubitArray,
-            &SimulationTimes,
-            Array1<Complex64>, 
-            usize, 
-            usize
-            ) -> Array1<Complex64>,
-    {
-        let mut simulator: Simulator = Simulator::new(circuit, qubit_array, step_size, num_samples);
-        return simulator.run(evolution_func);
+    ) -> Method::ResultType {
+        let mut simulator: Simulator<Method> =
+            Simulator::new(circuit, qubit_array, step_size, num_samples);
+        return simulator.run();
     }
     /// Simulate the circuit currently set
-    pub fn run<F>(&mut self, evolution_func: F) -> SimulationResults
-    where
-        F: Fn(
-            &mut Circuit,
-            &QubitArray,
-            &SimulationTimes,
-            Array1<Complex64>,
-            usize, 
-            usize
-            ) -> Array1<Complex64>,
-    {
+    pub fn run(&mut self) -> Method::ResultType {
         // Prepare variables for iterating over each qubit evolution
         let (mut simulation_results, iteration_indicies, save_offset, mut qubit_state): (
-            SimulationResults,
+            Method::ResultType,
             Vec<usize>,
             usize,
-            Array1<Complex64>,
+            Method::QubitState,
         ) = self.prepare_simulation();
 
         // Loop over all the sample indices and evolve from one sample to the next
         for i in 0..iteration_indicies.len() - 1 {
-            // dbg!(simulation_results.get_probability(0, &Array1::<Complex64>::from_vec(vec![Complex64::new(1., 0.), Complex64::new(0., 0.)])));
-            // dbg!(&qubit_state);
-            qubit_state = evolution_func(
+            qubit_state = Method::evolve_state(
                 &mut self.circuit,
                 &self.qubit_array,
                 self.simulation_times.as_ref(),
@@ -95,9 +72,12 @@ impl<Method: SimulationMethod> Simulator<Method> {
         }
         return simulation_results;
     }
-    fn prepare_simulation(&mut self) -> (SimulationResults, Vec<usize>, usize, Array1<Complex64>) {
+    fn prepare_simulation(
+        &mut self,
+    ) -> (Method::ResultType, Vec<usize>, usize, Method::QubitState) {
         // Make an empty simulation results to return
-        let mut simulation_results = SimulationResults::new(Rc::clone(&self.simulation_times));
+        let mut simulation_results: Method::ResultType =
+            Method::ResultType::new(Rc::clone(&self.simulation_times));
 
         // Make sure the qubit array has the correct number of qubits for this circuit
         assert!(
@@ -114,7 +94,8 @@ impl<Method: SimulationMethod> Simulator<Method> {
             .set_simulation_times(Rc::clone(&self.simulation_times));
 
         // Get the starting state for the simulation
-        let qubit_state: Array1<Complex64> = self.qubit_array.get_starting_state().clone();
+        let qubit_state: Method::QubitState =
+            Method::get_state(self.qubit_array.get_starting_state());
 
         // Get the indicies to iterate over
         let mut iteration_indicies: Vec<usize> = self.simulation_times.get_sample_indices().clone();

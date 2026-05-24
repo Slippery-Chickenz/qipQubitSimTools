@@ -1,5 +1,5 @@
 use super::experiment_results::ExperimentResult;
-use crate::simulation::SimulationResults;
+use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
 use ndarray::{ArrayD, IntoDimension, IxDyn};
@@ -21,7 +21,7 @@ impl ExperimentResult for DurationResult {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &SimulationResults,
+        simulation_result: &dyn SimulationResultGetter,
     ) -> () {
         self.results[sweep_parameter_indices.clone().into_dimension()] =
             simulation_result.get_duration();

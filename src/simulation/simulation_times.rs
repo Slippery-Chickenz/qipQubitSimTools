@@ -15,6 +15,7 @@ impl fmt::Display for UninitializedTimesError {
 
 /// Struct to hold the times for a simulation and the indices of the time values at which the
 /// samples should be saved.
+#[derive(Debug)]
 pub struct SimulationTimes {
     /// Time values at each iteration
     iteration_times: Array1<f64>,

@@ -1,27 +1,32 @@
 {
-	"step_size": 0.01,
+	"step_size": 0.001,
+	"method": "RKVectorized",
 	"output": {
-		"num_samples": 1,
+		"num_samples": 500,
 		"state": true,
-		"bloch_coords": false
+		"bloch_coords": true
 	},
 	"circuit": { 
 		"gates": {
 			"Idle": {
-				"duration": {
-					"linspace": [0, 2, 100]
-				}
+				"duration": 2
 			},
 			"PiO2X": {},
-			"PiO2Y": {}
+			"PiO2Y": {},
+			"Constant": {
+				"amplitude": 1,
+				"frequency": 0,
+				"phase": 0,
+				"duration": 10
+			}
 		},
-		"order": ["PiO2X", "Idle", "PiO2Y"]
+		"order": ["Constant"]
 	},
 	"qubits": { 
 		"q1": {
-			"larmor": { "linspace" : [-2, 2, 100] },
+			"larmor": 0,
 			"guess_larmor": 0,
-			"decoherence": 0.0
+			"decoherence": 0.1
 		}
 	}
 }
