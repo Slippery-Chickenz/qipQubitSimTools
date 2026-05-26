@@ -20,8 +20,7 @@ impl SimulationResultSaver for DensityMatrixVectorResult {
     fn new(simulation_times: Rc<SimulationTimes>) -> DensityMatrixVectorResult {
         // Set the array of density matrices. The outer axis is the number of samples and the inner
         // axes are the 2x2 density matrices
-        let density_matrices =
-            Array2::<Complex64>::zeros([simulation_times.get_num_samples(), 4]);
+        let density_matrices = Array2::<Complex64>::zeros([simulation_times.get_num_samples(), 4]);
         return DensityMatrixVectorResult {
             simulation_times: simulation_times,
             density_matrices: density_matrices,

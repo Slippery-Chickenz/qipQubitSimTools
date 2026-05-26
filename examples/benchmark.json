@@ -1,6 +1,6 @@
 {
 	"step_size": 0.001,
-	"method": "RKVectorized",
+	"method": "PadeVectorized",
 	"output": {
 		"num_samples": 500,
 		"state": true,

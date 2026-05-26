@@ -8,7 +8,6 @@ use std::time::{Duration, Instant};
 use qip_qst::experiment::Experiment;
 
 fn main() {
-
     let args: Vec<String> = env::args().collect();
 
     println!("Benchmarking {}", args[1]);

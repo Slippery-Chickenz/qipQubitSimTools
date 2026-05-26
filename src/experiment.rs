@@ -11,7 +11,9 @@ pub use sweep_parameter::SweepParameter;
 
 use experiment_results::ExperimentResults;
 
-use crate::simulation::{RKMethod, RKVectorizedMethod};
+use crate::simulation::{
+    PadeStateMethod, PadeVectorizedMethod, RKMethod, RKStateMethod, RKVectorizedMethod,
+};
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
     simulation::Simulator,
@@ -25,8 +27,10 @@ use serde_json::{Map, Value};
 enum SimulationMethodType {
     RKMethod,
     RKVectorizedMethod,
+    RKStateMethod,
+    PadeVectorizedMethod,
+    PadeStateMethod,
 }
-
 
 /// Experiment to be run. Consists of a circuit, qubit array, and simulation times to simulate and
 /// then a vector of parameters and values to sweep across and run simulations for each combination
@@ -58,11 +62,18 @@ impl Experiment {
         let mut json_values: Map<String, Value> = serde_json::from_reader(reader).unwrap();
 
         // String representing the simulation method to use. If there is no string resort to RKMethod
-        let sim_method_string: &str = json_values.get("method").unwrap_or_default().as_str().unwrap_or("");
+        let sim_method_string: &str = json_values
+            .get("method")
+            .unwrap_or_default()
+            .as_str()
+            .unwrap_or("");
         let sim_method: SimulationMethodType;
         match sim_method_string {
             "RK" => sim_method = SimulationMethodType::RKMethod,
             "RKVectorized" => sim_method = SimulationMethodType::RKVectorizedMethod,
+            "RKState" => sim_method = SimulationMethodType::RKStateMethod,
+            "PadeVectorized" => sim_method = SimulationMethodType::PadeVectorizedMethod,
+            "PadeState" => sim_method = SimulationMethodType::PadeStateMethod,
             _ => sim_method = SimulationMethodType::RKMethod,
         }
 
@@ -127,7 +138,7 @@ impl Experiment {
                 &json_values["output"].as_object().unwrap(),
                 Rc::clone(&rc_sweep_parameters),
             ),
-            simulation_method: sim_method
+            simulation_method: sim_method,
         };
     }
     /// Run the experiment defined in this class and save the results to the given filename
@@ -162,18 +173,51 @@ impl Experiment {
             //     .add_simulation_result(&sweep_parameter_indicies, &sim_result);
             //
             match self.simulation_method {
-                SimulationMethodType::RKMethod => self.results.add_simulation_result(&sweep_parameter_indicies, &Simulator::<RKMethod>::simulate_circuit(
-                self.circuit_blueprint.get_circuit(),
-                self.qubit_array_blueprint.get_qubit_array(),
-                self.simulation_times_blueprint.get_step_size(),
-                self.simulation_times_blueprint.get_num_samples(),
-                )),
-                SimulationMethodType::RKVectorizedMethod => self.results.add_simulation_result(&sweep_parameter_indicies, &Simulator::<RKVectorizedMethod>::simulate_circuit(
-                self.circuit_blueprint.get_circuit(),
-                self.qubit_array_blueprint.get_qubit_array(),
-                self.simulation_times_blueprint.get_step_size(),
-                self.simulation_times_blueprint.get_num_samples(),
-                )),
+                SimulationMethodType::RKMethod => self.results.add_simulation_result(
+                    &sweep_parameter_indicies,
+                    &Simulator::<RKMethod>::simulate_circuit(
+                        self.circuit_blueprint.get_circuit(),
+                        self.qubit_array_blueprint.get_qubit_array(),
+                        self.simulation_times_blueprint.get_step_size(),
+                        self.simulation_times_blueprint.get_num_samples(),
+                    ),
+                ),
+                SimulationMethodType::RKVectorizedMethod => self.results.add_simulation_result(
+                    &sweep_parameter_indicies,
+                    &Simulator::<RKVectorizedMethod>::simulate_circuit(
+                        self.circuit_blueprint.get_circuit(),
+                        self.qubit_array_blueprint.get_qubit_array(),
+                        self.simulation_times_blueprint.get_step_size(),
+                        self.simulation_times_blueprint.get_num_samples(),
+                    ),
+                ),
+                SimulationMethodType::RKStateMethod => self.results.add_simulation_result(
+                    &sweep_parameter_indicies,
+                    &Simulator::<RKStateMethod>::simulate_circuit(
+                        self.circuit_blueprint.get_circuit(),
+                        self.qubit_array_blueprint.get_qubit_array(),
+                        self.simulation_times_blueprint.get_step_size(),
+                        self.simulation_times_blueprint.get_num_samples(),
+                    ),
+                ),
+                SimulationMethodType::PadeVectorizedMethod => self.results.add_simulation_result(
+                    &sweep_parameter_indicies,
+                    &Simulator::<PadeVectorizedMethod>::simulate_circuit(
+                        self.circuit_blueprint.get_circuit(),
+                        self.qubit_array_blueprint.get_qubit_array(),
+                        self.simulation_times_blueprint.get_step_size(),
+                        self.simulation_times_blueprint.get_num_samples(),
+                    ),
+                ),
+                SimulationMethodType::PadeStateMethod => self.results.add_simulation_result(
+                    &sweep_parameter_indicies,
+                    &Simulator::<PadeStateMethod>::simulate_circuit(
+                        self.circuit_blueprint.get_circuit(),
+                        self.qubit_array_blueprint.get_qubit_array(),
+                        self.simulation_times_blueprint.get_step_size(),
+                        self.simulation_times_blueprint.get_num_samples(),
+                    ),
+                ),
             }
             // Loop over the indicies of the swept parameters and increase them
             for j in 0..sweep_parameter_indicies.len() {
