@@ -1,6 +1,6 @@
 {
 	"step_size": 0.001,
-	"method": "PadeVectorized",
+	"method": "PadeState",
 	"output": {
 		"num_samples": 500,
 		"state": true,

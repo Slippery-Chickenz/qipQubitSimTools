@@ -1,4 +1,5 @@
 use std::rc::Rc;
+use std::fmt::Debug;
 
 use crate::simulation::{Circuit, QubitArray, SimulationTimes};
 
@@ -6,7 +7,7 @@ use ndarray::Array1;
 use num_complex::Complex64;
 
 pub trait SimulationMethod {
-    type QubitState: Clone;
+    type QubitState: Clone + Debug;
     type ResultType: SimulationResultSaver<QubitState = Self::QubitState> + SimulationResultGetter;
     fn evolve_state(
         circuit: &mut Circuit,

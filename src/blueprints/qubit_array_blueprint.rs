@@ -1,3 +1,5 @@
+use std::{fs, io::BufReader};
+
 // use crate::blueprints::LarmorFrequencyBlueprint;
 use crate::experiment::SweepParameter;
 use crate::simulation::QubitArray;
@@ -19,8 +21,18 @@ impl QubitArrayBlueprint {
     /// Get a QubitArrayBlueprint object from a Map of Strings to json values. Returns not just the
     /// blueprint but also a vector of parameters to be swept over
     pub fn from_json(
-        json_values: &Map<String, Value>,
+        mut json_values: Map<String, Value>,
     ) -> (QubitArrayBlueprint, Vec<SweepParameter>) {
+
+        // If there is a key in the map called "filename" then assume that is a seperate
+        // file defining the circuit and look there
+        if json_values.contains_key("filename") {
+            let circuit_file: fs::File =
+                fs::File::open(json_values["filename"].as_str().unwrap()).unwrap();
+            let circuit_reader: BufReader<fs::File> = BufReader::new(circuit_file);
+            json_values = serde_json::from_reader(circuit_reader).unwrap();
+        }
+
         // Values for the first (and only as of now) qubit
         let q1_values: &Map<String, Value> = json_values["q1"].as_object().unwrap();
 

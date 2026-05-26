@@ -4,7 +4,7 @@ extern crate serde_json;
 use qip_qst::experiment::Experiment;
 
 fn main() {
-    let mut test_experiment = Experiment::from_json("examples/ramsey_config.json");
+    let mut test_experiment = Experiment::from_json_file("examples/ramsey_config.json");
     dbg!(&test_experiment);
     test_experiment
         .run_experiment("examples/ramsey_results")

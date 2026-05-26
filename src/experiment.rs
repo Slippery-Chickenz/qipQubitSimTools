@@ -12,7 +12,7 @@ pub use sweep_parameter::SweepParameter;
 use experiment_results::ExperimentResults;
 
 use crate::simulation::{
-    PadeStateMethod, PadeVectorizedMethod, RKMethod, RKStateMethod, RKVectorizedMethod,
+    PadeStateMethod, PadeVectorizedMethod, RKMethod, RKVectorizedMethod,
 };
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
@@ -27,9 +27,20 @@ use serde_json::{Map, Value};
 enum SimulationMethodType {
     RKMethod,
     RKVectorizedMethod,
-    RKStateMethod,
     PadeVectorizedMethod,
     PadeStateMethod,
+}
+
+impl From<&str> for SimulationMethodType {
+    fn from(value: &str) -> SimulationMethodType {
+        match value {
+            "RK" => return SimulationMethodType::RKMethod,
+            "RKVectorized" => return SimulationMethodType::RKVectorizedMethod,
+            "PadeVectorized" => return SimulationMethodType::PadeVectorizedMethod,
+            "PadeState" => return SimulationMethodType::PadeStateMethod,
+            _ => return SimulationMethodType::RKMethod,
+        }
+    }
 }
 
 /// Experiment to be run. Consists of a circuit, qubit array, and simulation times to simulate and
@@ -52,74 +63,52 @@ pub struct Experiment {
 }
 
 impl Experiment {
-    /// Get an experiment object from a json file name.
-    pub fn from_json(filename: &str) -> Experiment {
+
+    /// Get an experiment object from a json file name
+    pub fn from_json_file(filename: &str) -> Experiment {
         // File and reader to read the experiment config from
         let file: fs::File = fs::File::open(filename).unwrap();
         let reader: BufReader<fs::File> = BufReader::new(file);
 
         // Json values read in from the file
-        let mut json_values: Map<String, Value> = serde_json::from_reader(reader).unwrap();
-
+        let json_values: Map<String, Value> = serde_json::from_reader(reader).unwrap();
+        return Experiment::from_json(json_values);
+    }
+    /// Get an experiment object from a map of strings to json values
+    pub fn from_json(mut json_values: Map<String, Value>) -> Experiment {
         // String representing the simulation method to use. If there is no string resort to RKMethod
         let sim_method_string: &str = json_values
             .get("method")
             .unwrap_or_default()
             .as_str()
             .unwrap_or("");
-        let sim_method: SimulationMethodType;
-        match sim_method_string {
-            "RK" => sim_method = SimulationMethodType::RKMethod,
-            "RKVectorized" => sim_method = SimulationMethodType::RKVectorizedMethod,
-            "RKState" => sim_method = SimulationMethodType::RKStateMethod,
-            "PadeVectorized" => sim_method = SimulationMethodType::PadeVectorizedMethod,
-            "PadeState" => sim_method = SimulationMethodType::PadeStateMethod,
-            _ => sim_method = SimulationMethodType::RKMethod,
-        }
-
-        dbg!(&sim_method);
-
-        // There should be a map of values for the circuit blueprint under the "circuit" key
-        let mut circuit_json: Value = json_values.remove("circuit").unwrap();
-
-        // If there is a key in the circuit map called "filename" then assume that is a seperate
-        // file defining the circuit and look there
-        if circuit_json.as_object().unwrap().contains_key("filename") {
-            let circuit_file: fs::File =
-                fs::File::open(circuit_json["filename"].as_str().unwrap()).unwrap();
-            let circuit_reader: BufReader<fs::File> = BufReader::new(circuit_file);
-            circuit_json = serde_json::from_reader(circuit_reader).unwrap();
-        }
-
-        // Similar to the circuit read in for "qubits" to get the qubit array json values and look
-        // as well for the "filename" key
-        let mut qubit_json: Value = json_values.remove("qubits").unwrap();
-        if qubit_json.as_object().unwrap().contains_key("filename") {
-            let qubit_file: fs::File =
-                fs::File::open(circuit_json["filename"].as_str().unwrap()).unwrap();
-            let qubit_reader: BufReader<fs::File> = BufReader::new(qubit_file);
-            qubit_json = serde_json::from_reader(qubit_reader).unwrap();
-        }
+        let sim_method: SimulationMethodType = SimulationMethodType::from(sim_method_string);
 
         // Vector to hold the sweep parameters for the experiment
         let mut sweep_parameters: Vec<SweepParameter> = vec![];
+
+        // There should be a map of values for the circuit blueprint under the "circuit" key
+        let circuit_json: Map<String, Value> = serde_json::from_value(json_values.remove("circuit").unwrap()).unwrap();
 
         // Construct the circuit blueprint and collect the sweep parameters
         let (circuit_blueprint, mut circuit_sweep_parameters): (
             CircuitBlueprint,
             Vec<SweepParameter>,
-        ) = CircuitBlueprint::from_json(circuit_json.as_object().unwrap());
+        ) = CircuitBlueprint::from_json(circuit_json);
         for sweep_parameter in &mut circuit_sweep_parameters {
             sweep_parameter.add_path("circuit".to_string());
             sweep_parameter.reverse_path(); // Path is reversed so it reads front to back
         }
         sweep_parameters.append(&mut circuit_sweep_parameters);
 
+        // There should be a map of values for the circuit blueprint under the "circuit" key
+        let qubit_json: Map<String, Value> = serde_json::from_value(json_values.remove("qubits").unwrap()).unwrap();
+
         // Same for the qubit array blueprint. Construct and collect swept parameters
         let (qubit_array_blueprint, mut qubit_array_sweep_parameters): (
             QubitArrayBlueprint,
             Vec<SweepParameter>,
-        ) = QubitArrayBlueprint::from_json(qubit_json.as_object().unwrap());
+        ) = QubitArrayBlueprint::from_json(qubit_json);
         for sweep_parameter in &mut qubit_array_sweep_parameters {
             sweep_parameter.add_path("qubits".to_string());
             sweep_parameter.reverse_path();
@@ -140,6 +129,7 @@ impl Experiment {
             ),
             simulation_method: sim_method,
         };
+
     }
     /// Run the experiment defined in this class and save the results to the given filename
     pub fn run_experiment(&mut self, filename: &str) -> Result<()> {
@@ -160,18 +150,6 @@ impl Experiment {
 
         // Loop the total number of iterations needed to get through all swept values
         for _i in 0..num_experiment_iterations {
-            // Construct and simulate the given circuit and qubit array and save the final
-            // probability ot be in the -Z state
-            // let sim_result: DensityMatrixResult = Simulator::<RKMethod>::simulate_circuit(
-            //     self.circuit_blueprint.get_circuit(),
-            //     self.qubit_array_blueprint.get_qubit_array(),
-            //     self.simulation_times_blueprint.get_step_size(),
-            //     self.simulation_times_blueprint.get_num_samples(),
-            // );
-            // // Set the value in the results
-            // self.results
-            //     .add_simulation_result(&sweep_parameter_indicies, &sim_result);
-            //
             match self.simulation_method {
                 SimulationMethodType::RKMethod => self.results.add_simulation_result(
                     &sweep_parameter_indicies,
@@ -185,15 +163,6 @@ impl Experiment {
                 SimulationMethodType::RKVectorizedMethod => self.results.add_simulation_result(
                     &sweep_parameter_indicies,
                     &Simulator::<RKVectorizedMethod>::simulate_circuit(
-                        self.circuit_blueprint.get_circuit(),
-                        self.qubit_array_blueprint.get_qubit_array(),
-                        self.simulation_times_blueprint.get_step_size(),
-                        self.simulation_times_blueprint.get_num_samples(),
-                    ),
-                ),
-                SimulationMethodType::RKStateMethod => self.results.add_simulation_result(
-                    &sweep_parameter_indicies,
-                    &Simulator::<RKStateMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
                         self.simulation_times_blueprint.get_step_size(),

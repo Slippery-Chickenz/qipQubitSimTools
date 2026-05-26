@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::{fs, io::BufReader};
 
 use crate::blueprints::GateBlueprint;
 use crate::experiment::SweepParameter;
@@ -21,7 +22,17 @@ impl CircuitBlueprint {
     /// Construct a CircuitBlueprint from a map of Strings to json values. This will return not
     /// only the circuit blueprint but also a vector of parameters set in the json values to be
     /// swept over.
-    pub fn from_json(json_values: &Map<String, Value>) -> (CircuitBlueprint, Vec<SweepParameter>) {
+    pub fn from_json(mut json_values: Map<String, Value>) -> (CircuitBlueprint, Vec<SweepParameter>) {
+
+        // If there is a key in the map called "filename" then assume that is a seperate
+        // file defining the circuit and look there
+        if json_values.contains_key("filename") {
+            let circuit_file: fs::File =
+                fs::File::open(json_values["filename"].as_str().unwrap()).unwrap();
+            let circuit_reader: BufReader<fs::File> = BufReader::new(circuit_file);
+            json_values = serde_json::from_reader(circuit_reader).unwrap();
+        }
+
         // Ordered vector of gate names to construct the circuit
         let mut circuit_data: Vec<String> = vec![];
         // Map the circuit name strings to a blueprint to construct the circuit objects
@@ -40,9 +51,6 @@ impl CircuitBlueprint {
         // for (i, gate) in order.iter().enumerate() {
         for (gate_name, gate_values) in json_values["gates"].as_object().unwrap().iter() {
             let gate_data: &Map<String, Value> = gate_values.as_object().unwrap();
-
-            // String representing the name of the gate to add
-            // let gate_name: &str = gate.as_str().unwrap();
 
             // String representing the type of gate to add
             let gate_type: &str;
