@@ -9,6 +9,7 @@ use rustfft::FftPlanner;
 
 /// Hold the larmor frequency for a single two level system and any noise or movement that it may
 /// contain.
+#[derive(Debug)]
 pub struct LarmorFrequency {
     /// Base value that is constant for the entire simulation
     base_larmor: f64,
@@ -106,7 +107,7 @@ impl LarmorFrequency {
     /// sets, time steps and the larmor values
     pub fn save_larmor_frequencies(&mut self, duration: f64, step_size: f64) -> () {
         // Temporarily set the simulation times to generate fake data
-        self.set_simulation_times(Rc::new(SimulationTimes::new(duration, step_size, 2)));
+        self.set_simulation_times(Rc::new(SimulationTimes::new(duration, step_size, 1, 2)));
 
         if let Some(sim_times) = &self.simulation_times {
             // Create the file

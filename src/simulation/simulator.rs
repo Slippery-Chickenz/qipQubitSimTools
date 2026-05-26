@@ -33,7 +33,12 @@ impl<Method: SimulationMethod> Simulator<Method> {
         return Simulator::<Method> {
             circuit: circuit,
             qubit_array: qubit_array,
-            simulation_times: Rc::new(SimulationTimes::new(duration, step_size, num_samples)),
+            simulation_times: Rc::new(SimulationTimes::new(
+                duration,
+                step_size,
+                Method::get_num_times_per_step(),
+                num_samples,
+            )),
             simulation_method: PhantomData,
         };
     }

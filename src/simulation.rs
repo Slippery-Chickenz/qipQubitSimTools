@@ -8,8 +8,8 @@ mod simulator;
 pub use circuit::Circuit;
 pub use larmor_frequency::LarmorFrequency;
 pub use methods::{
-    DensityMatrixResult, DensityMatrixVectorResult, QubitStateResult, PadeStateMethod, PadeVectorizedMethod,
-    RKMethod, RKVectorizedMethod, SimulationMethod, SimulationResultGetter,
+    DensityMatrixResult, DensityMatrixVectorResult, PadeStateMethod, PadeVectorizedMethod,
+    QubitStateResult, RKMethod, RKVectorizedMethod, SimulationMethod, SimulationResultGetter,
     SimulationResultSaver,
 };
 pub use qubit_array::QubitArray;

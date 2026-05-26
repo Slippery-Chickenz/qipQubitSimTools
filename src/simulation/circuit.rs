@@ -137,12 +137,7 @@ impl Circuit {
         let time_steps: Array1<f64> = Array1::<f64>::linspace(0., self.duration, 10000);
 
         // Temporarily set the simulation times to get properly integrated frequencies
-        self.set_simulation_times(Rc::new(SimulationTimes::new(
-            self.duration,
-            0.1,
-            // time_steps.len(),
-            2,
-        )));
+        self.set_simulation_times(Rc::new(SimulationTimes::new(self.duration, 0.1, 1, 2)));
         self.integrate_frequencies();
 
         // Empty vectors to store data

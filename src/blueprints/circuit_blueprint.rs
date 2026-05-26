@@ -22,8 +22,9 @@ impl CircuitBlueprint {
     /// Construct a CircuitBlueprint from a map of Strings to json values. This will return not
     /// only the circuit blueprint but also a vector of parameters set in the json values to be
     /// swept over.
-    pub fn from_json(mut json_values: Map<String, Value>) -> (CircuitBlueprint, Vec<SweepParameter>) {
-
+    pub fn from_json(
+        mut json_values: Map<String, Value>,
+    ) -> (CircuitBlueprint, Vec<SweepParameter>) {
         // If there is a key in the map called "filename" then assume that is a seperate
         // file defining the circuit and look there
         if json_values.contains_key("filename") {

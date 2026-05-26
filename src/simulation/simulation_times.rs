@@ -1,6 +1,6 @@
 use std::fmt;
 
-use ndarray::Array1;
+use ndarray::{Array1, Array2};
 
 /// Error returned if a function is called which needs simulation times that are not set
 #[derive(Debug, Clone)]
@@ -18,7 +18,7 @@ impl fmt::Display for UninitializedTimesError {
 #[derive(Debug)]
 pub struct SimulationTimes {
     /// Time values at each iteration
-    iteration_times: Array1<f64>,
+    iteration_times: Array2<f64>,
     /// Indicies of the samples in the iteration times vector
     sample_indices: Vec<usize>,
     /// Time difference between iterations
@@ -27,9 +27,24 @@ pub struct SimulationTimes {
 
 impl SimulationTimes {
     /// Make a new SimulationTimes object given a duration, step size and number of samples to save
-    pub fn new(duration: f64, step_size: f64, num_samples: usize) -> SimulationTimes {
+    pub fn new(
+        duration: f64,
+        step_size: f64,
+        times_per_step: usize,
+        num_samples: usize,
+    ) -> SimulationTimes {
+        // Total number of times needed for this simulation
+        let num_times: usize = ((duration / (step_size as f64)).ceil() * (times_per_step as f64)).ceil() as usize;
+
         // Iteration times without sub timings for fourth order runge kutta
-        let iteration_times: Array1<f64> = Array1::<f64>::range(0., duration, step_size);
+        let iteration_times: Array2<f64> =
+            Array1::<f64>::linspace(0., duration, num_times)
+            // Array1::<f64>::range(0., duration, step_size / (times_per_step as f64))
+                .into_shape_with_order((
+                    (duration / (step_size as f64)).ceil() as usize,
+                    times_per_step,
+                ))
+                .unwrap();
 
         if num_samples >= iteration_times.len() {
             panic!("Not enough iteration times for the desired number of samples");
@@ -69,12 +84,12 @@ impl SimulationTimes {
         return self.sample_indices.len();
     }
     /// Get all the iteration times
-    pub fn get_iteration_times(&self) -> &Array1<f64> {
+    pub fn get_iteration_times(&self) -> &Array2<f64> {
         return &self.iteration_times;
     }
     /// Get a specific iteration time based on an index
     pub fn get_iteration_time(&self, index: usize) -> f64 {
-        return self.iteration_times[index];
+        return self.iteration_times[[index, 0]];
     }
     /// Get the number of iterations for the simulation
     pub fn get_num_iterations(&self) -> usize {

@@ -1,6 +1,9 @@
 {
-	"step_size": 0.001,
-	"method": "PadeState",
+	"step_size": 0.01,
+	"method": "RK",
+	"umethod": "RKVectorized",
+	"umethod": "PadeVectorized",
+	"umethod": "PadeState",
 	"output": {
 		"num_samples": 1,
 		"state": true,
@@ -20,7 +23,10 @@
 	},
 	"qubits": { 
 		"q1": {
-			"larmor": { "linspace" : [-2, 2, 100] },
+			"larmor": {
+				"base_value": { "linspace" : [-2, 2, 100] },
+				"1/f_power": 0.1
+			},
 			"guess_larmor": 0,
 			"decoherence": 0.0
 		}

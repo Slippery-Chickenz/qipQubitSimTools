@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use std::rc::Rc;
 
-use crate::simulation::SimulationTimes;
+use crate::simulation::{LarmorFrequency, SimulationTimes};
 
 use ndarray::{Array1, Array2};
 use num_complex::Complex64;
@@ -15,7 +15,8 @@ pub struct QubitArray {
     /// Starting density matrix of the qubits
     starting_state: Array1<Complex64>,
     /// Larmor value of the qubit
-    larmor: f64,
+    // larmor: f64,
+    larmor: LarmorFrequency,
     /// Guess at the larmor value for the qubits
     guess_larmor: f64,
     /// Coefficient to determine how strong decoherence is
@@ -27,7 +28,12 @@ pub struct QubitArray {
 impl QubitArray {
     /// Get a QubitArray object with a given number of qubits with a certain larmor and guess
     /// larmor. This sets the starting density matrix to be in the +z state e.g. (1, 0)
-    pub fn new(num_qubits: u32, larmor: f64, guess_larmor: f64, decoherence: f64) -> QubitArray {
+    pub fn new(
+        num_qubits: u32,
+        larmor: LarmorFrequency,
+        guess_larmor: f64,
+        decoherence: f64,
+    ) -> QubitArray {
         // Set the density matrix as a kronecker product of the +z state for each qubit
         let mut density_matrix: Array1<Complex64> = Array1::<Complex64>::zeros(4);
         density_matrix[0] = Complex64::new(1., 0.);
@@ -43,7 +49,7 @@ impl QubitArray {
     /// Set the simulation times for the qubit array
     pub fn set_simulation_times(&mut self, simulation_times: Rc<SimulationTimes>) -> () {
         self.simulation_times = Some(Rc::clone(&simulation_times));
-        // self.larmor.set_simulation_times(simulation_times);
+        self.larmor.set_simulation_times(simulation_times);
         return;
     }
     /// Get the density_matrix that represents the starting state for the qubits
@@ -56,10 +62,11 @@ impl QubitArray {
     }
     /// Get the detuning Hamiltonian for the qubit array. Just a 2x2 array with the detuning value
     /// (guess - larmor) for each time step in the simulation times
-    pub fn get_detuning_hamiltonian(&self) -> Array2<Complex64> {
+    pub fn get_detuning_hamiltonian(&self, t_index: usize) -> Array2<Complex64> {
         // Detuning between guess and qubit. Factor of pi is to convert to angular frequency
         // combined with 1/2 factor from S_z gate
-        let detuning: f64 = (self.larmor - self.guess_larmor) * -PI;
+        let detuning: f64 =
+            (self.larmor.get_larmor_frequencies()[t_index] - self.guess_larmor) * -PI;
 
         let detuning_hamiltonian: Array2<Complex64> =
             Array2::<Complex64>::from_shape_fn((2, 2), |(i, j)| {

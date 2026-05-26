@@ -1,5 +1,5 @@
-use std::rc::Rc;
 use std::fmt::Debug;
+use std::rc::Rc;
 
 use crate::simulation::{Circuit, QubitArray, SimulationTimes};
 
@@ -18,6 +18,7 @@ pub trait SimulationMethod {
         end_index: usize,
     ) -> Self::QubitState;
     fn get_state(array: &Array1<Complex64>) -> Self::QubitState;
+    fn get_num_times_per_step() -> usize;
 }
 
 pub trait SimulationResultSaver {

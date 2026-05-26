@@ -70,11 +70,7 @@ impl QubitStateResult {
     }
     /// Get a specific state sample
     pub fn get_state(&self, index: usize) -> Array1<Complex64> {
-        return self
-            .states
-            .index_axis(Axis(0), index)
-            .clone()
-            .to_owned();
+        return self.states.index_axis(Axis(0), index).clone().to_owned();
     }
     /// Get the simulation times for these results
     pub fn get_simulation_times(&self) -> Rc<SimulationTimes> {
@@ -82,7 +78,9 @@ impl QubitStateResult {
     }
     /// Get the probability that a certain sample number is in a given state
     pub fn get_probability(&self, sample_num: usize, state: &Array1<Complex64>) -> f64 {
-        let inner_product: Complex64 = state.mapv(|x| x.conj()).dot(&self.states.index_axis(Axis(0), sample_num));
+        let inner_product: Complex64 = state
+            .mapv(|x| x.conj())
+            .dot(&self.states.index_axis(Axis(0), sample_num));
         return (inner_product.conj() * inner_product).re;
     }
     /// Get the probability of the final sample to be in a given state
@@ -99,8 +97,7 @@ impl QubitStateResult {
     // Get the probability of every sample to be in a given state
     pub fn get_state_probabilities(&self, state: &Array1<Complex64>) -> Array1<f64> {
         // Make the array of probabilities to be the length of the number of samples
-        let mut probabilities: Array1<f64> =
-            Array1::<f64>::zeros([self.states.shape()[0]]);
+        let mut probabilities: Array1<f64> = Array1::<f64>::zeros([self.states.shape()[0]]);
         // Loop over all the number of samples and set the probabilities
         for i in 0..self.states.shape()[0] {
             probabilities[[i]] = self.get_probability(i, state);
@@ -108,9 +105,9 @@ impl QubitStateResult {
         return probabilities;
     }
     pub fn get_bloch_coord_cart(&self, sample_num: usize) -> (f64, f64, f64) {
-
         // Sample state to find the bloch coord for
-        let sample_state: Array1<Complex64> = self.states.index_axis(Axis(0), sample_num).to_owned();
+        let sample_state: Array1<Complex64> =
+            self.states.index_axis(Axis(0), sample_num).to_owned();
 
         // Calculate the density matrix for the state
         let density_matrix: Array2<Complex64> = sample_state

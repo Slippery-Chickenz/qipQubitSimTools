@@ -25,22 +25,37 @@ impl SimulationMethod for RKVectorizedMethod {
 
             // Four coefficients for Runge Kutta
             let k_1: Array1<Complex64> =
-                RKVectorizedMethod::get_lindblad_operator(circuit, qubit_array, time)
+                RKVectorizedMethod::get_lindblad_operator(circuit, qubit_array, time, t_index)
                     .dot(&qubit_state);
-            let k_2: Array1<Complex64> =
-                RKVectorizedMethod::get_lindblad_operator(circuit, qubit_array, time + (dt / 2.))
-                    .dot(&(&qubit_state + (&k_1 * dt)));
-            let k_3: Array1<Complex64> =
-                RKVectorizedMethod::get_lindblad_operator(circuit, qubit_array, time + (dt / 2.))
-                    .dot(&(&qubit_state + (&k_2 * dt)));
-            let k_4: Array1<Complex64> =
-                RKVectorizedMethod::get_lindblad_operator(circuit, qubit_array, time + dt)
-                    .dot(&(&qubit_state + (&k_3 * dt)));
+            let k_2: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
+                circuit,
+                qubit_array,
+                time + (dt / 2.),
+                t_index + 1,
+            )
+            .dot(&(&qubit_state + (&k_1 * (dt / 2.))));
+            let k_3: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
+                circuit,
+                qubit_array,
+                time + (dt / 2.),
+                t_index + 2,
+            )
+            .dot(&(&qubit_state + (&k_2 * (dt / 2.))));
+            let k_4: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
+                circuit,
+                qubit_array,
+                time + dt,
+                t_index + 3,
+            )
+            .dot(&(&qubit_state + (&k_3 * dt)));
 
             let next_state = qubit_state + (k_1 + (k_2 * 2.) + (k_3 * 2.) + k_4) * (dt / 6.);
             qubit_state = next_state;
         }
         return qubit_state;
+    }
+    fn get_num_times_per_step() -> usize {
+        return 4;
     }
     fn get_state(_array: &Array1<Complex64>) -> Array1<Complex64> {
         let mut density_matrix: Array1<Complex64> = Array1::<Complex64>::zeros(4);
@@ -55,11 +70,12 @@ impl RKVectorizedMethod {
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         time: f64,
+        time_index: usize,
     ) -> Array2<Complex64> {
         let identity: Array2<Complex64> = Array2::<Complex64>::eye(2);
 
-        let hamiltonian: Array2<Complex64> =
-            circuit.get_hamiltonian_operator(time) + qubit_array.get_detuning_hamiltonian();
+        let hamiltonian: Array2<Complex64> = circuit.get_hamiltonian_operator(time)
+            + qubit_array.get_detuning_hamiltonian(time_index);
 
         let system_term: Array2<Complex64> = Complex64::new(0., -1.)
             * (kron(&identity, &hamiltonian) - kron(&hamiltonian.reversed_axes(), &identity));

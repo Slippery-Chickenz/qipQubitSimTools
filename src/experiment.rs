@@ -11,9 +11,7 @@ pub use sweep_parameter::SweepParameter;
 
 use experiment_results::ExperimentResults;
 
-use crate::simulation::{
-    PadeStateMethod, PadeVectorizedMethod, RKMethod, RKVectorizedMethod,
-};
+use crate::simulation::{PadeStateMethod, PadeVectorizedMethod, RKMethod, RKVectorizedMethod};
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
     simulation::Simulator,
@@ -63,7 +61,6 @@ pub struct Experiment {
 }
 
 impl Experiment {
-
     /// Get an experiment object from a json file name
     pub fn from_json_file(filename: &str) -> Experiment {
         // File and reader to read the experiment config from
@@ -88,7 +85,8 @@ impl Experiment {
         let mut sweep_parameters: Vec<SweepParameter> = vec![];
 
         // There should be a map of values for the circuit blueprint under the "circuit" key
-        let circuit_json: Map<String, Value> = serde_json::from_value(json_values.remove("circuit").unwrap()).unwrap();
+        let circuit_json: Map<String, Value> =
+            serde_json::from_value(json_values.remove("circuit").unwrap()).unwrap();
 
         // Construct the circuit blueprint and collect the sweep parameters
         let (circuit_blueprint, mut circuit_sweep_parameters): (
@@ -102,7 +100,8 @@ impl Experiment {
         sweep_parameters.append(&mut circuit_sweep_parameters);
 
         // There should be a map of values for the circuit blueprint under the "circuit" key
-        let qubit_json: Map<String, Value> = serde_json::from_value(json_values.remove("qubits").unwrap()).unwrap();
+        let qubit_json: Map<String, Value> =
+            serde_json::from_value(json_values.remove("qubits").unwrap()).unwrap();
 
         // Same for the qubit array blueprint. Construct and collect swept parameters
         let (qubit_array_blueprint, mut qubit_array_sweep_parameters): (
@@ -129,7 +128,6 @@ impl Experiment {
             ),
             simulation_method: sim_method,
         };
-
     }
     /// Run the experiment defined in this class and save the results to the given filename
     pub fn run_experiment(&mut self, filename: &str) -> Result<()> {

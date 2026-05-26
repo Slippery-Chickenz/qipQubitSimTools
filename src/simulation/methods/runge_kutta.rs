@@ -24,26 +24,36 @@ impl SimulationMethod for RKMethod {
 
             // Four coefficients for Runge Kutta
             let k_1: Array2<Complex64> =
-                RKMethod::get_lindblad_operator(circuit, qubit_array, time, &qubit_state);
+                RKMethod::get_lindblad_operator(circuit, qubit_array, time, t_index, &qubit_state);
             let k_2: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 circuit,
                 qubit_array,
                 time + (dt / 2.),
-                &qubit_state,
+                t_index + 1,
+                &(&qubit_state + (&k_1 * (dt / 2.))),
             );
             let k_3: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 circuit,
                 qubit_array,
                 time + (dt / 2.),
-                &qubit_state,
+                t_index + 2,
+                &(&qubit_state + (&k_2 * (dt / 2.))),
             );
-            let k_4: Array2<Complex64> =
-                RKMethod::get_lindblad_operator(circuit, qubit_array, time + dt, &qubit_state);
+            let k_4: Array2<Complex64> = RKMethod::get_lindblad_operator(
+                circuit,
+                qubit_array,
+                time + dt,
+                t_index + 3,
+                &(&qubit_state + (&k_3 * dt)),
+            );
 
             let next_state = qubit_state + (k_1 + (k_2 * 2.) + (k_3 * 2.) + k_4) * (dt / 6.);
             qubit_state = next_state;
         }
         return qubit_state;
+    }
+    fn get_num_times_per_step() -> usize {
+        return 4;
     }
     fn get_state(_array: &Array1<Complex64>) -> Array2<Complex64> {
         let mut density_matrix: Array2<Complex64> = Array2::<Complex64>::zeros((2, 2));
@@ -58,10 +68,11 @@ impl RKMethod {
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         time: f64,
+        time_index: usize,
         density_matrix: &Array2<Complex64>,
     ) -> Array2<Complex64> {
-        let hamiltonian: Array2<Complex64> =
-            circuit.get_hamiltonian_operator(time) + qubit_array.get_detuning_hamiltonian();
+        let hamiltonian: Array2<Complex64> = circuit.get_hamiltonian_operator(time)
+            + qubit_array.get_detuning_hamiltonian(time_index);
 
         let system_term: Array2<Complex64> = Complex64::new(0., -1.)
             * (hamiltonian.dot(density_matrix) - density_matrix.dot(&hamiltonian));

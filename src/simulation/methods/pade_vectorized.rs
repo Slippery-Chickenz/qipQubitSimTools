@@ -24,11 +24,14 @@ impl SimulationMethod for PadeVectorizedMethod {
         for t_index in start_index..end_index {
             let time = simulation_times.get_iteration_time(t_index);
             let lindblad: Array2<Complex64> =
-                PadeVectorizedMethod::get_lindblad_operator(circuit, qubit_array, time);
+                PadeVectorizedMethod::get_lindblad_operator(circuit, qubit_array, time, t_index);
             let evolution_operator: Array2<Complex64> = expm(&(lindblad * dt)).0;
             qubit_state = evolution_operator.dot(&qubit_state);
         }
         return qubit_state;
+    }
+    fn get_num_times_per_step() -> usize {
+        return 4;
     }
     fn get_state(_array: &Array1<Complex64>) -> Array1<Complex64> {
         let mut density_matrix: Array1<Complex64> = Array1::<Complex64>::zeros(4);
@@ -43,11 +46,12 @@ impl PadeVectorizedMethod {
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         time: f64,
+        time_index: usize,
     ) -> Array2<Complex64> {
         let identity: Array2<Complex64> = Array2::<Complex64>::eye(2);
 
-        let hamiltonian: Array2<Complex64> =
-            circuit.get_hamiltonian_operator(time) + qubit_array.get_detuning_hamiltonian();
+        let hamiltonian: Array2<Complex64> = circuit.get_hamiltonian_operator(time)
+            + qubit_array.get_detuning_hamiltonian(time_index);
 
         let system_term: Array2<Complex64> = Complex64::new(0., -1.)
             * (kron(&identity, &hamiltonian) - kron(&hamiltonian.reversed_axes(), &identity));

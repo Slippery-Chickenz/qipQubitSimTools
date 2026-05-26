@@ -5,12 +5,11 @@ extern crate blas_src;
 extern crate serde_json;
 use serde_json::{Map, Value, json};
 
-use std::time::{Instant};
+use std::time::Instant;
 
 use qip_qst::experiment::Experiment;
 
 fn main() {
-
     let args: Vec<String> = env::args().collect();
 
     println!("Benchmarking {}", args[1]);
@@ -25,7 +24,12 @@ fn main() {
     let mut json_values: Map<String, Value> = serde_json::from_reader(reader).unwrap();
 
     // Map of simulation method to the time it took to simulate
-    let mut benchmarking_stats: Vec<(&str, f64)> = vec![("RK", 0.), ("RKVectorized", 0.), ("PadeVectorized", 0.), ("PadeState", 0.)];
+    let mut benchmarking_stats: Vec<(&str, f64)> = vec![
+        ("RK", 0.),
+        ("RKVectorized", 0.),
+        ("PadeVectorized", 0.),
+        ("PadeState", 0.),
+    ];
 
     // Loop over the benchmarking methods and test each one
     for (benchmark_string, time) in &mut benchmarking_stats {
