@@ -6,6 +6,7 @@ use crate::simulation::SimulationResultGetter;
 use super::bloch_coord_results::BlochCoordResults;
 use super::duration_result::DurationResult;
 use super::probability_results::ProbabilityResults;
+use super::waveform_results::WaveformResults;
 
 use hdf5::{Group, Result};
 use serde_json::{Map, Value};
@@ -64,6 +65,14 @@ impl ExperimentResults {
         if json_values.contains_key("bloch_coords") {
             if json_values["bloch_coords"].as_bool().unwrap() {
                 results.push(Box::new(BlochCoordResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                )));
+            }
+        }
+        if json_values.contains_key("waveform") {
+            if json_values["waveform"].as_bool().unwrap() {
+                results.push(Box::new(WaveformResults::from_json(
                     results_dim.clone(),
                     num_samples,
                 )));

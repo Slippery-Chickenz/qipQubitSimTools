@@ -1,27 +1,26 @@
 {
-	"step_size": 0.01,
+	"step_size": 0.1,
+	"method": "PadeState",
 	"output": {
 		"num_samples": 1,
 		"state": true,
-		"bloch_coords": true
+		"bloch_coords": false
 	},
 	"circuit": { 
 		"gates": {
 			"Idle": {
-				"duration": {
-					"linspace": 0
-				}
+				"duration": 10
 			},
 			"PiO2X": {},
 			"PiO2Y": {},
 			"ATMGate": {
 				"rise_time": 10,
-				"fall_time": 70,
-				"max_amplitude": 2,
-				"max_frequency": 1,
+				"fall_time": 175,
+				"max_amplitude": 0.5,
+				"max_frequency": 0.6,
 				"rise_gradient": 0.95,
-				"fall_gradient": 0.02,
-				"duration": 100
+				"fall_gradient": 0.05,
+				"duration": 200
 			}
 		},
 		"order": ["ATMGate"]
@@ -30,14 +29,12 @@
 		"q1": {
 			"larmor": {
 				"base_value": {
-					"linspace" : [-1.25, 1.25, 500]
+					"linspace" : [-1, 1, 500]
 				},
 				"1/f_power": 0
 			},
-			"channels": {
-				"dephasing_lifetime": 0
-			},
-			"guess_larmor": 0
+			"guess_larmor": 0,
+			"decoherence": 0
 		}
 	}
 }

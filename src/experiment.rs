@@ -6,6 +6,7 @@ mod duration_result;
 mod experiment_results;
 mod probability_results;
 mod sweep_parameter;
+mod waveform_results;
 
 pub use sweep_parameter::SweepParameter;
 
@@ -41,6 +42,11 @@ impl From<&str> for SimulationMethodType {
     }
 }
 
+/// Error to be returned if construction of an experiment failed
+pub enum ExperimentConstructionError {
+
+}
+
 /// Experiment to be run. Consists of a circuit, qubit array, and simulation times to simulate and
 /// then a vector of parameters and values to sweep across and run simulations for each combination
 /// of parameters.
@@ -62,14 +68,14 @@ pub struct Experiment {
 
 impl Experiment {
     /// Get an experiment object from a json file name
-    pub fn from_json_file(filename: &str) -> Experiment {
+    pub fn from_json_file(filename: &str) -> Result<Experiment, std::io::Error> {
         // File and reader to read the experiment config from
-        let file: fs::File = fs::File::open(filename).unwrap();
+        let file: fs::File = fs::File::open(filename)?;
         let reader: BufReader<fs::File> = BufReader::new(file);
 
         // Json values read in from the file
-        let json_values: Map<String, Value> = serde_json::from_reader(reader).unwrap();
-        return Experiment::from_json(json_values);
+        let json_values: Map<String, Value> = serde_json::from_reader(reader)?;//.unwrap();
+        return Ok(Experiment::from_json(json_values));
     }
     /// Get an experiment object from a map of strings to json values
     pub fn from_json(mut json_values: Map<String, Value>) -> Experiment {
