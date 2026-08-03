@@ -12,7 +12,9 @@ pub use sweep_parameter::SweepParameter;
 
 use experiment_results::ExperimentResults;
 
-use crate::simulation::{PadeStateMethod, PadeVectorizedMethod, RKMethod, RKVectorizedMethod};
+use crate::simulation::{
+    PadeStateMethod, PadeVectorizedMethod, RKMethod, RKVectorizedMethod, ReferenceFrame,
+};
 use crate::{
     blueprints::{CircuitBlueprint, QubitArrayBlueprint, SimulationTimesBlueprint},
     simulation::Simulator,
@@ -43,9 +45,7 @@ impl From<&str> for SimulationMethodType {
 }
 
 /// Error to be returned if construction of an experiment failed
-pub enum ExperimentConstructionError {
-
-}
+pub enum ExperimentConstructionError {}
 
 /// Experiment to be run. Consists of a circuit, qubit array, and simulation times to simulate and
 /// then a vector of parameters and values to sweep across and run simulations for each combination
@@ -64,6 +64,8 @@ pub struct Experiment {
     results: ExperimentResults,
     /// Simulation method to run the experiment with
     simulation_method: SimulationMethodType,
+    /// Reference frame for simulation
+    reference_frame: ReferenceFrame,
 }
 
 impl Experiment {
@@ -74,7 +76,7 @@ impl Experiment {
         let reader: BufReader<fs::File> = BufReader::new(file);
 
         // Json values read in from the file
-        let json_values: Map<String, Value> = serde_json::from_reader(reader)?;//.unwrap();
+        let json_values: Map<String, Value> = serde_json::from_reader(reader)?; //.unwrap();
         return Ok(Experiment::from_json(json_values));
     }
     /// Get an experiment object from a map of strings to json values
@@ -86,6 +88,18 @@ impl Experiment {
             .as_str()
             .unwrap_or("");
         let sim_method: SimulationMethodType = SimulationMethodType::from(sim_method_string);
+        let reference_frame: ReferenceFrame;
+        match json_values
+            .get("frame")
+            .unwrap_or_default()
+            .as_str()
+            .unwrap_or("")
+        {
+            "Lab" => reference_frame = ReferenceFrame::Lab,
+            "Rotating" => reference_frame = ReferenceFrame::Rotating,
+            "Pulse" => reference_frame = ReferenceFrame::Pulse,
+            &_ => reference_frame = ReferenceFrame::Rotating,
+        }
 
         // Vector to hold the sweep parameters for the experiment
         let mut sweep_parameters: Vec<SweepParameter> = vec![];
@@ -133,6 +147,7 @@ impl Experiment {
                 Rc::clone(&rc_sweep_parameters),
             ),
             simulation_method: sim_method,
+            reference_frame: reference_frame,
         };
     }
     /// Run the experiment defined in this class and save the results to the given filename
@@ -160,6 +175,7 @@ impl Experiment {
                     &Simulator::<RKMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
+                        self.reference_frame.clone(),
                         self.simulation_times_blueprint.get_step_size(),
                         self.simulation_times_blueprint.get_num_samples(),
                     ),
@@ -169,6 +185,7 @@ impl Experiment {
                     &Simulator::<RKVectorizedMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
+                        self.reference_frame.clone(),
                         self.simulation_times_blueprint.get_step_size(),
                         self.simulation_times_blueprint.get_num_samples(),
                     ),
@@ -178,6 +195,7 @@ impl Experiment {
                     &Simulator::<PadeVectorizedMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
+                        self.reference_frame.clone(),
                         self.simulation_times_blueprint.get_step_size(),
                         self.simulation_times_blueprint.get_num_samples(),
                     ),
@@ -187,6 +205,7 @@ impl Experiment {
                     &Simulator::<PadeStateMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
+                        self.reference_frame.clone(),
                         self.simulation_times_blueprint.get_step_size(),
                         self.simulation_times_blueprint.get_num_samples(),
                     ),

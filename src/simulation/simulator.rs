@@ -1,7 +1,7 @@
 use std::{marker::PhantomData, rc::Rc};
 
 use crate::simulation::{
-    Circuit, QubitArray, SimulationMethod, SimulationResultSaver, SimulationTimes,
+    Circuit, QubitArray, ReferenceFrame, SimulationMethod, SimulationResultSaver, SimulationTimes,
 };
 
 /// Simulator for a given quantum circuit on an array of qubits
@@ -12,6 +12,8 @@ pub struct Simulator<Method: SimulationMethod> {
     qubit_array: QubitArray,
     /// Times and samples for the simulation to be run and saved at
     simulation_times: Rc<SimulationTimes>,
+    /// Reference frame to run the simulation in
+    reference_frame: ReferenceFrame,
     /// Phantom data to store the type of method we use to simulate the circuit
     simulation_method: PhantomData<Method>,
 }
@@ -26,6 +28,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
     pub fn new(
         circuit: Circuit,
         qubit_array: QubitArray,
+        reference_frame: ReferenceFrame,
         step_size: f64,
         num_samples: usize,
     ) -> Simulator<Method> {
@@ -39,6 +42,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
                 Method::get_num_times_per_step(),
                 num_samples,
             )),
+            reference_frame: reference_frame,
             simulation_method: PhantomData,
         };
     }
@@ -46,11 +50,17 @@ impl<Method: SimulationMethod> Simulator<Method> {
     pub fn simulate_circuit(
         circuit: Circuit,
         qubit_array: QubitArray,
+        reference_frame: ReferenceFrame,
         step_size: f64,
         num_samples: usize,
     ) -> Method::ResultType {
-        let mut simulator: Simulator<Method> =
-            Simulator::new(circuit, qubit_array, step_size, num_samples);
+        let mut simulator: Simulator<Method> = Simulator::new(
+            circuit,
+            qubit_array,
+            reference_frame,
+            step_size,
+            num_samples,
+        );
         return simulator.run();
     }
     /// Simulate the circuit currently set
@@ -70,6 +80,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
                 &self.qubit_array,
                 self.simulation_times.as_ref(),
                 qubit_state,
+                &self.reference_frame,
                 iteration_indicies[i],
                 iteration_indicies[i + 1] - 1,
             );

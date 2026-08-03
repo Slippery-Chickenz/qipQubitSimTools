@@ -81,4 +81,12 @@ impl QubitArray {
     pub fn get_decoherence(&self) -> f64 {
         return self.decoherence;
     }
+    /// Get the larmor frequency of the qubits
+    pub fn get_larmor_frequency(&self, t_index: usize) -> f64 {
+        return self.larmor.get_larmor_frequencies()[t_index];
+    }
+    /// Get the guess larmor frequency of the qubits
+    pub fn get_guess_larmor(&self) -> f64 {
+        return self.guess_larmor;
+    }
 }

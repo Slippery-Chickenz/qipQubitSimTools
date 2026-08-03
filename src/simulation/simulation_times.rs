@@ -34,17 +34,17 @@ impl SimulationTimes {
         num_samples: usize,
     ) -> SimulationTimes {
         // Total number of times needed for this simulation
-        let num_times: usize = ((duration / (step_size as f64)).ceil() * (times_per_step as f64)).ceil() as usize;
+        let num_times: usize =
+            ((duration / (step_size as f64)).ceil() * (times_per_step as f64)).ceil() as usize;
 
         // Iteration times without sub timings for fourth order runge kutta
-        let iteration_times: Array2<f64> =
-            Array1::<f64>::linspace(0., duration, num_times)
+        let iteration_times: Array2<f64> = Array1::<f64>::linspace(0., duration, num_times)
             // Array1::<f64>::range(0., duration, step_size / (times_per_step as f64))
-                .into_shape_with_order((
-                    (duration / (step_size as f64)).ceil() as usize,
-                    times_per_step,
-                ))
-                .unwrap();
+            .into_shape_with_order((
+                (duration / (step_size as f64)).ceil() as usize,
+                times_per_step,
+            ))
+            .unwrap();
 
         if num_samples >= iteration_times.len() {
             panic!("Not enough iteration times for the desired number of samples");

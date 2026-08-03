@@ -6,6 +6,14 @@ use crate::simulation::{Circuit, QubitArray, SimulationTimes};
 use ndarray::Array1;
 use num_complex::Complex64;
 
+/// Reference frame to simulate in
+#[derive(Debug, Clone)]
+pub enum ReferenceFrame {
+    Lab,
+    Rotating,
+    Pulse,
+}
+
 pub trait SimulationMethod {
     type QubitState: Clone + Debug;
     type ResultType: SimulationResultSaver<QubitState = Self::QubitState> + SimulationResultGetter;
@@ -14,6 +22,7 @@ pub trait SimulationMethod {
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
         qubit_state: Self::QubitState,
+        reference_frame: &ReferenceFrame,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitState;

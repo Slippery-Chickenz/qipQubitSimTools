@@ -1,5 +1,6 @@
 use crate::simulation::{
-    Circuit, DensityMatrixVectorResult, QubitArray, SimulationMethod, SimulationTimes,
+    Circuit, DensityMatrixVectorResult, QubitArray, ReferenceFrame, SimulationMethod,
+    SimulationTimes,
 };
 
 use ndarray::linalg::kron;
@@ -16,6 +17,7 @@ impl SimulationMethod for RKVectorizedMethod {
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
         mut qubit_state: Self::QubitState,
+        reference_frame: &ReferenceFrame,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitState {

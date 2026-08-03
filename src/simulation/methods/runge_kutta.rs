@@ -1,5 +1,5 @@
 use crate::simulation::{
-    Circuit, DensityMatrixResult, QubitArray, SimulationMethod, SimulationTimes,
+    Circuit, DensityMatrixResult, QubitArray, ReferenceFrame, SimulationMethod, SimulationTimes,
 };
 
 use ndarray::{Array1, Array2};
@@ -15,6 +15,7 @@ impl SimulationMethod for RKMethod {
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
         mut qubit_state: Self::QubitState,
+        reference_frame: &ReferenceFrame,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitState {

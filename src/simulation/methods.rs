@@ -15,4 +15,6 @@ pub use qubit_state_result::QubitStateResult;
 pub use runge_kutta::RKMethod;
 pub use runge_kutta_vectorized::RKVectorizedMethod;
 
-pub use simulation_method::{SimulationMethod, SimulationResultGetter, SimulationResultSaver};
+pub use simulation_method::{
+    ReferenceFrame, SimulationMethod, SimulationResultGetter, SimulationResultSaver,
+};

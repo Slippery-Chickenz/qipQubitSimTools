@@ -9,8 +9,8 @@ pub use circuit::Circuit;
 pub use larmor_frequency::LarmorFrequency;
 pub use methods::{
     DensityMatrixResult, DensityMatrixVectorResult, PadeStateMethod, PadeVectorizedMethod,
-    QubitStateResult, RKMethod, RKVectorizedMethod, SimulationMethod, SimulationResultGetter,
-    SimulationResultSaver,
+    QubitStateResult, RKMethod, RKVectorizedMethod, ReferenceFrame, SimulationMethod,
+    SimulationResultGetter, SimulationResultSaver,
 };
 pub use qubit_array::QubitArray;
 pub use simulation_times::SimulationTimes;

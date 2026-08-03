@@ -69,7 +69,7 @@ impl Circuit {
     /// simulation times.
     pub fn set_simulation_times(&mut self, times: Rc<SimulationTimes>) -> () {
         self.simulation_times = Some(times);
-        self.integrate_frequencies();
+        // self.integrate_frequencies();
         return;
     }
     /// Integrate the frequencies of the circuit based on simulation times. This integration needs
@@ -80,55 +80,55 @@ impl Circuit {
     /// times are set as a number of samples and an number of iterations per sample. The first axis
     /// of the integrated frequencies is the sample number and the second axis is the iteration
     /// number for that sample.
-    fn integrate_frequencies(&mut self) -> () {
-        // Cannot integrate frequencies without simulation times
-        if let Some(sim_times) = &self.simulation_times {
-            self.integrated_frequencies = Array1::<f64>::zeros(sim_times.get_num_iterations());
-            let mut temp_f: f64 = 0.; // Temporary frequency that is the integrated value
-
-            // Outer axis is looped over number of samples
-            for (i, t) in sim_times.get_iteration_times().iter().enumerate() {
-                temp_f += self.get_frequency(*t);
-                self.integrated_frequencies[i] = temp_f;
-            }
-            // Multiply by dt for integration
-            self.integrated_frequencies *= sim_times.get_dt();
-        } else {
-            eprintln!("{}", UninitializedTimesError);
-        }
-        return;
-    }
+    // fn integrate_frequencies(&mut self) -> () {
+    //     // Cannot integrate frequencies without simulation times
+    //     if let Some(sim_times) = &self.simulation_times {
+    //         self.integrated_frequencies = Array1::<f64>::zeros(sim_times.get_num_iterations());
+    //         let mut temp_f: f64 = 0.; // Temporary frequency that is the integrated value
+    //
+    //         // Outer axis is looped over number of samples
+    //         for (i, t) in sim_times.get_iteration_times().iter().enumerate() {
+    //             temp_f += self.get_raw_frequency(*t);
+    //             self.integrated_frequencies[i] = temp_f;
+    //         }
+    //         // Multiply by dt for integration
+    //         self.integrated_frequencies *= sim_times.get_dt();
+    //     } else {
+    //         eprintln!("{}", UninitializedTimesError);
+    //     }
+    //     return;
+    // }
     /// Get hamiltonian operator for every iteration for a specific sample. If the sample number
     /// given is n then this will return the hamiltonian operators for iterations between n and n+1.
     /// This hamiltonian is just the pulse component and is denoted as:
     /// $$ H = \frac{\Omega(t)}{2} 2\pi (\cos(2\pi \int f(t) + \phi(t))S_x + \sin(2\pi \int f(t) + \phi(t))S_y) $$
-    pub fn get_hamiltonian_operator(&mut self, time: f64) -> Array2<Complex64> {
-        // Array of hamiltonians at each time step
-        // Outer axis is the iteration number
-        // Below that are the 2x2 Hamiltonians for the single qubit gates
-        let mut hamiltonian: Array2<Complex64> = Array2::<Complex64>::zeros([2, 2]);
-
-        //let t: f64 = sim_times.get_iteration_time(time_index);
-        let t: f64 = time;
-
-        // Amplitude, frequency, and phase for this time step in the circuit
-        let amplitude: f64 = self.get_amplitude(t);
-        // let frequency: f64 = self.get_integrated_frequency(time_index);
-        self.frequency += self.get_frequency(t) * (t - self.time);
-        self.time = t;
-        let phase: f64 = self.get_phase(t);
-
-        // Set hamiltonian values
-        hamiltonian[[0, 1]] = Complex64::new(
-            amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).cos(),
-            amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).sin(),
-        );
-        hamiltonian[[1, 0]] = Complex64::new(
-            amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).cos(),
-            -amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).sin(),
-        );
-        return hamiltonian;
-    }
+    // pub fn get_hamiltonian_operator(&mut self, time: f64) -> Array2<Complex64> {
+    //     // Array of hamiltonians at each time step
+    //     // Outer axis is the iteration number
+    //     // Below that are the 2x2 Hamiltonians for the single qubit gates
+    //     let mut hamiltonian: Array2<Complex64> = Array2::<Complex64>::zeros([2, 2]);
+    //
+    //     //let t: f64 = sim_times.get_iteration_time(time_index);
+    //     let t: f64 = time;
+    //
+    //     // Amplitude, frequency, and phase for this time step in the circuit
+    //     let amplitude: f64 = self.get_amplitude(t);
+    //     // let frequency: f64 = self.get_integrated_frequency(time_index);
+    //     self.frequency += self.get_raw_frequency(t) * (t - self.time);
+    //     self.time = t;
+    //     let phase: f64 = self.get_phase(t);
+    //
+    //     // Set hamiltonian values
+    //     hamiltonian[[0, 1]] = Complex64::new(
+    //         amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).cos(),
+    //         amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).sin(),
+    //     );
+    //     hamiltonian[[1, 0]] = Complex64::new(
+    //         amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).cos(),
+    //         -amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).sin(),
+    //     );
+    //     return hamiltonian;
+    // }
     /// Get the data needed to plot out the circuit. Returns 4 values: times for each data point,
     /// frequency data, amplitude_data, and combined pulse data (Real values of (0, 1) matrix
     /// element)
@@ -138,7 +138,7 @@ impl Circuit {
 
         // Temporarily set the simulation times to get properly integrated frequencies
         self.set_simulation_times(Rc::new(SimulationTimes::new(self.duration, 0.1, 1, 2)));
-        self.integrate_frequencies();
+        // self.integrate_frequencies();
 
         // Empty vectors to store data
         let mut frequency_data: Array1<f64> = Array1::<f64>::zeros(time_steps.len());
@@ -147,12 +147,13 @@ impl Circuit {
 
         // Loop over each time step and compile frequency, amplitude, and pulse data
         for (i, t) in time_steps.iter().enumerate() {
-            frequency_data[i] = self.get_frequency(*t);
+            frequency_data[i] = self.get_raw_frequency(*t);
             amplitude_data[i] = self.get_amplitude(*t);
-            pulse_data[i] = amplitude_data[i]
-                * PI
-                * 0.5
-                * (2. * PI * self.get_integrated_frequency(i) + self.get_phase(*t)).cos();
+            pulse_data[i] = 0.;
+            // amplitude_data[i]
+            // * PI
+            // * 0.5
+            // * (2. * PI * self.get_integrated_frequency(i) + self.get_phase(*t)).cos();
         }
 
         // Reset the simulation times and integrated frequencies
@@ -190,19 +191,22 @@ impl Circuit {
         return;
     }
     // Get the pulse amplitude of the circuit at a time
-    fn get_amplitude(&self, time: f64) -> f64 {
+    pub fn get_amplitude(&self, time: f64) -> f64 {
         return self.gates[self.get_gate_index(time)].get_amplitude(time);
     }
     // Get the raw pulse frequency of the circuit at a time
-    fn get_frequency(&self, time: f64) -> f64 {
+    fn get_raw_frequency(&self, time: f64) -> f64 {
         return self.gates[self.get_gate_index(time)].get_frequency(time);
     }
     // Get the integrated frequency of the circuit at a time
-    fn get_integrated_frequency(&self, time_index: usize) -> f64 {
-        return self.integrated_frequencies[time_index];
+    pub fn get_integrated_frequency(&mut self, time: f64) -> f64 {
+        let t: f64 = time;
+        self.frequency += self.get_raw_frequency(t) * (t - self.time);
+        self.time = t;
+        return self.frequency;
     }
     // Get the phase of the circuit at a time
-    fn get_phase(&self, time: f64) -> f64 {
+    pub fn get_phase(&self, time: f64) -> f64 {
         return self.gates[self.get_gate_index(time)].get_phase(time);
     }
     // Get the index in the gates vector of the gate which is playing at a given time
