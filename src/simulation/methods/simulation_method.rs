@@ -1,28 +1,21 @@
 use std::fmt::Debug;
 use std::rc::Rc;
+use std::marker::PhantomData;
 
-use crate::simulation::{Circuit, QubitArray, SimulationTimes};
+use crate::simulation::{Circuit, QubitArray, SimulationTimes, Hamiltonian};
 
 use ndarray::Array1;
 use num_complex::Complex64;
 
-/// Reference frame to simulate in
-#[derive(Debug, Clone)]
-pub enum ReferenceFrame {
-    Lab,
-    Rotating,
-    Pulse,
-}
-
 pub trait SimulationMethod {
     type QubitState: Clone + Debug;
     type ResultType: SimulationResultSaver<QubitState = Self::QubitState> + SimulationResultGetter;
-    fn evolve_state(
+    fn evolve_state<T: Hamiltonian>(
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
         qubit_state: Self::QubitState,
-        reference_frame: &ReferenceFrame,
+        _hamiltonian: PhantomData<T>,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitState;

@@ -1,6 +1,7 @@
+use std::marker::PhantomData;
+
 use crate::simulation::{
-    Circuit, DensityMatrixVectorResult, QubitArray, ReferenceFrame, SimulationMethod,
-    SimulationTimes,
+    Circuit, DensityMatrixVectorResult, Hamiltonian, QubitArray, ReferenceFrame, SimulationMethod, SimulationTimes
 };
 
 use ndarray::linalg::kron;
@@ -13,20 +14,25 @@ pub struct PadeVectorizedMethod {}
 impl SimulationMethod for PadeVectorizedMethod {
     type QubitState = Array1<Complex64>;
     type ResultType = DensityMatrixVectorResult;
-    fn evolve_state(
+    fn evolve_state<T: Hamiltonian>(
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
         mut qubit_state: Self::QubitState,
-        reference_frame: &ReferenceFrame,
+        _hamiltonian: PhantomData<T>,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitState {
         let dt: f64 = simulation_times.get_dt();
         for t_index in start_index..end_index {
             let time = simulation_times.get_iteration_time(t_index);
-            let lindblad: Array2<Complex64> =
-                PadeVectorizedMethod::get_lindblad_operator(circuit, qubit_array, reference_frame, time, t_index);
+            let lindblad: Array2<Complex64> = PadeVectorizedMethod::get_lindblad_operator(
+                circuit,
+                qubit_array,
+                reference_frame,
+                time,
+                t_index,
+            );
             let evolution_operator: Array2<Complex64> = expm(&(lindblad * dt)).0;
             qubit_state = evolution_operator.dot(&qubit_state);
         }
@@ -53,7 +59,13 @@ impl PadeVectorizedMethod {
     ) -> Array2<Complex64> {
         let identity: Array2<Complex64> = Array2::<Complex64>::eye(2);
 
-        let hamiltonian: Array2<Complex64> = PadeVectorizedMethod::get_hamiltonian_operator(circuit, qubit_array, reference_frame, time, time_index);
+        let hamiltonian: Array2<Complex64> = PadeVectorizedMethod::get_hamiltonian_operator(
+            circuit,
+            qubit_array,
+            reference_frame,
+            time,
+            time_index,
+        );
 
         let system_term: Array2<Complex64> = Complex64::new(0., -1.)
             * (kron(&identity, &hamiltonian) - kron(&hamiltonian.reversed_axes(), &identity));
@@ -190,4 +202,3 @@ impl PadeVectorizedMethod {
         ]);
     }
 }
-

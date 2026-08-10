@@ -1,5 +1,7 @@
+use std::marker::PhantomData;
+
 use crate::simulation::{
-    Circuit, DensityMatrixResult, QubitArray, ReferenceFrame, SimulationMethod, SimulationTimes,
+    Circuit, DensityMatrixResult, Hamiltonian, QubitArray, SimulationMethod, SimulationTimes
 };
 
 use ndarray::{Array1, Array2};
@@ -10,12 +12,12 @@ pub struct RKMethod {}
 impl SimulationMethod for RKMethod {
     type QubitState = Array2<Complex64>;
     type ResultType = DensityMatrixResult;
-    fn evolve_state(
+    fn evolve_state<T: Hamiltonian>(
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
         mut qubit_state: Self::QubitState,
-        reference_frame: &ReferenceFrame,
+        _hamiltonian: PhantomData<T>,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitState {

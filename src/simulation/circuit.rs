@@ -147,7 +147,7 @@ impl Circuit {
 
         // Loop over each time step and compile frequency, amplitude, and pulse data
         for (i, t) in time_steps.iter().enumerate() {
-            frequency_data[i] = self.get_raw_frequency(*t);
+            frequency_data[i] = self.get_frequency(*t);
             amplitude_data[i] = self.get_amplitude(*t);
             pulse_data[i] = 0.;
             // amplitude_data[i]
@@ -195,13 +195,13 @@ impl Circuit {
         return self.gates[self.get_gate_index(time)].get_amplitude(time);
     }
     // Get the raw pulse frequency of the circuit at a time
-    fn get_raw_frequency(&self, time: f64) -> f64 {
+    pub fn get_frequency(&self, time: f64) -> f64 {
         return self.gates[self.get_gate_index(time)].get_frequency(time);
     }
     // Get the integrated frequency of the circuit at a time
     pub fn get_integrated_frequency(&mut self, time: f64) -> f64 {
         let t: f64 = time;
-        self.frequency += self.get_raw_frequency(t) * (t - self.time);
+        self.frequency += self.get_frequency(t) * (t - self.time);
         self.time = t;
         return self.frequency;
     }

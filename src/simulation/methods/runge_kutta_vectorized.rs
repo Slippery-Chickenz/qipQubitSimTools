@@ -1,5 +1,7 @@
+use std::marker::PhantomData;
+
 use crate::simulation::{
-    Circuit, DensityMatrixVectorResult, QubitArray, ReferenceFrame, SimulationMethod,
+    Circuit, DensityMatrixVectorResult, QubitArray, SimulationMethod,
     SimulationTimes,
 };
 
@@ -17,7 +19,7 @@ impl SimulationMethod for RKVectorizedMethod {
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
         mut qubit_state: Self::QubitState,
-        reference_frame: &ReferenceFrame,
+        _hamiltonian: PhantomData<T>,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitState {
