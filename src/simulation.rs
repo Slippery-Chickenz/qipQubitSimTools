@@ -7,7 +7,7 @@ mod simulation_times;
 mod simulator;
 
 pub use circuit::Circuit;
-pub use hamiltonians::{Hamiltonian, ReferenceFrame};
+pub use hamiltonians::{Hamiltonian, ReferenceFrame, LabFrame, RotatingFrame, PulseFrame};
 pub use larmor_frequency::LarmorFrequency;
 pub use methods::{
     DensityMatrixResult, DensityMatrixVectorResult, PadeStateMethod, PadeVectorizedMethod,

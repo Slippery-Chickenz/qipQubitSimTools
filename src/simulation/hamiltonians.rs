@@ -2,9 +2,13 @@ pub mod lab_frame;
 pub mod pulse_frame;
 pub mod rotating_frame;
 
+pub use lab_frame::LabFrame;
+pub use pulse_frame::PulseFrame;
+pub use rotating_frame::RotatingFrame;
+
 use crate::simulation::{Circuit, QubitArray};
 
-use ndarray::{Array1, Array2};
+use ndarray::Array2;
 use num_complex::Complex64;
 
 /// Reference frame to simulate in
@@ -22,10 +26,4 @@ pub trait Hamiltonian {
         time: f64,
         time_index: usize,
     ) -> Array2<Complex64>;
-    fn get_vectorized(
-        circuit: &mut Circuit,
-        qubit_array: &QubitArray,
-        time: f64,
-        time_index: usize,
-    ) -> Array1<Complex64>;
 }

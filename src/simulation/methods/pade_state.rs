@@ -1,7 +1,7 @@
-use std::{marker::PhantomData};
+use std::marker::PhantomData;
 
 use crate::simulation::{
-    Circuit, QubitArray, QubitStateResult, SimulationMethod, SimulationTimes, Hamiltonian,
+    Circuit, Hamiltonian, QubitArray, QubitStateResult, SimulationMethod, SimulationTimes,
 };
 
 use ndarray::{Array1, Array2};

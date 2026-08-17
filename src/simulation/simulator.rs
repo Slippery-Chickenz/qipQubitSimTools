@@ -1,7 +1,7 @@
 use std::{marker::PhantomData, rc::Rc};
 
 use crate::simulation::{
-    Circuit, QubitArray, ReferenceFrame, SimulationMethod, SimulationResultSaver, SimulationTimes,
+    Circuit, Hamiltonian, LabFrame, PulseFrame, QubitArray, ReferenceFrame, RotatingFrame, SimulationMethod, SimulationResultSaver, SimulationTimes
 };
 
 /// Simulator for a given quantum circuit on an array of qubits
@@ -66,6 +66,37 @@ impl<Method: SimulationMethod> Simulator<Method> {
     /// Simulate the circuit currently set
     pub fn run(&mut self) -> Method::ResultType {
         // Prepare variables for iterating over each qubit evolution
+        // let (mut simulation_results, iteration_indicies, save_offset, mut qubit_state): (
+        //     Method::ResultType,
+        //     Vec<usize>,
+        //     usize,
+        //     Method::QubitState,
+        // ) = self.prepare_simulation();
+
+        match self.reference_frame {
+            ReferenceFrame::Lab => return self.run_in_frame::<LabFrame>(PhantomData),
+            ReferenceFrame::Rotating => return self.run_in_frame::<RotatingFrame>(PhantomData),
+            ReferenceFrame::Pulse => return self.run_in_frame::<PulseFrame>(PhantomData),
+        }
+
+        // Loop over all the sample indices and evolve from one sample to the next
+        // for i in 0..iteration_indicies.len() - 1 {
+        //     qubit_state = Method::evolve_state(
+        //         &mut self.circuit,
+        //         &self.qubit_array,
+        //         self.simulation_times.as_ref(),
+        //         qubit_state,
+        //         // &self.reference_frame,
+        //         PhantomData,
+        //         iteration_indicies[i],
+        //         iteration_indicies[i + 1] - 1,
+        //     );
+        //     simulation_results.save_state(i + save_offset, qubit_state.clone());
+        // }
+        // return simulation_results;
+    }
+    fn run_in_frame<T: Hamiltonian>(&mut self, hamiltonian: PhantomData<T>) -> Method::ResultType {
+        // Prepare variables for iterating over each qubit evolution
         let (mut simulation_results, iteration_indicies, save_offset, mut qubit_state): (
             Method::ResultType,
             Vec<usize>,
@@ -80,7 +111,8 @@ impl<Method: SimulationMethod> Simulator<Method> {
                 &self.qubit_array,
                 self.simulation_times.as_ref(),
                 qubit_state,
-                &self.reference_frame,
+                // &self.reference_frame,
+                hamiltonian,
                 iteration_indicies[i],
                 iteration_indicies[i + 1] - 1,
             );

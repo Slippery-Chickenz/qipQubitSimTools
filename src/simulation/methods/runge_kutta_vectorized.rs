@@ -1,8 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::simulation::{
-    Circuit, DensityMatrixVectorResult, QubitArray, SimulationMethod,
-    SimulationTimes,
+    Circuit, DensityMatrixVectorResult, Hamiltonian, QubitArray, SimulationMethod, SimulationTimes,
 };
 
 use ndarray::linalg::kron;
@@ -14,7 +13,7 @@ pub struct RKVectorizedMethod {}
 impl SimulationMethod for RKVectorizedMethod {
     type QubitState = Array1<Complex64>;
     type ResultType = DensityMatrixVectorResult;
-    fn evolve_state(
+    fn evolve_state<T: Hamiltonian>(
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
@@ -28,28 +27,24 @@ impl SimulationMethod for RKVectorizedMethod {
             let time = simulation_times.get_iteration_time(t_index);
 
             // Four coefficients for Runge Kutta
-            let k_1: Array1<Complex64> =
-                RKVectorizedMethod::get_lindblad_operator(circuit, qubit_array, time, t_index)
-                    .dot(&qubit_state);
-            let k_2: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
-                circuit,
+            let k_1: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
+                T::get_matrix(circuit, qubit_array, time, t_index),
                 qubit_array,
-                time + (dt / 2.),
-                t_index + 1,
+            )
+            .dot(&qubit_state);
+            let k_2: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
+                T::get_matrix(circuit, qubit_array, time + (dt / 2.), t_index + 1),
+                qubit_array,
             )
             .dot(&(&qubit_state + (&k_1 * (dt / 2.))));
             let k_3: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
-                circuit,
+                T::get_matrix(circuit, qubit_array, time + (dt / 2.), t_index + 2),
                 qubit_array,
-                time + (dt / 2.),
-                t_index + 2,
             )
             .dot(&(&qubit_state + (&k_2 * (dt / 2.))));
             let k_4: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
-                circuit,
+                T::get_matrix(circuit, qubit_array, time + dt, t_index + 3),
                 qubit_array,
-                time + dt,
-                t_index + 3,
             )
             .dot(&(&qubit_state + (&k_3 * dt)));
 
@@ -71,15 +66,10 @@ impl SimulationMethod for RKVectorizedMethod {
 impl RKVectorizedMethod {
     /// Get the lindblad operator for the defined circuit at a specific time
     fn get_lindblad_operator(
-        circuit: &mut Circuit,
+        hamiltonian: Array2<Complex64>,
         qubit_array: &QubitArray,
-        time: f64,
-        time_index: usize,
     ) -> Array2<Complex64> {
         let identity: Array2<Complex64> = Array2::<Complex64>::eye(2);
-
-        let hamiltonian: Array2<Complex64> = circuit.get_hamiltonian_operator(time)
-            + qubit_array.get_detuning_hamiltonian(time_index);
 
         let system_term: Array2<Complex64> = Complex64::new(0., -1.)
             * (kron(&identity, &hamiltonian) - kron(&hamiltonian.reversed_axes(), &identity));

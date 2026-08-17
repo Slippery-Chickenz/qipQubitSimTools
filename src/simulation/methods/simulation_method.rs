@@ -1,8 +1,8 @@
 use std::fmt::Debug;
-use std::rc::Rc;
 use std::marker::PhantomData;
+use std::rc::Rc;
 
-use crate::simulation::{Circuit, QubitArray, SimulationTimes, Hamiltonian};
+use crate::simulation::{Circuit, Hamiltonian, QubitArray, SimulationTimes};
 
 use ndarray::Array1;
 use num_complex::Complex64;

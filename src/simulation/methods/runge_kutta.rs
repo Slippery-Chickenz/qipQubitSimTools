@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::simulation::{
-    Circuit, DensityMatrixResult, Hamiltonian, QubitArray, SimulationMethod, SimulationTimes
+    Circuit, DensityMatrixResult, Hamiltonian, QubitArray, SimulationMethod, SimulationTimes,
 };
 
 use ndarray::{Array1, Array2};
@@ -26,27 +26,24 @@ impl SimulationMethod for RKMethod {
             let time = simulation_times.get_iteration_time(t_index);
 
             // Four coefficients for Runge Kutta
-            let k_1: Array2<Complex64> =
-                RKMethod::get_lindblad_operator(circuit, qubit_array, time, t_index, &qubit_state);
-            let k_2: Array2<Complex64> = RKMethod::get_lindblad_operator(
-                circuit,
+            let k_1: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 qubit_array,
-                time + (dt / 2.),
-                t_index + 1,
+                T::get_matrix(circuit, qubit_array, time, t_index),
+                &qubit_state,
+            );
+            let k_2: Array2<Complex64> = RKMethod::get_lindblad_operator(
+                qubit_array,
+                T::get_matrix(circuit, qubit_array, time + (dt / 2.), t_index + 1),
                 &(&qubit_state + (&k_1 * (dt / 2.))),
             );
             let k_3: Array2<Complex64> = RKMethod::get_lindblad_operator(
-                circuit,
                 qubit_array,
-                time + (dt / 2.),
-                t_index + 2,
+                T::get_matrix(circuit, qubit_array, time + (dt / 2.), t_index + 2),
                 &(&qubit_state + (&k_2 * (dt / 2.))),
             );
             let k_4: Array2<Complex64> = RKMethod::get_lindblad_operator(
-                circuit,
                 qubit_array,
-                time + dt,
-                t_index + 3,
+                T::get_matrix(circuit, qubit_array, time + dt, t_index + 3),
                 &(&qubit_state + (&k_3 * dt)),
             );
 
@@ -68,15 +65,10 @@ impl SimulationMethod for RKMethod {
 impl RKMethod {
     /// Get the lindblad operator for the defined circuit at a specific time
     fn get_lindblad_operator(
-        circuit: &mut Circuit,
         qubit_array: &QubitArray,
-        time: f64,
-        time_index: usize,
+        hamiltonian: Array2<Complex64>,
         density_matrix: &Array2<Complex64>,
     ) -> Array2<Complex64> {
-        let hamiltonian: Array2<Complex64> = circuit.get_hamiltonian_operator(time)
-            + qubit_array.get_detuning_hamiltonian(time_index);
-
         let system_term: Array2<Complex64> = Complex64::new(0., -1.)
             * (hamiltonian.dot(density_matrix) - density_matrix.dot(&hamiltonian));
 

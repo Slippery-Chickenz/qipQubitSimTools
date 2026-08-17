@@ -1,13 +1,10 @@
-use std::f64::consts::PI;
 use std::option::Option;
 use std::rc::Rc;
 
-use super::simulation_times::UninitializedTimesError;
 use crate::gates::Gate;
 use crate::simulation::SimulationTimes;
 
-use ndarray::{Array1, Array2};
-use num_complex::Complex64;
+use ndarray::Array1;
 
 /// Quantum circuit to be simulated
 pub struct Circuit {
