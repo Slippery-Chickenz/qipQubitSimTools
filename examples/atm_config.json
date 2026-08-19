@@ -2,9 +2,9 @@
 	"step_size": 0.1,
 	"method": "PadeState",
 	"output": {
-		"num_samples": 1,
+		"num_samples": 51,
 		"state": true,
-		"bloch_coords": false
+		"bloch_coords": true
 	},
 	"circuit": { 
 		"gates": {
@@ -33,7 +33,7 @@
 				},
 				"1/f_power": 0
 			},
-			"guess_larmor": 0,
+			"guess_larmor": 0.25,
 			"decoherence": 0
 		}
 	}

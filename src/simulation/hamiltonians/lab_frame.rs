@@ -1,7 +1,7 @@
 use crate::simulation::{Circuit, Hamiltonian, QubitArray};
 use std::f64::consts::PI;
 
-use ndarray::{Array1, Array2, arr1, arr2};
+use ndarray::{Array2, arr2};
 use num_complex::Complex64;
 
 pub struct LabFrame {}

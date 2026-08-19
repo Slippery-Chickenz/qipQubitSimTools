@@ -1,17 +1,4 @@
-use std::fmt;
-
 use ndarray::{Array1, Array2};
-
-/// Error returned if a function is called which needs simulation times that are not set
-#[derive(Debug, Clone)]
-pub(super) struct UninitializedTimesError;
-
-impl fmt::Display for UninitializedTimesError {
-    /// Error message for uninitialized times
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Simulation times are unitialized")
-    }
-}
 
 /// Struct to hold the times for a simulation and the indices of the time values at which the
 /// samples should be saved.
