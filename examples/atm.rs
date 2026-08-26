@@ -1,9 +1,15 @@
+use std::env;
+
 extern crate blas_src;
 extern crate serde_json;
 
 use qip_qst::experiment::Experiment;
 
 fn main() {
+    unsafe {
+        env::set_var("RUST_BACKTRACE", "1");
+    }
+
     let mut test_experiment: Experiment =
         Experiment::from_json_file("examples/atm_config.json").unwrap();
     dbg!(&test_experiment);

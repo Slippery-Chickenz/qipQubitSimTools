@@ -26,13 +26,6 @@ impl SimulationMethod for PadeStateMethod {
         for t_index in start_index..end_index {
             let time = simulation_times.get_iteration_time(t_index);
             let hamiltonain: Array2<Complex64> = T::get_matrix(circuit, qubit_array, time, t_index);
-            // let hamiltonain: Array2<Complex64> = PadeStateMethod::get_hamiltonian_operator(
-            //     circuit,
-            //     qubit_array,
-            //     reference_frame,
-            //     time,
-            //     t_index,
-            // );
             let evolution_operator: Array2<Complex64> =
                 expm(&(Complex64::new(0., -1.) * hamiltonain * dt)).0;
             qubit_state = evolution_operator.dot(&qubit_state);
@@ -40,7 +33,7 @@ impl SimulationMethod for PadeStateMethod {
         return qubit_state;
     }
     fn get_num_times_per_step() -> usize {
-        return 4;
+        return 1;
     }
     fn get_state(_array: &Array1<Complex64>) -> Array1<Complex64> {
         let mut density_matrix: Array1<Complex64> = Array1::<Complex64>::zeros(2);

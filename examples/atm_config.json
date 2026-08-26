@@ -1,10 +1,14 @@
 {
-	"step_size": 0.1,
+	"step_size": 0.01,
 	"method": "PadeState",
+	"frame": "Pulse",
 	"output": {
-		"num_samples": 51,
+		"num_samples": 2000,
 		"state": true,
-		"bloch_coords": true
+		"bloch_coords": true,
+		"times": true,
+		"waveform": true
+
 	},
 	"circuit": { 
 		"gates": {
@@ -15,12 +19,12 @@
 			"PiO2Y": {},
 			"ATMGate": {
 				"rise_time": 10,
-				"fall_time": 175,
+				"fall_time": 75,
 				"max_amplitude": 0.5,
 				"max_frequency": 0.6,
 				"rise_gradient": 0.95,
-				"fall_gradient": 0.05,
-				"duration": 200
+				"fall_gradient": 0.08,
+				"duration": 100
 			}
 		},
 		"order": ["ATMGate"]
@@ -28,12 +32,13 @@
 	"qubits": { 
 		"q1": {
 			"larmor": {
-				"base_value": {
-					"linspace" : [-1, 1, 500]
-				},
+				"base_value": 0,
 				"1/f_power": 0
 			},
-			"guess_larmor": 0.25,
+			"guess_larmor": {
+					"linspace" : [-1, 1, 400]
+				},
+			"uguess_larmor": -0.5,
 			"decoherence": 0
 		}
 	}

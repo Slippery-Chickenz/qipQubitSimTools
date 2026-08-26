@@ -1,10 +1,11 @@
+use std::f64::consts::PI;
 use std::option::Option;
 use std::rc::Rc;
 
 use crate::gates::Gate;
 use crate::simulation::SimulationTimes;
 
-use ndarray::Array1;
+use ndarray::{Array1, Array2};
 
 /// Quantum circuit to be simulated
 pub struct Circuit {
@@ -15,9 +16,7 @@ pub struct Circuit {
     /// Simulation times to run the circuit at.
     simulation_times: Option<Rc<SimulationTimes>>,
     /// For the circuit to be simulated the frequency of each gate must be integrated over all the
-    /// time steps. This is a vector of vectors. The outer vector is the sample number those
-    /// frequencies are for. The inner vector is for the specific time step.
-    integrated_frequencies: Array1<f64>,
+    /// time steps.
     frequency: f64,
     time: f64,
 }
@@ -28,7 +27,6 @@ impl Circuit {
         return Circuit {
             gates: vec![],
             duration: 0.,
-            integrated_frequencies: Array1::<f64>::zeros(0),
             simulation_times: None,
             frequency: 0.,
             time: 0.,
@@ -129,34 +127,38 @@ impl Circuit {
     /// Get the data needed to plot out the circuit. Returns 4 values: times for each data point,
     /// frequency data, amplitude_data, and combined pulse data (Real values of (0, 1) matrix
     /// element)
-    pub fn get_circuit_data(&mut self) -> (Array1<f64>, Array1<f64>, Array1<f64>, Array1<f64>) {
-        // Set time steps to run at (10000 points is arbitrary)
-        let time_steps: Array1<f64> = Array1::<f64>::linspace(0., self.duration, 10000);
-
-        // Temporarily set the simulation times to get properly integrated frequencies
-        self.set_simulation_times(Rc::new(SimulationTimes::new(self.duration, 0.1, 1, 2)));
-        // self.integrate_frequencies();
+    pub fn get_circuit_data(&self) -> (Array1<f64>, Array1<f64>, Array1<f64>, Array2<f64>) {
+        let times: SimulationTimes = SimulationTimes::new(self.duration, 0.001, 1, 2);
 
         // Empty vectors to store data
-        let mut frequency_data: Array1<f64> = Array1::<f64>::zeros(time_steps.len());
-        let mut amplitude_data: Array1<f64> = Array1::<f64>::zeros(time_steps.len());
-        let mut pulse_data: Array1<f64> = Array1::<f64>::zeros(time_steps.len());
+        let mut frequency_data: Array1<f64> =
+            Array1::<f64>::zeros(times.get_iteration_times().shape()[0]);
+        let mut amplitude_data: Array1<f64> =
+            Array1::<f64>::zeros(times.get_iteration_times().shape()[0]);
+        let mut phase_data: Array1<f64> =
+            Array1::<f64>::zeros(times.get_iteration_times().shape()[0]);
+        let mut pulse_data: Array2<f64> =
+            Array2::<f64>::zeros((2, times.get_iteration_times().shape()[0]));
+
+        // Integrated frequency for modulation
+        let mut integrated_frequency: f64 = 0.;
 
         // Loop over each time step and compile frequency, amplitude, and pulse data
-        for (i, t) in time_steps.iter().enumerate() {
+        for (i, t) in times.get_iteration_times().iter().enumerate() {
             frequency_data[i] = self.get_frequency(*t);
+            integrated_frequency += frequency_data[i] * times.get_dt();
             amplitude_data[i] = self.get_amplitude(*t);
-            pulse_data[i] = 0.;
-            // amplitude_data[i]
-            // * PI
-            // * 0.5
-            // * (2. * PI * self.get_integrated_frequency(i) + self.get_phase(*t)).cos();
+            phase_data[i] = self.get_phase(*t);
+            pulse_data[[0, i]] = amplitude_data[i]
+                * PI
+                * 0.5
+                * (2. * PI * integrated_frequency + phase_data[i]).cos();
+            pulse_data[[1, i]] = amplitude_data[i]
+                * PI
+                * 0.5
+                * (2. * PI * integrated_frequency + phase_data[i]).sin();
         }
-
-        // Reset the simulation times and integrated frequencies
-        self.simulation_times = None;
-        self.integrated_frequencies = Array1::<f64>::zeros(0);
-        return (time_steps, frequency_data, amplitude_data, pulse_data);
+        return (frequency_data, amplitude_data, phase_data, pulse_data);
     }
     /// Saves the circuit data to an HDF5 file to be plotted elsewhere. HDF5 file just has 4 data
     /// sets, time steps, frequency data, amplitude data, and the combined pulse data.

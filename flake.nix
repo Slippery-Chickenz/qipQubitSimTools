@@ -17,6 +17,7 @@
 						cargo
 						gdb
 						rustc
+						rustfmt
 						rust-analyzer
 						openblasCompat
 					];

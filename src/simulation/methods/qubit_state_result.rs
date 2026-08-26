@@ -61,6 +61,9 @@ impl SimulationResultGetter for QubitStateResult {
         }
         return (x_coords, y_coords, z_coords);
     }
+    fn get_simulation_times(&self) -> &SimulationTimes {
+        return &self.simulation_times;
+    }
 }
 
 impl QubitStateResult {

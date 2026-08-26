@@ -1,7 +1,8 @@
 use std::{marker::PhantomData, rc::Rc};
 
 use crate::simulation::{
-    Circuit, Hamiltonian, LabFrame, PulseFrame, QubitArray, ReferenceFrame, RotatingFrame, SimulationMethod, SimulationResultSaver, SimulationTimes
+    Circuit, Hamiltonian, LabFrame, PulseFrame, QubitArray, ReferenceFrame, RotatingFrame,
+    SimulationMethod, SimulationResultSaver, SimulationTimes,
 };
 
 /// Simulator for a given quantum circuit on an array of qubits
@@ -103,7 +104,6 @@ impl<Method: SimulationMethod> Simulator<Method> {
             usize,
             Method::QubitState,
         ) = self.prepare_simulation();
-
         // Loop over all the sample indices and evolve from one sample to the next
         for i in 0..iteration_indicies.len() - 1 {
             qubit_state = Method::evolve_state(
@@ -114,7 +114,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
                 // &self.reference_frame,
                 hamiltonian,
                 iteration_indicies[i],
-                iteration_indicies[i + 1] - 1,
+                iteration_indicies[i + 1],
             );
             simulation_results.save_state(i + save_offset, qubit_state.clone());
         }
@@ -147,6 +147,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
 
         // Get the indicies to iterate over
         let mut iteration_indicies: Vec<usize> = self.simulation_times.get_sample_indices().clone();
+        *iteration_indicies.last_mut().unwrap() -= 1;
 
         // If there is is more than 1 sample to be taken then offset the saves to include the
         // starting state

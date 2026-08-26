@@ -33,4 +33,5 @@ pub trait SimulationResultGetter {
     fn get_probabilities(&self) -> Array1<f64>;
     fn get_duration(&self) -> f64;
     fn get_bloch_coords_cart(&self) -> (Array1<f64>, Array1<f64>, Array1<f64>);
+    fn get_simulation_times(&self) -> &SimulationTimes;
 }

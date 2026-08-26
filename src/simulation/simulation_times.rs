@@ -21,18 +21,18 @@ impl SimulationTimes {
         num_samples: usize,
     ) -> SimulationTimes {
         // Total number of times needed for this simulation
-        let num_times: usize =
-            ((duration / (step_size as f64)).ceil() * (times_per_step as f64)).ceil() as usize;
+        let num_times: usize = (((duration / (step_size as f64)).ceil() + 1.)
+            * (times_per_step as f64))
+            .ceil() as usize;
 
         // Iteration times without sub timings for fourth order runge kutta
         let iteration_times: Array2<f64> = Array1::<f64>::linspace(0., duration, num_times)
             // Array1::<f64>::range(0., duration, step_size / (times_per_step as f64))
             .into_shape_with_order((
-                (duration / (step_size as f64)).ceil() as usize,
+                ((duration / (step_size as f64)).ceil() + 1.) as usize,
                 times_per_step,
             ))
             .unwrap();
-
         if num_samples >= iteration_times.len() {
             panic!("Not enough iteration times for the desired number of samples");
         }
@@ -69,6 +69,19 @@ impl SimulationTimes {
     /// Get the number of samples that are saved
     pub fn get_num_samples(&self) -> usize {
         return self.sample_indices.len();
+    }
+    /// Get an array of the times that each sample are from
+    pub fn get_sample_times(&self) -> Array1<f64> {
+        let mut sample_times: Array1<f64> = Array1::<f64>::zeros(self.sample_indices.len());
+        for (i, index) in self.sample_indices.iter().enumerate() {
+            if *index == self.iteration_times.shape()[0] {
+                sample_times[i] =
+                    self.iteration_times[[*index - 1, self.iteration_times.shape()[1] - 1]];
+                break;
+            }
+            sample_times[i] = self.iteration_times[[*index, self.iteration_times.shape()[1] - 1]];
+        }
+        return sample_times;
     }
     /// Get all the iteration times
     pub fn get_iteration_times(&self) -> &Array2<f64> {

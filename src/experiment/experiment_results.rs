@@ -1,12 +1,16 @@
 use std::rc::Rc;
 
 use super::SweepParameter;
-use crate::simulation::SimulationResultGetter;
+use crate::{
+    experiment::time_results::TimeResults,
+    simulation::{Circuit, SimulationResultGetter},
+};
 
 use super::bloch_coord_results::BlochCoordResults;
 use super::duration_result::DurationResult;
 use super::probability_results::ProbabilityResults;
-use super::waveform_results::WaveformResults;
+use super::waveform_saver::WaveformSaver;
+use super::adiabaticity_results::AdiabaticityResults;
 
 use hdf5::{Group, Result};
 use serde_json::{Map, Value};
@@ -30,6 +34,7 @@ impl std::fmt::Debug for dyn ExperimentResult {
 pub struct ExperimentResults {
     results: Vec<Box<dyn ExperimentResult>>,
     sweep_parameters: Rc<Vec<SweepParameter>>,
+    waveform_saver: Option<WaveformSaver>,
 }
 
 impl ExperimentResults {
@@ -62,6 +67,12 @@ impl ExperimentResults {
                 num_samples,
             )));
         }
+        if json_values.contains_key("times") {
+            results.push(Box::new(TimeResults::from_json(
+                results_dim.clone(),
+                num_samples,
+            )));
+        }
         if json_values.contains_key("bloch_coords") {
             if json_values["bloch_coords"].as_bool().unwrap() {
                 results.push(Box::new(BlochCoordResults::from_json(
@@ -70,19 +81,23 @@ impl ExperimentResults {
                 )));
             }
         }
-        if json_values.contains_key("waveform") {
-            if json_values["waveform"].as_bool().unwrap() {
-                results.push(Box::new(WaveformResults::from_json(
+        if json_values.contains_key("adiabaticity") {
+            if json_values["adiabaticity"].as_bool().unwrap() {
+                results.push(Box::new(AdiabaticityResults::from_json(
                     results_dim.clone(),
                     num_samples,
                 )));
             }
         }
-
         return ExperimentResults {
             results: results,
             sweep_parameters: sweep_parameters,
+            waveform_saver: Option::None,
         };
+    }
+    pub fn save_circuit(&mut self, circuit: Circuit) -> () {
+        self.waveform_saver = Option::Some(WaveformSaver::from_circuit(circuit));
+        return;
     }
     pub fn add_simulation_result(
         &mut self,
@@ -118,6 +133,12 @@ impl ExperimentResults {
             // Create at attribute for this parameter and write which number axis this parameter is
             let attr = parameter_ds.new_attr::<usize>().shape([1]).create("axis")?;
             attr.write(&[i])?;
+        }
+
+        // If there is a waveform to save then make a group and save it
+        if let Some(waveform_saver) = &self.waveform_saver {
+            let group = file.create_group("waveform")?;
+            waveform_saver.save(&group)?;
         }
         return Ok(());
     }

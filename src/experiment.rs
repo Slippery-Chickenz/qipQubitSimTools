@@ -6,7 +6,11 @@ mod duration_result;
 mod experiment_results;
 mod probability_results;
 mod sweep_parameter;
-mod waveform_results;
+mod time_results;
+mod waveform_saver;
+mod adiabaticity_results;
+
+pub use waveform_saver::WaveformSaver;
 
 pub use sweep_parameter::SweepParameter;
 
@@ -62,6 +66,8 @@ pub struct Experiment {
     sweep_parameters: Rc<Vec<SweepParameter>>,
     /// Object to store and save the results in. Dynamic depending on what is defined to save
     results: ExperimentResults,
+    /// Flag to save waveform or not
+    save_waveform: bool,
     /// Simulation method to run the experiment with
     simulation_method: SimulationMethodType,
     /// Reference frame for simulation
@@ -137,6 +143,17 @@ impl Experiment {
         // Rc of sweep parameters to save here and also send to results
         let rc_sweep_parameters: Rc<Vec<SweepParameter>> = Rc::new(sweep_parameters);
 
+        let mut save_waveform: bool = false;
+        if json_values["output"]
+            .as_object()
+            .unwrap()
+            .contains_key("waveform")
+        {
+            save_waveform = json_values["output"].as_object().unwrap()["waveform"]
+                .as_bool()
+                .unwrap();
+        }
+
         return Experiment {
             circuit_blueprint: circuit_blueprint,
             qubit_array_blueprint: qubit_array_blueprint,
@@ -146,6 +163,7 @@ impl Experiment {
                 &json_values["output"].as_object().unwrap(),
                 Rc::clone(&rc_sweep_parameters),
             ),
+            save_waveform: save_waveform,
             simulation_method: sim_method,
             reference_frame: reference_frame,
         };
@@ -166,6 +184,12 @@ impl Experiment {
 
         // Make a progress bar to display how fast the experiment is going
         let progress_bar: ProgressBar = ProgressBar::new(num_experiment_iterations as u64);
+
+        // Send the first simulated circuit to the results to save waveform
+        if self.save_waveform {
+            self.results
+                .save_circuit(self.circuit_blueprint.get_circuit());
+        }
 
         // Loop the total number of iterations needed to get through all swept values
         for _i in 0..num_experiment_iterations {
