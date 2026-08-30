@@ -2,7 +2,7 @@ use std::rc::Rc;
 
 use crate::simulation::{SimulationResultGetter, SimulationResultSaver, SimulationTimes};
 
-use ndarray::{Array1, Array2, Axis};
+use ndarray::{Array1, Array2, Array3, Axis};
 use num_complex::Complex64;
 
 pub struct QubitStateResult {
@@ -10,19 +10,29 @@ pub struct QubitStateResult {
     simulation_times: Rc<SimulationTimes>,
     /// Qubit state at each sample point in the z-basis
     states: Array2<Complex64>,
+    /// Hamiltonian at each sample point
+    hamiltonians: Array3<Complex64>,
 }
 
 impl SimulationResultSaver for QubitStateResult {
     type QubitState = Array1<Complex64>;
     /// Get a new result object with a set set of simulation times and a starting
     /// state
-    fn new(simulation_times: Rc<SimulationTimes>) -> QubitStateResult {
+    fn new(simulation_times: Rc<SimulationTimes>, save_hamiltonian: bool) -> QubitStateResult {
         // Set the array of qubit states. The outer axis is the number of samples and the inner
         // axes are the states in the z basis
-        let qubit_states = Array2::<Complex64>::zeros([simulation_times.get_num_samples(), 2]);
+        let qubit_states: Array2<Complex64> =
+            Array2::<Complex64>::zeros([simulation_times.get_num_samples(), 2]);
+        let hamiltonians: Array3<Complex64>;
+        if save_hamiltonian {
+            hamiltonians = Array3::<Complex64>::zeros([simulation_times.get_num_samples(), 2, 2]);
+        } else {
+            hamiltonians = Array3::<Complex64>::zeros([1, 1, 1]);
+        }
         return QubitStateResult {
             simulation_times: simulation_times,
             states: qubit_states,
+            hamiltonians: hamiltonians,
         };
     }
     fn save_state(&mut self, sample_num: usize, state: Array1<Complex64>) -> () {
@@ -30,6 +40,12 @@ impl SimulationResultSaver for QubitStateResult {
         self.states
             .index_axis_mut(Axis(0), sample_num)
             .assign(&state);
+        return;
+    }
+    fn save_hamiltonian(&mut self, sample_num: usize, hamiltonian: Array2<Complex64>) -> () {
+        self.hamiltonians
+            .index_axis_mut(Axis(0), sample_num)
+            .assign(&hamiltonian);
         return;
     }
 }
@@ -63,6 +79,9 @@ impl SimulationResultGetter for QubitStateResult {
     }
     fn get_simulation_times(&self) -> &SimulationTimes {
         return &self.simulation_times;
+    }
+    fn get_hamiltonians(&self) -> &Array3<Complex64> {
+        return &self.hamiltonians;
     }
 }
 

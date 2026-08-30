@@ -11,20 +11,29 @@ pub struct DensityMatrixResult {
     simulation_times: Rc<SimulationTimes>,
     /// Density matrix at each sample point
     density_matrices: Array3<Complex64>,
+    /// Hamiltonian at each sample point
+    hamiltonians: Array3<Complex64>,
 }
 
 impl SimulationResultSaver for DensityMatrixResult {
     type QubitState = Array2<Complex64>;
     /// Get a new SimulationResults object with a set set of simulation times and a starting
     /// density matrix
-    fn new(simulation_times: Rc<SimulationTimes>) -> DensityMatrixResult {
+    fn new(simulation_times: Rc<SimulationTimes>, save_hamiltonian: bool) -> DensityMatrixResult {
         // Set the array of density matrices. The outer axis is the number of samples and the inner
         // axes are the 2x2 density matrices
         let density_matrices =
             Array3::<Complex64>::zeros([simulation_times.get_num_samples(), 2, 2]);
+        let hamiltonians: Array3<Complex64>;
+        if save_hamiltonian {
+            hamiltonians = Array3::<Complex64>::zeros([simulation_times.get_num_samples(), 2, 2]);
+        } else {
+            hamiltonians = Array3::<Complex64>::zeros([1, 1, 1]);
+        }
         return DensityMatrixResult {
             simulation_times: simulation_times,
             density_matrices: density_matrices,
+            hamiltonians: hamiltonians,
         };
     }
     fn save_state(&mut self, sample_num: usize, state: Array2<Complex64>) -> () {
@@ -32,6 +41,12 @@ impl SimulationResultSaver for DensityMatrixResult {
         self.density_matrices
             .index_axis_mut(Axis(0), sample_num)
             .assign(&state);
+        return;
+    }
+    fn save_hamiltonian(&mut self, sample_num: usize, hamiltonian: Array2<Complex64>) -> () {
+        self.hamiltonians
+            .index_axis_mut(Axis(0), sample_num)
+            .assign(&hamiltonian);
         return;
     }
 }
@@ -65,6 +80,9 @@ impl SimulationResultGetter for DensityMatrixResult {
     }
     fn get_simulation_times(&self) -> &SimulationTimes {
         return &self.simulation_times;
+    }
+    fn get_hamiltonians(&self) -> &Array3<Complex64> {
+        return &self.hamiltonians;
     }
 }
 

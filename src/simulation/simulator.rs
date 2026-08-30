@@ -54,6 +54,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
         reference_frame: ReferenceFrame,
         step_size: f64,
         num_samples: usize,
+        save_hamiltonian: bool,
     ) -> Method::ResultType {
         let mut simulator: Simulator<Method> = Simulator::new(
             circuit,
@@ -62,48 +63,42 @@ impl<Method: SimulationMethod> Simulator<Method> {
             step_size,
             num_samples,
         );
-        return simulator.run();
+        return simulator.run(save_hamiltonian);
     }
     /// Simulate the circuit currently set
-    pub fn run(&mut self) -> Method::ResultType {
-        // Prepare variables for iterating over each qubit evolution
-        // let (mut simulation_results, iteration_indicies, save_offset, mut qubit_state): (
-        //     Method::ResultType,
-        //     Vec<usize>,
-        //     usize,
-        //     Method::QubitState,
-        // ) = self.prepare_simulation();
-
+    pub fn run(&mut self, save_hamiltonian: bool) -> Method::ResultType {
         match self.reference_frame {
-            ReferenceFrame::Lab => return self.run_in_frame::<LabFrame>(PhantomData),
-            ReferenceFrame::Rotating => return self.run_in_frame::<RotatingFrame>(PhantomData),
-            ReferenceFrame::Pulse => return self.run_in_frame::<PulseFrame>(PhantomData),
+            ReferenceFrame::Lab => {
+                return self.run_in_frame::<LabFrame>(save_hamiltonian, PhantomData);
+            }
+            ReferenceFrame::Rotating => {
+                return self.run_in_frame::<RotatingFrame>(save_hamiltonian, PhantomData);
+            }
+            ReferenceFrame::Pulse => {
+                return self.run_in_frame::<PulseFrame>(save_hamiltonian, PhantomData);
+            }
         }
-
-        // Loop over all the sample indices and evolve from one sample to the next
-        // for i in 0..iteration_indicies.len() - 1 {
-        //     qubit_state = Method::evolve_state(
-        //         &mut self.circuit,
-        //         &self.qubit_array,
-        //         self.simulation_times.as_ref(),
-        //         qubit_state,
-        //         // &self.reference_frame,
-        //         PhantomData,
-        //         iteration_indicies[i],
-        //         iteration_indicies[i + 1] - 1,
-        //     );
-        //     simulation_results.save_state(i + save_offset, qubit_state.clone());
-        // }
-        // return simulation_results;
     }
-    fn run_in_frame<T: Hamiltonian>(&mut self, hamiltonian: PhantomData<T>) -> Method::ResultType {
+    fn run_in_frame<T: Hamiltonian>(
+        &mut self,
+        save_hamiltonian: bool,
+        hamiltonian: PhantomData<T>,
+    ) -> Method::ResultType {
         // Prepare variables for iterating over each qubit evolution
         let (mut simulation_results, iteration_indicies, save_offset, mut qubit_state): (
             Method::ResultType,
             Vec<usize>,
             usize,
             Method::QubitState,
-        ) = self.prepare_simulation();
+        ) = self.prepare_simulation(save_hamiltonian);
+
+        if save_hamiltonian && self.simulation_times.get_num_samples() != 1 {
+            simulation_results.save_hamiltonian(
+                0,
+                T::get_matrix(&mut self.circuit, &self.qubit_array, 0., 0),
+            );
+        }
+
         // Loop over all the sample indices and evolve from one sample to the next
         for i in 0..iteration_indicies.len() - 1 {
             qubit_state = Method::evolve_state(
@@ -117,15 +112,28 @@ impl<Method: SimulationMethod> Simulator<Method> {
                 iteration_indicies[i + 1],
             );
             simulation_results.save_state(i + save_offset, qubit_state.clone());
+            if save_hamiltonian {
+                simulation_results.save_hamiltonian(
+                    i + save_offset,
+                    T::get_matrix(
+                        &mut self.circuit,
+                        &self.qubit_array,
+                        self.simulation_times
+                            .get_iteration_time(iteration_indicies[i + 1] - 1),
+                        iteration_indicies[i + 1] - 1,
+                    ),
+                );
+            }
         }
         return simulation_results;
     }
     fn prepare_simulation(
         &mut self,
+        save_hamiltonian: bool,
     ) -> (Method::ResultType, Vec<usize>, usize, Method::QubitState) {
         // Make an empty simulation results to return
         let mut simulation_results: Method::ResultType =
-            Method::ResultType::new(Rc::clone(&self.simulation_times));
+            Method::ResultType::new(Rc::clone(&self.simulation_times), save_hamiltonian);
 
         // Make sure the qubit array has the correct number of qubits for this circuit
         assert!(

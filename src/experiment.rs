@@ -1,14 +1,16 @@
 use std::rc::Rc;
 use std::{fs, io::BufReader};
 
+mod adiabaticity_results;
 mod bloch_coord_results;
 mod duration_result;
 mod experiment_results;
+mod hamiltonian_results;
 mod probability_results;
+mod eigenstate_results;
 mod sweep_parameter;
 mod time_results;
 mod waveform_saver;
-mod adiabaticity_results;
 
 pub use waveform_saver::WaveformSaver;
 
@@ -68,6 +70,8 @@ pub struct Experiment {
     results: ExperimentResults,
     /// Flag to save waveform or not
     save_waveform: bool,
+    /// Flag to save hamiltonians in the simulation or not
+    save_hamiltonians: bool,
     /// Simulation method to run the experiment with
     simulation_method: SimulationMethodType,
     /// Reference frame for simulation
@@ -143,27 +147,20 @@ impl Experiment {
         // Rc of sweep parameters to save here and also send to results
         let rc_sweep_parameters: Rc<Vec<SweepParameter>> = Rc::new(sweep_parameters);
 
-        let mut save_waveform: bool = false;
-        if json_values["output"]
-            .as_object()
-            .unwrap()
-            .contains_key("waveform")
-        {
-            save_waveform = json_values["output"].as_object().unwrap()["waveform"]
-                .as_bool()
-                .unwrap();
-        }
+        let (results, save_hamiltonians, save_waveform): (ExperimentResults, bool, bool) =
+            ExperimentResults::from_json(
+                &json_values["output"].as_object().unwrap(),
+                Rc::clone(&rc_sweep_parameters),
+            );
 
         return Experiment {
             circuit_blueprint: circuit_blueprint,
             qubit_array_blueprint: qubit_array_blueprint,
             simulation_times_blueprint: SimulationTimesBlueprint::from_json(&json_values),
             sweep_parameters: Rc::clone(&rc_sweep_parameters),
-            results: ExperimentResults::from_json(
-                &json_values["output"].as_object().unwrap(),
-                Rc::clone(&rc_sweep_parameters),
-            ),
+            results: results,
             save_waveform: save_waveform,
+            save_hamiltonians: save_hamiltonians,
             simulation_method: sim_method,
             reference_frame: reference_frame,
         };
@@ -202,6 +199,7 @@ impl Experiment {
                         self.reference_frame.clone(),
                         self.simulation_times_blueprint.get_step_size(),
                         self.simulation_times_blueprint.get_num_samples(),
+                        self.save_hamiltonians,
                     ),
                 ),
                 SimulationMethodType::RKVectorizedMethod => self.results.add_simulation_result(
@@ -212,6 +210,7 @@ impl Experiment {
                         self.reference_frame.clone(),
                         self.simulation_times_blueprint.get_step_size(),
                         self.simulation_times_blueprint.get_num_samples(),
+                        self.save_hamiltonians,
                     ),
                 ),
                 SimulationMethodType::PadeVectorizedMethod => self.results.add_simulation_result(
@@ -222,6 +221,7 @@ impl Experiment {
                         self.reference_frame.clone(),
                         self.simulation_times_blueprint.get_step_size(),
                         self.simulation_times_blueprint.get_num_samples(),
+                        self.save_hamiltonians,
                     ),
                 ),
                 SimulationMethodType::PadeStateMethod => self.results.add_simulation_result(
@@ -232,6 +232,7 @@ impl Experiment {
                         self.reference_frame.clone(),
                         self.simulation_times_blueprint.get_step_size(),
                         self.simulation_times_blueprint.get_num_samples(),
+                        self.save_hamiltonians,
                     ),
                 ),
             }

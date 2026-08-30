@@ -19,7 +19,7 @@ impl Hamiltonian for PulseFrame {
         let pulse_frequency: f64 = circuit.get_frequency(time);
         return arr2(&[
             [
-                PI * Complex64::new(larmor_frequency - guess_frequency - pulse_frequency, 0.),
+               PI * Complex64::new(larmor_frequency - guess_frequency - pulse_frequency, 0.),
                 Complex64::new(amplitude * PI * 0.5, 0.),
             ],
             [

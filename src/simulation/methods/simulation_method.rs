@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use crate::simulation::{Circuit, Hamiltonian, QubitArray, SimulationTimes};
 
-use ndarray::Array1;
+use ndarray::{Array1, Array2, Array3};
 use num_complex::Complex64;
 
 pub trait SimulationMethod {
@@ -25,8 +25,9 @@ pub trait SimulationMethod {
 
 pub trait SimulationResultSaver {
     type QubitState;
-    fn new(simulation_times: Rc<SimulationTimes>) -> Self;
+    fn new(simulation_times: Rc<SimulationTimes>, save_hamiltonian: bool) -> Self;
     fn save_state(&mut self, sample_num: usize, state: Self::QubitState) -> ();
+    fn save_hamiltonian(&mut self, sample_num: usize, state: Array2<Complex64>) -> ();
 }
 
 pub trait SimulationResultGetter {
@@ -34,4 +35,5 @@ pub trait SimulationResultGetter {
     fn get_duration(&self) -> f64;
     fn get_bloch_coords_cart(&self) -> (Array1<f64>, Array1<f64>, Array1<f64>);
     fn get_simulation_times(&self) -> &SimulationTimes;
+    fn get_hamiltonians(&self) -> &Array3<Complex64>;
 }

@@ -6,11 +6,13 @@ use crate::{
     simulation::{Circuit, SimulationResultGetter},
 };
 
+use super::adiabaticity_results::AdiabaticityResults;
 use super::bloch_coord_results::BlochCoordResults;
 use super::duration_result::DurationResult;
+use super::hamiltonian_results::HamiltonianResults;
 use super::probability_results::ProbabilityResults;
+use super::eigenstate_results::EigenstateResults;
 use super::waveform_saver::WaveformSaver;
-use super::adiabaticity_results::AdiabaticityResults;
 
 use hdf5::{Group, Result};
 use serde_json::{Map, Value};
@@ -41,7 +43,7 @@ impl ExperimentResults {
     pub fn from_json(
         json_values: &Map<String, Value>,
         sweep_parameters: Rc<Vec<SweepParameter>>,
-    ) -> ExperimentResults {
+    ) -> (ExperimentResults, bool, bool) {
         // Vector to hold the dimensions of the results
         let mut results_dim: Vec<usize> = vec![];
         // Loop over the sweep parameters and add the len of the values as the length of the dimension
@@ -61,6 +63,21 @@ impl ExperimentResults {
             num_samples,
         )));
 
+        let mut save_waveform: bool = false;
+        if json_values.contains_key("waveform") {
+            save_waveform = json_values["waveform"].as_bool().unwrap();
+        }
+
+        let mut save_hamiltonians: bool = false;
+        if json_values.contains_key("hamiltonians") {
+            if json_values["hamiltonians"].as_bool().unwrap() {
+                results.push(Box::new(HamiltonianResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                )));
+                save_hamiltonians = true;
+            }
+        }
         if json_values.contains_key("state") {
             results.push(Box::new(ProbabilityResults::from_json(
                 results_dim.clone(),
@@ -87,13 +104,28 @@ impl ExperimentResults {
                     results_dim.clone(),
                     num_samples,
                 )));
+                save_hamiltonians = true;
             }
         }
-        return ExperimentResults {
-            results: results,
-            sweep_parameters: sweep_parameters,
-            waveform_saver: Option::None,
-        };
+        if json_values.contains_key("eigenstates") {
+            if json_values["eigenstates"].as_bool().unwrap() {
+                results.push(Box::new(EigenstateResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                )));
+                save_hamiltonians = true;
+            }
+        }
+
+        return (
+            ExperimentResults {
+                results: results,
+                sweep_parameters: sweep_parameters,
+                waveform_saver: Option::None,
+            },
+            save_hamiltonians,
+            save_waveform,
+        );
     }
     pub fn save_circuit(&mut self, circuit: Circuit) -> () {
         self.waveform_saver = Option::Some(WaveformSaver::from_circuit(circuit));

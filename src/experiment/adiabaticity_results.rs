@@ -55,7 +55,7 @@ impl ExperimentResult for AdiabaticityResults {
     fn save(&self, group: &Group) -> Result<()> {
         // Make a builder and put the results data set into the file
         let builder = group.new_dataset_builder();
-        let _ds = builder.with_data(&self.results).create("probabilities")?;
+        let _ds = builder.with_data(&self.results).create("adiabaticity")?;
         return Ok(());
     }
 }
