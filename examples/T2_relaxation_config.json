@@ -1,9 +1,16 @@
 {
 	"step_size": 0.01,
+	"method": "PadeVectorized",
+	"frame": "Pulse",
 	"output": {
 		"num_samples": 1,
 		"state": true,
-		"bloch_coords": false
+		"bloch_coords": true,
+		"times": true,
+		"waveform": true,
+		"hamiltonians": true,
+		"adiabaticity": true,
+		"eigenstates": true
 	},
 	"circuit": { 
 		"gates": {
@@ -19,9 +26,23 @@
 	},
 	"qubits": { 
 		"q1": {
-			"larmor": 0,
+			"larmor": {
+				"base_value": 0,
+				"1/f_power": 0
+			},
 			"guess_larmor": 0,
-			"decoherence": 0.1
+			"decoherence": 0.1,
+			"init_state": "+z",
+			"uinit_state": {
+				"+z": {
+					"real": 1,
+					"imag": 0
+				},
+				"-z": {
+					"real": 0,
+					"imag": 0
+				}
+			}
 		}
 	}
 }

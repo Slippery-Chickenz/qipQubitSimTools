@@ -1,4 +1,6 @@
 use ndarray::Array1;
+use rand::RngExt;
+use rand::distr::Uniform;
 use serde_json::{Map, Value};
 
 /// Hold a parameter to sweep across in an experiment. Has to hold both the path to update the
@@ -14,6 +16,12 @@ pub struct SweepParameter {
 }
 
 impl SweepParameter {
+    pub fn new(path: Vec<String>, values: Vec<f64>) -> SweepParameter {
+        return SweepParameter {
+            path: path,
+            values: values,
+        };
+    }
     /// Get a sweep parameter from a starting path and json values.
     pub fn from_json(path: String, values: &Value) -> SweepParameter {
         // If the values are an array then just return a sweep parameter with the path and the
@@ -33,7 +41,7 @@ impl SweepParameter {
         // Otherwise the values should be a map from String to values
         let values_map: &Map<String, Value> = values.as_object().unwrap();
 
-        // Currently we support listing the sweep values as a linspace from a min to a max with
+        // Currently support listing the sweep values as a linspace from a min to a max with
         // some number of values
         if values_map.contains_key("linspace") {
             // If it is a linspace then just return a sweep parameter and create the array of
@@ -53,6 +61,31 @@ impl SweepParameter {
                 )
                 .to_vec(),
             };
+        }
+        // Or define a type of random distribution to sample from
+        else if values_map.contains_key("distribution") {
+            let distribution: &Map<String, Value> = values_map["distribution"].as_object().unwrap();
+            // Uniform distribution
+            if distribution["type"].as_str().unwrap() == "uniform" {
+                let min: f64 = distribution["min"].as_f64().unwrap();
+                let max: f64 = distribution["max"].as_f64().unwrap();
+                let distr: Uniform<f64> = Uniform::<f64>::try_from(min..max).unwrap();
+                let rng = rand::rng();
+                return SweepParameter {
+                    path: vec![path],
+                    values: rng
+                        .sample_iter(distr)
+                        .take(distribution["num_samples"].as_i64().unwrap() as usize)
+                        .collect(),
+                };
+                // let values: Array1<f64> = rng.sample_iter(distr).take(distribution["num_samples"].as_i64().unwrap() as usize).collect();
+                // let mut values: Array1<f64> = Array1::<f64>::zeros(distribution["num_samples"].as_i64().unwrap() as usize);
+                // let distr: Uniform<f64> = Uniform::<f64>::try_from(min..max).unwrap();
+                // let mut rng = rand::rng();
+                // for value in values.iter_mut() {
+                //     *value = distr.sample(&mut rng);
+                // }
+            }
         }
         return SweepParameter {
             path: vec![path],

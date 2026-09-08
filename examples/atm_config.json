@@ -1,10 +1,11 @@
 {
-	"step_size": 0.1,
+	"step_size": 0.01,
 	"method": "PadeState",
 	"frame": "Pulse",
 	"output": {
-		"num_samples": 1000,
+		"num_samples": 200,
 		"state": true,
+		"probability": true,
 		"bloch_coords": true,
 		"times": true,
 		"waveform": true,
@@ -20,13 +21,13 @@
 			"PiO2X": {},
 			"PiO2Y": {},
 			"ATMGate": {
-				"rise_time": 10,
-				"fall_time": 75,
-				"max_amplitude": 0.5,
-				"max_frequency": 0.6,
+				"rise_time": 5,
+				"fall_time": 18,
+				"max_amplitude": 1,
+				"max_frequency": -0.6,
 				"rise_gradient": 0.95,
-				"fall_gradient": 0.08,
-				"duration": 100
+				"fall_gradient": 0.2,
+				"duration": 30
 			}
 		},
 		"order": ["ATMGate"]
@@ -38,9 +39,20 @@
 				"1/f_power": 0
 			},
 			"guess_larmor": {
-					"linspace" : [-2, 2, 250]
+					"linspace" : [-0.5, 1.5, 500]
 				},
-			"decoherence": 0
+			"decoherence": 0,
+			"init_state": "+z",
+			"uinit_state": {
+				"+z": {
+					"real": 1,
+					"imag": 0
+				},
+				"-z": {
+					"real": 0,
+					"imag": 0
+				}
+			}
 		}
 	}
 }

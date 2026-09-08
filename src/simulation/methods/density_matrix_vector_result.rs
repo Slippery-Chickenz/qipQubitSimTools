@@ -61,6 +61,29 @@ impl SimulationResultGetter for DensityMatrixVectorResult {
             Complex64::new(1., 0.),
         ]));
     }
+    /// Get the state of every sample
+    fn get_states(&self) -> Array2<Complex64> {
+        let mut states: Array2<Complex64> =
+            Array2::<Complex64>::zeros((self.density_matrices.shape()[0], 2));
+        for i in 0..self.density_matrices.shape()[0] {
+            let (x, y, z): (f64, f64, f64) = self.get_bloch_coord_cart(i);
+            let magnitude: f64 = (x.powf(2.) + y.powf(2.) + z.powf(2.)).sqrt();
+            // If the magnitude is zero then just set the state to +z
+            if magnitude < 0.0001 {
+                states[[i, 0]] = Complex64::new(1., 0.);
+                continue;
+            }
+            // If x is too small then just set phi to 0
+            let phi: f64 = if x < 0.0001 { 0. } else { (y / x).atan() };
+            let theta: f64 = (z / (x.powf(2.) + y.powf(2.) + z.powf(2.)).sqrt()).acos();
+            states[[i, 0]] = Complex64::new((theta / 2.).cos(), 0.);
+            states[[i, 1]] = Complex64::new(
+                (theta / 2.).sin() * phi.cos(),
+                (theta / 2.).sin() * phi.sin(),
+            );
+        }
+        return states;
+    }
     /// Get the duration of the simulation
     fn get_duration(&self) -> f64 {
         return self.simulation_times.get_duration();

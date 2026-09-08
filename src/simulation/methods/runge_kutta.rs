@@ -10,17 +10,17 @@ use num_complex::Complex64;
 pub struct RKMethod {}
 
 impl SimulationMethod for RKMethod {
-    type QubitState = Array2<Complex64>;
+    type QubitStateType = Array2<Complex64>;
     type ResultType = DensityMatrixResult;
     fn evolve_state<T: Hamiltonian>(
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
-        mut qubit_state: Self::QubitState,
+        mut qubit_state: Self::QubitStateType,
         _hamiltonian: PhantomData<T>,
         start_index: usize,
         end_index: usize,
-    ) -> Self::QubitState {
+    ) -> Self::QubitStateType {
         let dt: f64 = simulation_times.get_dt();
         for t_index in start_index..end_index {
             let time = simulation_times.get_iteration_time(t_index);
@@ -55,9 +55,11 @@ impl SimulationMethod for RKMethod {
     fn get_num_times_per_step() -> usize {
         return 4;
     }
-    fn get_state(_array: &Array1<Complex64>) -> Array2<Complex64> {
-        let mut density_matrix: Array2<Complex64> = Array2::<Complex64>::zeros((2, 2));
-        density_matrix[[0, 0]] = Complex64::new(1., 0.);
+    fn get_state(array: &Array1<Complex64>) -> Array2<Complex64> {
+        let density_matrix: Array2<Complex64> = array
+            .to_shape([2, 1])
+            .unwrap()
+            .dot(&array.mapv(|x| x.conj()).to_shape([1, 2]).unwrap());
         return density_matrix;
     }
 }

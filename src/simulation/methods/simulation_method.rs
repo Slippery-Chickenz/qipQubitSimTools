@@ -8,18 +8,19 @@ use ndarray::{Array1, Array2, Array3};
 use num_complex::Complex64;
 
 pub trait SimulationMethod {
-    type QubitState: Clone + Debug;
-    type ResultType: SimulationResultSaver<QubitState = Self::QubitState> + SimulationResultGetter;
+    type QubitStateType: Clone + Debug;
+    type ResultType: SimulationResultSaver<QubitState = Self::QubitStateType>
+        + SimulationResultGetter;
     fn evolve_state<T: Hamiltonian>(
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
-        qubit_state: Self::QubitState,
+        qubit_state: Self::QubitStateType,
         _hamiltonian: PhantomData<T>,
         start_index: usize,
         end_index: usize,
-    ) -> Self::QubitState;
-    fn get_state(array: &Array1<Complex64>) -> Self::QubitState;
+    ) -> Self::QubitStateType;
+    fn get_state(array: &Array1<Complex64>) -> Self::QubitStateType;
     fn get_num_times_per_step() -> usize;
 }
 
@@ -32,6 +33,7 @@ pub trait SimulationResultSaver {
 
 pub trait SimulationResultGetter {
     fn get_probabilities(&self) -> Array1<f64>;
+    fn get_states(&self) -> Array2<Complex64>;
     fn get_duration(&self) -> f64;
     fn get_bloch_coords_cart(&self) -> (Array1<f64>, Array1<f64>, Array1<f64>);
     fn get_simulation_times(&self) -> &SimulationTimes;

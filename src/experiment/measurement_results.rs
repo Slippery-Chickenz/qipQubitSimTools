@@ -1,48 +1,46 @@
 use super::experiment_results::ExperimentResult;
-use crate::simulation::{QubitState, SimulationResultGetter};
+use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
 use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
-use num_complex::Complex64;
-use serde_json::Value;
+use rand::RngExt;
 
-pub struct ProbabilityResults {
+pub struct MeasurementResults {
     /// Multi-Dimensional array to store the results of the sweep in
-    probabilities: ArrayD<f64>,
-    /// State that the probabilities are to be in
-    _state: QubitState,
+    measurements: ArrayD<bool>,
 }
 
-impl ProbabilityResults {
-    pub fn from_json(
-        mut results_dim: Vec<usize>,
-        num_samples: usize,
-        _json_values: &Value,
-    ) -> ProbabilityResults {
+impl MeasurementResults {
+    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize) -> MeasurementResults {
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
-
-        let state: QubitState = Array1::<Complex64>::zeros(2);
-
         // Array for results of experiment
-        let results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
-        return ProbabilityResults {
-            probabilities: results,
-            _state: state,
+        let results: ArrayD<bool> =
+            ArrayD::<bool>::from_shape_simple_fn(IxDyn(&results_dim), || false);
+        return MeasurementResults {
+            measurements: results,
         };
     }
 }
 
-impl ExperimentResult for ProbabilityResults {
+impl ExperimentResult for MeasurementResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
         let probabilities: Array1<f64> = simulation_result.get_probabilities();
+        let mut rng = rand::rng();
+        let mut measurement_values: Array1<bool> =
+            Array1::<bool>::from_shape_simple_fn(probabilities.shape()[0], || false);
+        for (i, measurement) in measurement_values.iter_mut().enumerate() {
+            *measurement = rng.random_bool(probabilities[i].max(0.).min(1.));
+        }
+
         if probabilities.len() == 1 {
-            self.probabilities[sweep_parameter_indices.clone().into_dimension()] = probabilities[0];
+            self.measurements[sweep_parameter_indices.clone().into_dimension()] =
+                measurement_values[0];
             return;
         }
 
@@ -60,9 +58,9 @@ impl ExperimentResult for ProbabilityResults {
 
         let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
             SliceInfo::try_from(slice_info_vec).unwrap();
-        self.probabilities
+        self.measurements
             .slice_mut(slice_info)
-            .assign(&probabilities);
+            .assign(&measurement_values);
         return;
     }
     /// Save a given array of results to an HDF5 file. The results are N Dimensional where N should
@@ -72,8 +70,8 @@ impl ExperimentResult for ProbabilityResults {
         // Make a builder and put the results data set into the file
         let builder = group.new_dataset_builder();
         let _ds = builder
-            .with_data(&self.probabilities)
-            .create("probabilities")?;
+            .with_data(&self.measurements)
+            .create("measurements")?;
         return Ok(());
     }
 }

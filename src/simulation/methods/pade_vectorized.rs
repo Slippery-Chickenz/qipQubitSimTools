@@ -12,17 +12,17 @@ use num_complex::Complex64;
 pub struct PadeVectorizedMethod {}
 
 impl SimulationMethod for PadeVectorizedMethod {
-    type QubitState = Array1<Complex64>;
+    type QubitStateType = Array1<Complex64>;
     type ResultType = DensityMatrixVectorResult;
     fn evolve_state<T: Hamiltonian>(
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         simulation_times: &SimulationTimes,
-        mut qubit_state: Self::QubitState,
+        mut qubit_state: Self::QubitStateType,
         _hamiltonian: PhantomData<T>,
         start_index: usize,
         end_index: usize,
-    ) -> Self::QubitState {
+    ) -> Self::QubitStateType {
         let dt: f64 = simulation_times.get_dt();
         for t_index in start_index..end_index {
             let time = simulation_times.get_iteration_time(t_index);

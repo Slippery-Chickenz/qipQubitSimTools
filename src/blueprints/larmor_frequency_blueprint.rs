@@ -38,17 +38,21 @@ impl LarmorFrequencyBlueprint {
             base_value = json_values[parameter_key].as_f64().unwrap();
         }
 
-        parameter_key = "1/f_power";
-
-        // Same but for guess larmor. If it is not a number it must be an array to sweep over
-        if !json_values[parameter_key].is_number() {
-            swept_parameters.push(SweepParameter::from_json(
-                parameter_key.to_string(),
-                &json_values[parameter_key],
-            ));
-            pink_noise_power = swept_parameters[swept_parameters.len() - 1].get_value(0);
+        parameter_key = "pink_noise_power";
+        if json_values.contains_key("noise_power") {
+            let noise_powers: &Map<String, Value> = json_values["noise_power"].as_object().unwrap();
+            // Same but for guess larmor. If it is not a number it must be an array to sweep over
+            if !noise_powers["pink"].is_number() {
+                swept_parameters.push(SweepParameter::from_json(
+                    parameter_key.to_string(),
+                    &noise_powers["pink"],
+                ));
+                pink_noise_power = swept_parameters[swept_parameters.len() - 1].get_value(0);
+            } else {
+                pink_noise_power = noise_powers["pink"].as_f64().unwrap();
+            }
         } else {
-            pink_noise_power = json_values[parameter_key].as_f64().unwrap();
+            pink_noise_power = 0.;
         }
 
         return (
@@ -72,7 +76,7 @@ impl LarmorFrequencyBlueprint {
         // Match the path to be updated and update it
         match sweep_parameter.get_path(path_index).as_str() {
             "base_value" => self.base_value = sweep_parameter.get_value(value_index),
-            "1/f_noise_power" => self.pink_noise_power = sweep_parameter.get_value(value_index),
+            "pink_noise_power" => self.pink_noise_power = sweep_parameter.get_value(value_index),
             _ => return,
         }
         return;

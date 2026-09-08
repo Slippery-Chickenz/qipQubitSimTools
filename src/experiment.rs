@@ -4,10 +4,12 @@ use std::{fs, io::BufReader};
 mod adiabaticity_results;
 mod bloch_coord_results;
 mod duration_result;
+mod eigenstate_results;
 mod experiment_results;
 mod hamiltonian_results;
+mod measurement_results;
 mod probability_results;
-mod eigenstate_results;
+mod state_results;
 mod sweep_parameter;
 mod time_results;
 mod waveform_saver;
@@ -28,6 +30,7 @@ use crate::{
 
 use hdf5::Result;
 use indicatif::ProgressBar;
+use ndarray::Array1;
 use serde_json::{Map, Value};
 
 #[derive(Debug)]
@@ -143,6 +146,19 @@ impl Experiment {
             sweep_parameter.reverse_path();
         }
         sweep_parameters.append(&mut qubit_array_sweep_parameters);
+
+        let num_shots: i64 = json_values
+            .get("shots")
+            .unwrap_or_default()
+            .as_i64()
+            .unwrap_or(1);
+
+        if num_shots > 1 {
+            sweep_parameters.append(&mut vec![SweepParameter::new(
+                vec!["shots".to_string()],
+                Array1::<f64>::linspace(0., num_shots as f64, num_shots as usize).to_vec(),
+            )]);
+        }
 
         // Rc of sweep parameters to save here and also send to results
         let rc_sweep_parameters: Rc<Vec<SweepParameter>> = Rc::new(sweep_parameters);

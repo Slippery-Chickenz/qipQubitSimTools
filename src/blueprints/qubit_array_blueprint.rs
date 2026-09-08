@@ -2,6 +2,8 @@
 use crate::simulation::QubitArray;
 use crate::{blueprints::LarmorFrequencyBlueprint, experiment::SweepParameter};
 
+use ndarray::Array1;
+use num_complex::Complex64;
 use serde_json::{Map, Value};
 
 /// Blueprint for constructing a qubit array to simulate.
@@ -13,6 +15,8 @@ pub struct QubitArrayBlueprint {
     guess_larmor: f64,
     /// Decoherence strength for the qubit
     decoherence: f64,
+    /// Inital state for the qubit
+    init_state: Array1<Complex64>,
 }
 
 impl QubitArrayBlueprint {
@@ -68,11 +72,75 @@ impl QubitArrayBlueprint {
             decoherence = q1_values["decoherence"].as_f64().unwrap();
         }
 
+        let mut init_state: Array1<Complex64> =
+            Array1::<Complex64>::from_vec(vec![Complex64::new(1., 0.), Complex64::new(0., 0.)]);
+
+        // Check for the inital state and assign it depending on input
+        if q1_values.contains_key("init_state") {
+            if q1_values["init_state"].is_string() {
+                init_state = match q1_values["init_state"].as_str().unwrap() {
+                    "+x" => Array1::<Complex64>::from_vec(vec![
+                        Complex64::new(1. / 2_f64.sqrt(), 0.),
+                        Complex64::new(1. / 2_f64.sqrt(), 0.),
+                    ]),
+                    "-x" => Array1::<Complex64>::from_vec(vec![
+                        Complex64::new(1. / 2_f64.sqrt(), 0.),
+                        Complex64::new(-1. / 2_f64.sqrt(), 0.),
+                    ]),
+                    "+y" => Array1::<Complex64>::from_vec(vec![
+                        Complex64::new(1. / 2_f64.sqrt(), 0.),
+                        Complex64::new(0., 1. / 2_f64.sqrt()),
+                    ]),
+                    "-y" => Array1::<Complex64>::from_vec(vec![
+                        Complex64::new(1. / 2_f64.sqrt(), 0.),
+                        Complex64::new(0., -1. / 2_f64.sqrt()),
+                    ]),
+                    "+z" => Array1::<Complex64>::from_vec(vec![
+                        Complex64::new(1., 0.),
+                        Complex64::new(0., 0.),
+                    ]),
+                    "-z" => Array1::<Complex64>::from_vec(vec![
+                        Complex64::new(0., 0.),
+                        Complex64::new(1., 0.),
+                    ]),
+                    _ => panic!("Not valid inital state"),
+                };
+            } else if q1_values["init_state"].is_object() {
+                init_state = Array1::<Complex64>::from_vec(vec![
+                    Complex64::new(
+                        q1_values["init_state"].as_object().unwrap()["+z"]
+                            .as_object()
+                            .unwrap()["real"]
+                            .as_f64()
+                            .unwrap(),
+                        q1_values["init_state"].as_object().unwrap()["+z"]
+                            .as_object()
+                            .unwrap()["imag"]
+                            .as_f64()
+                            .unwrap(),
+                    ),
+                    Complex64::new(
+                        q1_values["init_state"].as_object().unwrap()["-z"]
+                            .as_object()
+                            .unwrap()["real"]
+                            .as_f64()
+                            .unwrap(),
+                        q1_values["init_state"].as_object().unwrap()["-z"]
+                            .as_object()
+                            .unwrap()["imag"]
+                            .as_f64()
+                            .unwrap(),
+                    ),
+                ]);
+            }
+        }
+
         return (
             QubitArrayBlueprint {
                 larmor: larmor,
                 guess_larmor: guess_larmor,
                 decoherence: decoherence,
+                init_state: init_state,
             },
             swept_parameters,
         );
@@ -102,6 +170,7 @@ impl QubitArrayBlueprint {
             self.larmor.get_larmor_frequency(),
             self.guess_larmor,
             self.decoherence,
+            self.init_state.clone(),
         );
     }
 }

@@ -15,7 +15,6 @@ pub struct QubitArray {
     /// Starting density matrix of the qubits
     starting_state: Array1<Complex64>,
     /// Larmor value of the qubit
-    // larmor: f64,
     larmor: LarmorFrequency,
     /// Guess at the larmor value for the qubits
     guess_larmor: f64,
@@ -33,13 +32,11 @@ impl QubitArray {
         larmor: LarmorFrequency,
         guess_larmor: f64,
         decoherence: f64,
+        starting_state: Array1<Complex64>,
     ) -> QubitArray {
-        // Set the density matrix as a kronecker product of the +z state for each qubit
-        let mut density_matrix: Array1<Complex64> = Array1::<Complex64>::zeros(4);
-        density_matrix[0] = Complex64::new(1., 0.);
         return QubitArray {
             num_qubts: num_qubits,
-            starting_state: density_matrix,
+            starting_state: starting_state,
             larmor: larmor,
             guess_larmor: guess_larmor,
             decoherence: decoherence,

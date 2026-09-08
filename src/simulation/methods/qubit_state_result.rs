@@ -58,6 +58,10 @@ impl SimulationResultGetter for QubitStateResult {
             Complex64::new(1., 0.),
         ]));
     }
+    // Get the state of every sample
+    fn get_states(&self) -> Array2<Complex64> {
+        return self.states.clone();
+    }
     /// Get the duration of the simulation
     fn get_duration(&self) -> f64 {
         return self.simulation_times.get_duration();

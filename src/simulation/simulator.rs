@@ -89,7 +89,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
             Method::ResultType,
             Vec<usize>,
             usize,
-            Method::QubitState,
+            Method::QubitStateType,
         ) = self.prepare_simulation(save_hamiltonian);
 
         if save_hamiltonian && self.simulation_times.get_num_samples() != 1 {
@@ -130,7 +130,12 @@ impl<Method: SimulationMethod> Simulator<Method> {
     fn prepare_simulation(
         &mut self,
         save_hamiltonian: bool,
-    ) -> (Method::ResultType, Vec<usize>, usize, Method::QubitState) {
+    ) -> (
+        Method::ResultType,
+        Vec<usize>,
+        usize,
+        Method::QubitStateType,
+    ) {
         // Make an empty simulation results to return
         let mut simulation_results: Method::ResultType =
             Method::ResultType::new(Rc::clone(&self.simulation_times), save_hamiltonian);
@@ -150,7 +155,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
             .set_simulation_times(Rc::clone(&self.simulation_times));
 
         // Get the starting state for the simulation
-        let qubit_state: Method::QubitState =
+        let qubit_state: Method::QubitStateType =
             Method::get_state(self.qubit_array.get_starting_state());
 
         // Get the indicies to iterate over

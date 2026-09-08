@@ -9,9 +9,11 @@ use crate::{
 use super::adiabaticity_results::AdiabaticityResults;
 use super::bloch_coord_results::BlochCoordResults;
 use super::duration_result::DurationResult;
-use super::hamiltonian_results::HamiltonianResults;
-use super::probability_results::ProbabilityResults;
 use super::eigenstate_results::EigenstateResults;
+use super::hamiltonian_results::HamiltonianResults;
+use super::measurement_results::MeasurementResults;
+use super::probability_results::ProbabilityResults;
+use super::state_results::StateResults;
 use super::waveform_saver::WaveformSaver;
 
 use hdf5::{Group, Result};
@@ -79,7 +81,20 @@ impl ExperimentResults {
             }
         }
         if json_values.contains_key("state") {
+            results.push(Box::new(StateResults::from_json(
+                results_dim.clone(),
+                num_samples,
+            )));
+        }
+        if json_values.contains_key("probability") {
             results.push(Box::new(ProbabilityResults::from_json(
+                results_dim.clone(),
+                num_samples,
+                &json_values["probability"],
+            )));
+        }
+        if json_values.contains_key("measurement") {
+            results.push(Box::new(MeasurementResults::from_json(
                 results_dim.clone(),
                 num_samples,
             )));
@@ -161,10 +176,15 @@ impl ExperimentResults {
             // Build a dataset with the values this parameter is swept over
             let parameter_ds = builder
                 .with_data(swept_parameter.get_values())
-                .create(swept_parameter.get_full_path().as_str())?;
+                .create(swept_parameter.get_full_path().as_str())
+                .unwrap();
             // Create at attribute for this parameter and write which number axis this parameter is
-            let attr = parameter_ds.new_attr::<usize>().shape([1]).create("axis")?;
-            attr.write(&[i])?;
+            let attr = parameter_ds
+                .new_attr::<usize>()
+                .shape([1])
+                .create("axis")
+                .unwrap();
+            attr.write(&[i]).unwrap();
         }
 
         // If there is a waveform to save then make a group and save it

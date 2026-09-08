@@ -2,7 +2,7 @@ use super::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array2, Array3, ArrayD, Axis, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array2, Array3, ArrayD, Axis, Ix1, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
 use ndarray_linalg::{Eigh, UPLO};
 use num_complex::Complex64;
 
@@ -24,7 +24,10 @@ impl EigenstateResults {
         // Add an extra dimension for the eigen states
         results_dim.push(2);
         let eigenstates: ArrayD<Complex64> = ArrayD::<Complex64>::zeros(IxDyn(&results_dim));
-        return EigenstateResults { eigenstates: eigenstates, eigenenergies: eigenenergies };
+        return EigenstateResults {
+            eigenstates: eigenstates,
+            eigenenergies: eigenenergies,
+        };
     }
 }
 
@@ -34,14 +37,13 @@ impl ExperimentResult for EigenstateResults {
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
-
         // Get the hamiltonian at each sample
         let hamiltonians: Array3<Complex64> = simulation_result.get_hamiltonians().clone();
 
         // Array to store the eigen values and states at each sample
         let mut eigenstates: Array3<Complex64> = Array3::<Complex64>::zeros(hamiltonians.raw_dim());
         let mut eigenenergies: Array2<f64> = Array2::<f64>::zeros((hamiltonians.shape()[0], 2));
-        
+
         // Loop over hamiltonians and find eigen states/energies
         for (i, hamiltonian) in hamiltonians.outer_iter().enumerate() {
             let (evals, evecs) = hamiltonian.eigh(UPLO::Lower).unwrap();
@@ -61,7 +63,7 @@ impl ExperimentResult for EigenstateResults {
         });
 
         if hamiltonians.shape()[0] == 1 {
-            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
                 SliceInfo::try_from(slice_info_vec.clone()).unwrap();
 
             self.eigenenergies
@@ -106,9 +108,7 @@ impl ExperimentResult for EigenstateResults {
         let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix3> =
             SliceInfo::try_from(slice_info_vec).unwrap();
 
-        self.eigenstates
-            .slice_mut(slice_info)
-            .assign(&eigenstates);
+        self.eigenstates.slice_mut(slice_info).assign(&eigenstates);
         return;
     }
     /// Save a given array of results to an HDF5 file. The results are N Dimensional where N should
@@ -120,7 +120,9 @@ impl ExperimentResult for EigenstateResults {
         let _ds = builder.with_data(&self.eigenstates).create("eigenstates")?;
 
         let builder = group.new_dataset_builder();
-        let _ds = builder.with_data(&self.eigenenergies).create("eigenenergies")?;
+        let _ds = builder
+            .with_data(&self.eigenenergies)
+            .create("eigenenergies")?;
         return Ok(());
     }
 }
