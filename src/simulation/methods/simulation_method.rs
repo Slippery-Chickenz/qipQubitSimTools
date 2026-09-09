@@ -33,6 +33,7 @@ pub trait SimulationResultSaver {
 
 pub trait SimulationResultGetter {
     fn get_probabilities(&self) -> Array1<f64>;
+    fn get_state_probabilities(&self, state: &Array1<Complex64>) -> Array1<f64>;
     fn get_states(&self) -> Array2<Complex64>;
     fn get_duration(&self) -> f64;
     fn get_bloch_coords_cart(&self) -> (Array1<f64>, Array1<f64>, Array1<f64>);

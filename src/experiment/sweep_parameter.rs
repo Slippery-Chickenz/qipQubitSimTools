@@ -78,13 +78,6 @@ impl SweepParameter {
                         .take(distribution["num_samples"].as_i64().unwrap() as usize)
                         .collect(),
                 };
-                // let values: Array1<f64> = rng.sample_iter(distr).take(distribution["num_samples"].as_i64().unwrap() as usize).collect();
-                // let mut values: Array1<f64> = Array1::<f64>::zeros(distribution["num_samples"].as_i64().unwrap() as usize);
-                // let distr: Uniform<f64> = Uniform::<f64>::try_from(min..max).unwrap();
-                // let mut rng = rand::rng();
-                // for value in values.iter_mut() {
-                //     *value = distr.sample(&mut rng);
-                // }
             }
         }
         return SweepParameter {

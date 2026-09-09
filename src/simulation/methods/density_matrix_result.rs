@@ -59,6 +59,9 @@ impl SimulationResultGetter for DensityMatrixResult {
             Complex64::new(1., 0.),
         ]));
     }
+    fn get_state_probabilities(&self, state: &Array1<Complex64>) -> Array1<f64> {
+        return self.get_state_probabilities(state);
+    }
     /// Get the state of every sample
     fn get_states(&self) -> Array2<Complex64> {
         let mut states: Array2<Complex64> =

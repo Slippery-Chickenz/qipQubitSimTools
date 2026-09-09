@@ -97,6 +97,7 @@ impl ExperimentResults {
             results.push(Box::new(MeasurementResults::from_json(
                 results_dim.clone(),
                 num_samples,
+                &json_values["measurement"],
             )));
         }
         if json_values.contains_key("times") {

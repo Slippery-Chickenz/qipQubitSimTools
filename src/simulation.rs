@@ -17,9 +17,3 @@ pub use methods::{
 pub use qubit_array::QubitArray;
 pub use simulation_times::SimulationTimes;
 pub use simulator::Simulator;
-
-use ndarray::{Array1, Array2};
-use num_complex::Complex64;
-
-pub type QubitState = Array1<Complex64>;
-pub type DensityMatrix = Array2<Complex64>;

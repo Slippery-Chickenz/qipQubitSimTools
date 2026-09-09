@@ -5,7 +5,7 @@
 	"output": {
 		"num_samples": 200,
 		"state": true,
-		"probability": true,
+		"probability": "-z",
 		"bloch_coords": true,
 		"times": true,
 		"waveform": true,

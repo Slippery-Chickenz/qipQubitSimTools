@@ -1,5 +1,6 @@
 use super::experiment_results::ExperimentResult;
-use crate::simulation::{QubitState, SimulationResultGetter};
+use crate::simulation::SimulationResultGetter;
+use crate::utils::get_state_from_json;
 
 use hdf5::{Group, Result};
 use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
@@ -10,26 +11,27 @@ pub struct ProbabilityResults {
     /// Multi-Dimensional array to store the results of the sweep in
     probabilities: ArrayD<f64>,
     /// State that the probabilities are to be in
-    _state: QubitState,
+    state: Array1<Complex64>,
 }
 
 impl ProbabilityResults {
     pub fn from_json(
         mut results_dim: Vec<usize>,
         num_samples: usize,
-        _json_values: &Value,
+        json_values: &Value,
     ) -> ProbabilityResults {
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
 
-        let state: QubitState = Array1::<Complex64>::zeros(2);
+        // Get the state to find the probability for
+        let state: Array1<Complex64> = get_state_from_json(json_values);
 
         // Array for results of experiment
         let results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
         return ProbabilityResults {
             probabilities: results,
-            _state: state,
+            state: state,
         };
     }
 }
@@ -40,7 +42,7 @@ impl ExperimentResult for ProbabilityResults {
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
-        let probabilities: Array1<f64> = simulation_result.get_probabilities();
+        let probabilities: Array1<f64> = simulation_result.get_state_probabilities(&self.state);
         if probabilities.len() == 1 {
             self.probabilities[sweep_parameter_indices.clone().into_dimension()] = probabilities[0];
             return;

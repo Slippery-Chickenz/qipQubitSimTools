@@ -1,48 +1,60 @@
 {
 	"step_size": 0.01,
-	"method": "PadeVectorized",
-	"frame": "Pulse",
+	"shots": 400,
+	"method": "PadeState",
+	"frame": "Rotating",
 	"output": {
 		"num_samples": 1,
-		"state": true,
-		"bloch_coords": true,
-		"times": true,
-		"waveform": true,
-		"hamiltonians": true,
-		"adiabaticity": true,
-		"eigenstates": true
+		"state": false,
+		"measurement": true,
+		"bloch_coords": false,
+		"times": false,
+		"waveform": false,
+		"hamiltonians": false,
+		"adiabaticity": false,
+		"eigenstates": false
 	},
 	"circuit": { 
 		"gates": {
 			"Idle": {
-				"duration": {
-					"linspace": [0, 10, 100]
-				}
+				"duration": 2
 			},
 			"PiO2X": {},
-			"PiO2Y": {}
+			"PiO2Y": {},
+			"Constant": {
+				"amplitude": 1,
+				"frequency": 0,
+				"phase": 0,
+				"duration": {
+					"linspace": [0.1, 20, 400]
+				}
+			}
 		},
-		"order": ["PiO2X", "Idle", "PiO2X"]
+		"order": ["Constant"]
 	},
 	"qubits": { 
 		"q1": {
+			"decoherence": 0,
 			"larmor": {
-				"base_value": 0,
-				"1/f_power": 0
+				"base_value": {
+					"distribution": {
+						"type": "uniform",
+						"min": -0.2,
+						"max": 0.2,
+						"num_samples": 400
+					}
+				},
+				"shot_distribution": {
+						"type": "uniform",
+						"range": -0.2
+				},
+				"noise_power": {
+					"pink": [0.0, 0.05, 0.1, 0.15, 0.2]
+				}
 			},
 			"guess_larmor": 0,
-			"decoherence": 0.1,
-			"init_state": "+z",
-			"uinit_state": {
-				"+z": {
-					"real": 1,
-					"imag": 0
-				},
-				"-z": {
-					"real": 0,
-					"imag": 0
-				}
-			}
+			"decoherence": 0,
+			"init_state": "+z"
 		}
 	}
 }

@@ -1,25 +1,35 @@
 use super::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
+use crate::utils::get_state_from_json;
 
 use hdf5::{Group, Result};
 use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
 use rand::RngExt;
+use num_complex::Complex64;
+use serde_json::Value;
 
 pub struct MeasurementResults {
     /// Multi-Dimensional array to store the results of the sweep in
     measurements: ArrayD<bool>,
+    /// State that the probabilities are to be in
+    state: Array1<Complex64>,
 }
 
 impl MeasurementResults {
-    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize) -> MeasurementResults {
+    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize, json_values: &Value) -> MeasurementResults {
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
+
+        // Get the state to find the probability for
+        let state: Array1<Complex64> = get_state_from_json(json_values);
+
         // Array for results of experiment
         let results: ArrayD<bool> =
             ArrayD::<bool>::from_shape_simple_fn(IxDyn(&results_dim), || false);
         return MeasurementResults {
             measurements: results,
+            state: state
         };
     }
 }
@@ -30,7 +40,7 @@ impl ExperimentResult for MeasurementResults {
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
-        let probabilities: Array1<f64> = simulation_result.get_probabilities();
+        let probabilities: Array1<f64> = simulation_result.get_state_probabilities(&self.state);
         let mut rng = rand::rng();
         let mut measurement_values: Array1<bool> =
             Array1::<bool>::from_shape_simple_fn(probabilities.shape()[0], || false);

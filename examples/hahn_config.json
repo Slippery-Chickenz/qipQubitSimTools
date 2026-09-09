@@ -1,5 +1,5 @@
 {
-	"step_size": 0.01,
+	"step_size": 0.001,
 	"shots": 1,
 	"method": "PadeState",
 	"frame": "Rotating",
@@ -7,7 +7,7 @@
 		"num_samples": 100,
 		"state": true,
 		"probability": true,
-		"measurement": true,
+		"measurement": "+z",
 		"bloch_coords": true,
 		"times": false,
 		"waveform": false,
@@ -19,20 +19,16 @@
 		"gates": {
 			"Idle": {
 				"type": "Idle",
-				"duration": 4
-			},
-			"Idle2": {
-				"type": "Idle",
-				"duration": { "linspace" : [0, 10, 200] }
+				"duration": { 
+					"linspace": [0, 4, 200]
+				}
 			},
 			"PiO2X": {},
 			"PiO2Y": {},
 			"PiX": {},
 			"PiY": {}
 		},
-		"uorder": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"],
-		"order": ["PiO2X", "Idle", "PiX", "Idle2", "PiO2X"],
-		"uorder": ["PiO2X", "Idle", "PiO2X"]
+		"order": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"]
 	},
 	"qubits": { 
 		"q1": {
@@ -41,15 +37,13 @@
 				"base_value": {
 					"distribution": {
 						"type": "uniform",
-						"min": -0.5,
-						"max": 0.5,
-						"num_samples": 400
+						"min": -0.1,
+						"max": 0.1,
+						"num_samples": 300
 					}
 				},
-				"ubase_value": 0,
 				"noise_power": {
-					"upink": [0.0, 0.05, 0.1, 0.15, 0.2],
-					"pink": 0
+					"pink": [0.3]
 				}
 			},
 			"guess_larmor": 0,
