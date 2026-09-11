@@ -13,54 +13,67 @@ pub struct SweepParameter {
     path: Vec<String>,
     /// Values to sweep the parameter over
     values: Vec<f64>,
+    /// ID value for this parameter. Parameters with the same ID must have the same length and will
+    /// be swept across together thus using the same axis in the final results.
+    _id: Option<i64>,
 }
 
 impl SweepParameter {
-    pub fn new(path: Vec<String>, values: Vec<f64>) -> SweepParameter {
+    pub fn new(path: Vec<String>, values: Vec<f64>, id: Option<i64>) -> SweepParameter {
         return SweepParameter {
             path: path,
             values: values,
+            _id: id,
         };
     }
     /// Get a sweep parameter from a starting path and json values.
-    pub fn from_json(path: String, values: &Value) -> SweepParameter {
+    pub fn from_json(path: &str, json_values: Value) -> (f64, Option<SweepParameter>) {
+        if json_values.is_number() {
+            return (serde_json::from_value(json_values).unwrap(), Option::None);
+        }
+
+        // Values to sweep the parameter over
+        let sweep_values: Vec<f64>;
+
         // If the values are an array then just return a sweep parameter with the path and the
         // values converted to an array of f64s
-        if values.is_array() {
-            return SweepParameter {
-                path: vec![path],
-                values: values
-                    .as_array()
-                    .unwrap()
-                    .iter()
-                    .map(|x| x.as_f64().unwrap())
-                    .collect(),
-            };
+        if json_values.is_array() {
+            sweep_values = serde_json::from_value(json_values).unwrap();
+            return (
+                sweep_values[0],
+                Some(SweepParameter {
+                    path: vec![path.to_string()],
+                    values: sweep_values,
+                    _id: Option::None,
+                }),
+            );
         }
 
         // Otherwise the values should be a map from String to values
-        let values_map: &Map<String, Value> = values.as_object().unwrap();
+        let mut values_map: Map<String, Value> = serde_json::from_value(json_values).unwrap();
 
-        // Currently support listing the sweep values as a linspace from a min to a max with
-        // some number of values
-        if values_map.contains_key("linspace") {
+        // If the values contain an ID then grab that
+        let id: Option<i64> = if values_map.contains_key("id") {
+            Option::Some(values_map["id"].as_i64().unwrap())
+        } else {
+            Option::None
+        };
+
+        if values_map.contains_key("values") {
+            sweep_values = serde_json::from_value(values_map.remove("values").unwrap()).unwrap();
+        }
+        // If a linspace is defined
+        else if values_map.contains_key("linspace") {
             // If it is a linspace then just return a sweep parameter and create the array of
             // values with the ndarray linspace function
-            let linspace_args: Vec<f64> = values_map["linspace"]
-                .as_array()
-                .unwrap()
-                .iter()
-                .map(|x| x.as_f64().unwrap())
-                .collect();
-            return SweepParameter {
-                path: vec![path],
-                values: Array1::<f64>::linspace(
-                    linspace_args[0],
-                    linspace_args[1],
-                    linspace_args[2] as usize,
-                )
-                .to_vec(),
-            };
+            let linspace_args: Vec<f64> =
+                serde_json::from_value(values_map.remove("linspace").unwrap()).unwrap();
+            sweep_values = Array1::<f64>::linspace(
+                linspace_args[0],
+                linspace_args[1],
+                linspace_args[2] as usize,
+            )
+            .to_vec();
         }
         // Or define a type of random distribution to sample from
         else if values_map.contains_key("distribution") {
@@ -71,19 +84,25 @@ impl SweepParameter {
                 let max: f64 = distribution["max"].as_f64().unwrap();
                 let distr: Uniform<f64> = Uniform::<f64>::try_from(min..max).unwrap();
                 let rng = rand::rng();
-                return SweepParameter {
-                    path: vec![path],
-                    values: rng
-                        .sample_iter(distr)
-                        .take(distribution["num_samples"].as_i64().unwrap() as usize)
-                        .collect(),
-                };
+                sweep_values = rng
+                    .sample_iter(distr)
+                    .take(distribution["num_samples"].as_i64().unwrap() as usize)
+                    .collect();
+            } else {
+                panic!("No valid values given for sweep {}", path);
             }
+        } else {
+            panic!("No valid values given for sweep {}", path);
         }
-        return SweepParameter {
-            path: vec![path],
-            values: vec![],
-        };
+
+        return (
+            sweep_values[0],
+            Some(SweepParameter {
+                path: vec![path.to_string()],
+                values: sweep_values,
+                _id: id,
+            }),
+        );
     }
     /// Add a string onto the end of the path values
     pub fn add_path(&mut self, path: String) -> () {

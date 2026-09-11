@@ -1,5 +1,6 @@
 // use crate::blueprints::LarmorFrequencyBlueprint;
 use crate::simulation::QubitArray;
+use crate::utils::get_state_from_json;
 use crate::{blueprints::LarmorFrequencyBlueprint, experiment::SweepParameter};
 
 use ndarray::Array1;
@@ -22,17 +23,18 @@ pub struct QubitArrayBlueprint {
 impl QubitArrayBlueprint {
     /// Get a QubitArrayBlueprint object from a Map of Strings to json values. Returns not just the
     /// blueprint but also a vector of parameters to be swept over
-    pub fn from_json(
-        json_values: Map<String, Value>,
-    ) -> (QubitArrayBlueprint, Vec<SweepParameter>) {
+    pub fn from_json(mut json_values: Vec<Value>) -> (QubitArrayBlueprint, Vec<SweepParameter>) {
         // Values for the first (and only as of now) qubit
-        let q1_values: &Map<String, Value> = json_values["q1"].as_object().unwrap();
+        let mut q1_values: Map<String, Value> =
+            serde_json::from_value(json_values.remove(0)).unwrap();
 
         // Empty vector for the sweep parameters
         let mut swept_parameters: Vec<SweepParameter> = vec![];
 
         let (larmor, mut larmor_swept_parameters): (LarmorFrequencyBlueprint, Vec<SweepParameter>) =
-            LarmorFrequencyBlueprint::from_json(q1_values["larmor"].as_object().unwrap());
+            LarmorFrequencyBlueprint::from_json(
+                serde_json::from_value(q1_values.remove("larmor").unwrap()).unwrap(),
+            );
 
         // Add to the path in the sweep parameter to track it for updates later
         for sweep_parameter in &mut larmor_swept_parameters {
@@ -41,99 +43,26 @@ impl QubitArrayBlueprint {
         // Append the sweep parameters from this gate to the overall
         swept_parameters.append(&mut larmor_swept_parameters);
 
-        // Get the larmor value from the map under the "larmor" key. If it is not a number then
-        // assume it is an array and it must be swept over
-
-        // Store the guess lamrmor
-        let guess_larmor: f64;
-
-        // Same but for guess larmor. If it is not a number it must be an array to sweep over
-        if !q1_values["guess_larmor"].is_number() {
-            swept_parameters.push(SweepParameter::from_json(
-                "guess_larmor".to_string(),
-                &q1_values["guess_larmor"],
-            ));
-            guess_larmor = swept_parameters[swept_parameters.len() - 1].get_value(0);
-        } else {
-            guess_larmor = q1_values["guess_larmor"].as_f64().unwrap();
+        let (guess_larmor, sweep_parameter_option): (f64, Option<SweepParameter>) =
+            SweepParameter::from_json(
+                "guess_larmor",
+                serde_json::from_value(q1_values.remove("guess_larmor").unwrap()).unwrap(),
+            );
+        if let Some(sweep_parameter) = sweep_parameter_option {
+            swept_parameters.push(sweep_parameter);
         }
 
-        // Decoherence
-        let decoherence: f64;
-
-        // Same but for decoherence. If it is not a number it must be an array to sweep over
-        if !q1_values["decoherence"].is_number() {
-            swept_parameters.push(SweepParameter::from_json(
-                "decoherence".to_string(),
-                &q1_values["decoherence"],
-            ));
-            decoherence = swept_parameters[swept_parameters.len() - 1].get_value(0);
-        } else {
-            decoherence = q1_values["decoherence"].as_f64().unwrap();
+        let (decoherence, sweep_parameter_option): (f64, Option<SweepParameter>) =
+            SweepParameter::from_json(
+                "decoherence",
+                serde_json::from_value(q1_values.remove("decoherence").unwrap()).unwrap(),
+            );
+        if let Some(sweep_parameter) = sweep_parameter_option {
+            swept_parameters.push(sweep_parameter);
         }
 
-        let mut init_state: Array1<Complex64> =
-            Array1::<Complex64>::from_vec(vec![Complex64::new(1., 0.), Complex64::new(0., 0.)]);
-
-        // Check for the inital state and assign it depending on input
-        if q1_values.contains_key("init_state") {
-            if q1_values["init_state"].is_string() {
-                init_state = match q1_values["init_state"].as_str().unwrap() {
-                    "+x" => Array1::<Complex64>::from_vec(vec![
-                        Complex64::new(1. / 2_f64.sqrt(), 0.),
-                        Complex64::new(1. / 2_f64.sqrt(), 0.),
-                    ]),
-                    "-x" => Array1::<Complex64>::from_vec(vec![
-                        Complex64::new(1. / 2_f64.sqrt(), 0.),
-                        Complex64::new(-1. / 2_f64.sqrt(), 0.),
-                    ]),
-                    "+y" => Array1::<Complex64>::from_vec(vec![
-                        Complex64::new(1. / 2_f64.sqrt(), 0.),
-                        Complex64::new(0., 1. / 2_f64.sqrt()),
-                    ]),
-                    "-y" => Array1::<Complex64>::from_vec(vec![
-                        Complex64::new(1. / 2_f64.sqrt(), 0.),
-                        Complex64::new(0., -1. / 2_f64.sqrt()),
-                    ]),
-                    "+z" => Array1::<Complex64>::from_vec(vec![
-                        Complex64::new(1., 0.),
-                        Complex64::new(0., 0.),
-                    ]),
-                    "-z" => Array1::<Complex64>::from_vec(vec![
-                        Complex64::new(0., 0.),
-                        Complex64::new(1., 0.),
-                    ]),
-                    _ => panic!("Not valid inital state"),
-                };
-            } else if q1_values["init_state"].is_object() {
-                init_state = Array1::<Complex64>::from_vec(vec![
-                    Complex64::new(
-                        q1_values["init_state"].as_object().unwrap()["+z"]
-                            .as_object()
-                            .unwrap()["real"]
-                            .as_f64()
-                            .unwrap(),
-                        q1_values["init_state"].as_object().unwrap()["+z"]
-                            .as_object()
-                            .unwrap()["imag"]
-                            .as_f64()
-                            .unwrap(),
-                    ),
-                    Complex64::new(
-                        q1_values["init_state"].as_object().unwrap()["-z"]
-                            .as_object()
-                            .unwrap()["real"]
-                            .as_f64()
-                            .unwrap(),
-                        q1_values["init_state"].as_object().unwrap()["-z"]
-                            .as_object()
-                            .unwrap()["imag"]
-                            .as_f64()
-                            .unwrap(),
-                    ),
-                ]);
-            }
-        }
+        let init_state: Array1<Complex64> =
+            get_state_from_json(q1_values.remove("init_state").unwrap());
 
         return (
             QubitArrayBlueprint {

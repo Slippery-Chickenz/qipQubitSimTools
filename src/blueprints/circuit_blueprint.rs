@@ -14,7 +14,6 @@ pub struct CircuitBlueprint {
     /// Circuit data which is a vector of blueprints for each gate in the circuit
     circuit_data: Vec<String>,
     /// Gate directory to map human readable gate names to their position in the vector
-    // gate_directory: HashMap<String, Vec<usize>>,
     gate_directory: HashMap<String, GateBlueprint>,
 }
 
@@ -35,33 +34,37 @@ impl CircuitBlueprint {
         }
 
         // Ordered vector of gate names to construct the circuit
-        let mut circuit_data: Vec<String> = vec![];
+        let circuit_data: Vec<String> =
+            serde_json::from_value(json_values.remove("order").unwrap()).unwrap();
+
         // Map the circuit name strings to a blueprint to construct the circuit objects
         let mut gate_directory: HashMap<String, GateBlueprint> = HashMap::new();
-
-        // Get list of gates defining the circuit and add them to the vector
-        let order: &Vec<Value> = json_values["order"].as_array().unwrap();
-        for gate_name in order {
-            circuit_data.push(gate_name.as_str().unwrap().to_string());
-        }
 
         // Vector of parameters to be swept over
         let mut gate_swept_parameters: Vec<SweepParameter> = vec![];
 
         // Loop over the array of gates
-        // for (i, gate) in order.iter().enumerate() {
-        for (gate_name, gate_values) in json_values["gates"].as_object().unwrap().iter() {
-            let gate_data: &Map<String, Value> = gate_values.as_object().unwrap();
+        // for gate_values in json_values["gates"].as_array().unwrap().iter() {
+        for gate_values in
+            serde_json::from_value::<Vec<Map<String, Value>>>(json_values.remove("gates").unwrap())
+                .unwrap()
+                .iter_mut()
+        {
+            // String representing the name of the gate
+            let gate_name: String =
+                serde_json::from_value(gate_values.remove("name").unwrap()).unwrap();
 
-            // String representing the type of gate to add
-            let gate_type: &str;
-
-            // If there exists a name entry then use that as the name otherwise just use the key
-            if gate_data.contains_key("type") {
-                gate_type = gate_data.get("type").unwrap().as_str().unwrap();
+            // String representing the type of gate to add if there is no type specified then assume
+            // it is the same as the name
+            let gate_type: String = if gate_values.contains_key("type") {
+                serde_json::from_value(gate_values.remove("type").unwrap()).unwrap()
             } else {
-                gate_type = gate_name;
-            }
+                gate_name.clone()
+            };
+
+            let gate_data: Map<String, Value> =
+                serde_json::from_value(gate_values.remove("parameters").unwrap_or_default())
+                    .unwrap_or_default();
 
             // Get a blueprint and the swept parameters for the given gate defined by the string
             let (gate_blueprint, mut swept_parameters): (GateBlueprint, Vec<SweepParameter>) =

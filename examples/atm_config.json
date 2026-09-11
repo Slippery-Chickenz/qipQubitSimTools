@@ -1,9 +1,11 @@
 {
-	"step_size": 0.01,
-	"method": "PadeState",
-	"frame": "Pulse",
-	"output": {
+	"simulation_settings": {
+		"step_size": 0.01,
 		"num_samples": 200,
+		"method": "PadeState",
+		"frame": "Pulse"
+	},
+	"output": {
 		"state": true,
 		"probability": "-z",
 		"bloch_coords": true,
@@ -14,45 +16,31 @@
 		"eigenstates": true
 	},
 	"circuit": { 
-		"gates": {
-			"Idle": {
-				"duration": 10
-			},
-			"PiO2X": {},
-			"PiO2Y": {},
-			"ATMGate": {
-				"rise_time": 5,
-				"fall_time": 18,
-				"max_amplitude": 1,
-				"max_frequency": -0.6,
-				"rise_gradient": 0.95,
-				"fall_gradient": 0.2,
-				"duration": 30
-			}
-		},
-		"order": ["ATMGate"]
-	},
-	"qubits": { 
-		"q1": {
-			"larmor": {
-				"base_value": 0,
-				"1/f_power": 0
-			},
-			"guess_larmor": {
-					"linspace" : [-0.5, 1.5, 500]
-				},
-			"decoherence": 0,
-			"init_state": "+z",
-			"uinit_state": {
-				"+z": {
-					"real": 1,
-					"imag": 0
-				},
-				"-z": {
-					"real": 0,
-					"imag": 0
+		"gates": [
+			{
+				"name": "ATMGate",
+				"parameters": {
+					"rise_time": 5,
+					"fall_time": 18,
+					"max_amplitude": 1,
+					"max_frequency": -0.6,
+					"rise_gradient": 0.95,
+					"fall_gradient": 0.2,
+					"duration": 30
 				}
 			}
+		],
+		"order": ["ATMGate"]
+	},
+	"qubits": [ 
+		{
+			"larmor": {
+				"base_value": 0,
+				"pink_noise_power": 0
+			},
+			"guess_larmor": { "linspace" : [-0.5, 1.5, 500] },
+			"decoherence": 0,
+			"init_state": "+z"
 		}
-	}
+	]
 }

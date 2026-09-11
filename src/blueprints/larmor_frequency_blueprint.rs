@@ -11,48 +11,29 @@ pub struct LarmorFrequencyBlueprint {
 
 impl LarmorFrequencyBlueprint {
     pub fn from_json(
-        json_values: &Map<String, Value>,
+        mut json_values: Map<String, Value>,
     ) -> (LarmorFrequencyBlueprint, Vec<SweepParameter>) {
-        // Values for the base value and noise
-        // let larmor_values: &Map<String, Value> = json_values["q1"].as_object().unwrap();
 
         // Empty vector for the sweep parameters
         let mut swept_parameters: Vec<SweepParameter> = vec![];
 
         // Store the larmor and guess lamrmor
-        let base_value: f64;
-        let pink_noise_power: f64;
-
-        let mut parameter_key: &str = "base_value";
-
-        // Get the base value from the map under the "base_value" key. If it is not a number then
-        // assume it is an array and it must be swept over
-        if !json_values[parameter_key].is_number() {
-            swept_parameters.push(SweepParameter::from_json(
-                parameter_key.to_string(),
-                &json_values[parameter_key],
-            ));
-            // If it is an array to sweep then just set it to the first item in the array to start
-            base_value = swept_parameters[swept_parameters.len() - 1].get_value(0);
-        } else {
-            base_value = json_values[parameter_key].as_f64().unwrap();
+        let (base_value, sweep_parameter_option): (f64, Option<SweepParameter>) =
+            SweepParameter::from_json(
+                "base_value",
+                serde_json::from_value(json_values.remove("base_value").unwrap()).unwrap(),
+            );
+        if let Some(sweep_parameter) = sweep_parameter_option {
+            swept_parameters.push(sweep_parameter);
         }
 
-        parameter_key = "pink_noise_power";
-        if json_values.contains_key("noise_power") {
-            let noise_powers: &Map<String, Value> = json_values["noise_power"].as_object().unwrap();
-            // Same but for guess larmor. If it is not a number it must be an array to sweep over
-            if !noise_powers["pink"].is_number() {
-                swept_parameters.push(SweepParameter::from_json(
-                    parameter_key.to_string(),
-                    &noise_powers["pink"],
-                ));
-                pink_noise_power = swept_parameters[swept_parameters.len() - 1].get_value(0);
-            } else {
-                pink_noise_power = noise_powers["pink"].as_f64().unwrap();
-            }
-        } else {
-            pink_noise_power = 0.;
+        let (pink_noise_power, sweep_parameter_option): (f64, Option<SweepParameter>) =
+            SweepParameter::from_json(
+                "pink_noise_power",
+                serde_json::from_value(json_values.remove("pink_noise_power").unwrap()).unwrap(),
+            );
+        if let Some(sweep_parameter) = sweep_parameter_option {
+            swept_parameters.push(sweep_parameter);
         }
 
         return (

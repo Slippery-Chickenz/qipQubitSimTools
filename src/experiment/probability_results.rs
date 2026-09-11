@@ -18,7 +18,7 @@ impl ProbabilityResults {
     pub fn from_json(
         mut results_dim: Vec<usize>,
         num_samples: usize,
-        json_values: &Value,
+        json_values: Value,
     ) -> ProbabilityResults {
         if num_samples > 1 {
             results_dim.push(num_samples);

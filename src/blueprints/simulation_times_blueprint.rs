@@ -11,10 +11,10 @@ pub struct SimulationTimesBlueprint {
 
 impl SimulationTimesBlueprint {
     /// Get a SimulationTimesBlueprint object from a map of Strings to json values
-    pub fn from_json(json_values: &Map<String, Value>) -> SimulationTimesBlueprint {
+    pub fn from_json(json_values: Map<String, Value>) -> SimulationTimesBlueprint {
         // Just get the number of iterations and samples as u64 from the map
         return SimulationTimesBlueprint {
-            step_size: json_values["step_size"].as_f64().unwrap(),
+            step_size: 0.01,
             num_samples: json_values["output"]["num_samples"].as_u64().unwrap() as usize,
         };
     }

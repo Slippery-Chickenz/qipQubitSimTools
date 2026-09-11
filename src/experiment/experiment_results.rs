@@ -43,8 +43,9 @@ pub struct ExperimentResults {
 
 impl ExperimentResults {
     pub fn from_json(
-        json_values: &Map<String, Value>,
+        mut json_values: Map<String, Value>,
         sweep_parameters: Rc<Vec<SweepParameter>>,
+        num_samples: usize,
     ) -> (ExperimentResults, bool, bool) {
         // Vector to hold the dimensions of the results
         let mut results_dim: Vec<usize> = vec![];
@@ -52,9 +53,6 @@ impl ExperimentResults {
         for sweep_parameter in &*sweep_parameters {
             results_dim.push(sweep_parameter.values_len());
         }
-
-        // Number of samples per simulation
-        let num_samples: usize = json_values["num_samples"].as_u64().unwrap() as usize;
 
         // List of all the results from the simulations to store
         let mut results: Vec<Box<dyn ExperimentResult>> = vec![];
@@ -90,14 +88,14 @@ impl ExperimentResults {
             results.push(Box::new(ProbabilityResults::from_json(
                 results_dim.clone(),
                 num_samples,
-                &json_values["probability"],
+                json_values.remove("probability").unwrap(),
             )));
         }
         if json_values.contains_key("measurement") {
             results.push(Box::new(MeasurementResults::from_json(
                 results_dim.clone(),
                 num_samples,
-                &json_values["measurement"],
+                json_values.remove("measurement").unwrap(),
             )));
         }
         if json_values.contains_key("times") {

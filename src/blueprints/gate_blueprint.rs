@@ -21,7 +21,7 @@ impl GateBlueprint {
     /// that are defined to be swept over
     pub fn from_json(
         gate_type: String,
-        json_values: &Map<String, Value>,
+        json_values: Map<String, Value>,
     ) -> (GateBlueprint, Vec<SweepParameter>) {
         // Parameters to construct the gate with
         let mut parameters: HashMap<String, f64> = HashMap::new();
@@ -30,20 +30,12 @@ impl GateBlueprint {
 
         // Loop through all the keys and valeus in the json map given
         for (key, value) in json_values.into_iter() {
-            // If value is not a number then it must be something to be swept over
-            if value.is_object() {
-                // Add a new sweep parameter defined with the key name and the values in the json
-                swept_parameters.push(SweepParameter::from_json(key.clone(), value));
-                // Add the parameter to the blueprint with the value set to the first defined in
-                // the sweep
-                parameters.insert(
-                    key.clone(),
-                    swept_parameters[swept_parameters.len() - 1].get_value(0),
-                );
-            } else if value.is_number() {
-                // If it is a number then just insert it into the blueprint
-                parameters.insert(key.clone(), value.as_f64().unwrap());
+            let (parameter, sweep_parameter_option): (f64, Option<SweepParameter>) =
+                SweepParameter::from_json(key.clone().as_str(), value);
+            if let Some(sweep_parameter) = sweep_parameter_option {
+                swept_parameters.push(sweep_parameter);
             }
+            parameters.insert(key.clone(), parameter);
         }
         return (
             GateBlueprint {

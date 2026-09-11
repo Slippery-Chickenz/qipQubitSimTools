@@ -1,10 +1,12 @@
 {
-	"step_size": 0.01,
-	"shots": 400,
-	"method": "PadeState",
-	"frame": "Rotating",
-	"output": {
+	"shots": 1,
+	"simulation_settings": {
+		"step_size": 0.01,
 		"num_samples": 1,
+		"method": "PadeState",
+		"frame": "Rotating"
+	},
+	"output": {
 		"state": false,
 		"measurement": true,
 		"bloch_coords": false,
@@ -15,25 +17,31 @@
 		"eigenstates": false
 	},
 	"circuit": { 
-		"gates": {
-			"Idle": {
-				"duration": 2
+		"gates": [
+			{
+				"name": "Idle",
+				"parameters": {
+					"duration": 2
+				}
 			},
-			"PiO2X": {},
-			"PiO2Y": {},
-			"Constant": {
-				"amplitude": 1,
-				"frequency": 0,
-				"phase": 0,
-				"duration": {
-					"linspace": [0.1, 20, 400]
+			{ "name": "PiO2X" },
+			{ "name": "PiO2Y" },
+			{
+				"name": "Constant",
+				"parameters": {
+					"amplitude": 1,
+					"frequency": 0,
+					"phase": 0,
+					"duration": {
+						"linspace": [0.1, 20, 400]
+					}
 				}
 			}
-		},
+		],
 		"order": ["Constant"]
 	},
-	"qubits": { 
-		"q1": {
+	"qubits": [
+		{
 			"decoherence": 0,
 			"larmor": {
 				"base_value": {
@@ -48,13 +56,11 @@
 						"type": "uniform",
 						"range": -0.2
 				},
-				"noise_power": {
-					"pink": [0.0, 0.05, 0.1, 0.15, 0.2]
-				}
+				"pink_noise_power": [0.0, 0.05, 0.1, 0.15, 0.2]
 			},
 			"guess_larmor": 0,
 			"decoherence": 0,
 			"init_state": "+z"
 		}
-	}
+	]
 }

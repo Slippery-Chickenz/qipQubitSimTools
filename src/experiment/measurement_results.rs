@@ -4,8 +4,8 @@ use crate::utils::get_state_from_json;
 
 use hdf5::{Group, Result};
 use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
-use rand::RngExt;
 use num_complex::Complex64;
+use rand::RngExt;
 use serde_json::Value;
 
 pub struct MeasurementResults {
@@ -16,7 +16,11 @@ pub struct MeasurementResults {
 }
 
 impl MeasurementResults {
-    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize, json_values: &Value) -> MeasurementResults {
+    pub fn from_json(
+        mut results_dim: Vec<usize>,
+        num_samples: usize,
+        json_values: Value,
+    ) -> MeasurementResults {
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
@@ -29,7 +33,7 @@ impl MeasurementResults {
             ArrayD::<bool>::from_shape_simple_fn(IxDyn(&results_dim), || false);
         return MeasurementResults {
             measurements: results,
-            state: state
+            state: state,
         };
     }
 }

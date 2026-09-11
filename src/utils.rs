@@ -2,7 +2,7 @@ use ndarray::Array1;
 use num_complex::Complex64;
 use serde_json::Value;
 
-pub fn get_state_from_json(json_value: &Value) -> Array1<Complex64> {
+pub fn get_state_from_json(json_value: Value) -> Array1<Complex64> {
     // Check for the inital state and assign it depending on input
     if json_value.is_string() {
         return match json_value.as_str().unwrap() {
