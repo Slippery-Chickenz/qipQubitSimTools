@@ -52,8 +52,6 @@ pub struct Experiment {
     results: ExperimentResults,
     /// Flag to save waveform or not
     save_waveform: bool,
-    /// Flag to save hamiltonians in the simulation or not
-    save_hamiltonians: bool,
 }
 
 impl Experiment {
@@ -112,7 +110,7 @@ impl Experiment {
             )]);
         }
 
-        let simulation_settings_blueprint: SimulationSettingsBlueprint =
+        let mut simulation_settings_blueprint: SimulationSettingsBlueprint =
             SimulationSettingsBlueprint::from_json(
                 serde_json::from_value(json_values.remove("simulation_settings").unwrap()).unwrap(),
             );
@@ -127,6 +125,8 @@ impl Experiment {
                 simulation_settings_blueprint.get_num_samples(),
             );
 
+        simulation_settings_blueprint.save_hamiltonians(save_hamiltonians);
+
         return Experiment {
             circuit_blueprint: circuit_blueprint,
             qubit_array_blueprint: qubit_array_blueprint,
@@ -134,7 +134,6 @@ impl Experiment {
             sweep_parameters: Rc::clone(&rc_sweep_parameters),
             results: results,
             save_waveform: save_waveform,
-            save_hamiltonians: save_hamiltonians,
         };
     }
     /// Run the experiment defined in this class and save the results to the given filename
@@ -166,12 +165,13 @@ impl Experiment {
                     &Simulator::<RKMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
-                        self.simulation_settings_blueprint
-                            .get_reference_frame()
-                            .clone(),
-                        self.simulation_settings_blueprint.get_step_size(),
-                        self.simulation_settings_blueprint.get_num_samples(),
-                        self.save_hamiltonians,
+                        self.simulation_settings_blueprint.get_simulation_settings(),
+                        // self.simulation_settings_blueprint
+                        //     .get_reference_frame()
+                        //     .clone(),
+                        // self.simulation_settings_blueprint.get_step_size(),
+                        // self.simulation_settings_blueprint.get_num_samples(),
+                        // self.save_hamiltonians,
                     ),
                 ),
                 SimulationMethodType::RKVectorizedMethod => self.results.add_simulation_result(
@@ -179,12 +179,13 @@ impl Experiment {
                     &Simulator::<RKVectorizedMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
-                        self.simulation_settings_blueprint
-                            .get_reference_frame()
-                            .clone(),
-                        self.simulation_settings_blueprint.get_step_size(),
-                        self.simulation_settings_blueprint.get_num_samples(),
-                        self.save_hamiltonians,
+                        self.simulation_settings_blueprint.get_simulation_settings(),
+                        // self.simulation_settings_blueprint
+                        //     .get_reference_frame()
+                        //     .clone(),
+                        // self.simulation_settings_blueprint.get_step_size(),
+                        // self.simulation_settings_blueprint.get_num_samples(),
+                        // self.save_hamiltonians,
                     ),
                 ),
                 SimulationMethodType::PadeVectorizedMethod => self.results.add_simulation_result(
@@ -192,12 +193,13 @@ impl Experiment {
                     &Simulator::<PadeVectorizedMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
-                        self.simulation_settings_blueprint
-                            .get_reference_frame()
-                            .clone(),
-                        self.simulation_settings_blueprint.get_step_size(),
-                        self.simulation_settings_blueprint.get_num_samples(),
-                        self.save_hamiltonians,
+                        self.simulation_settings_blueprint.get_simulation_settings(),
+                        // self.simulation_settings_blueprint
+                        //     .get_reference_frame()
+                        //     .clone(),
+                        // self.simulation_settings_blueprint.get_step_size(),
+                        // self.simulation_settings_blueprint.get_num_samples(),
+                        // self.save_hamiltonians,
                     ),
                 ),
                 SimulationMethodType::PadeStateMethod => self.results.add_simulation_result(
@@ -205,12 +207,13 @@ impl Experiment {
                     &Simulator::<PadeStateMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
-                        self.simulation_settings_blueprint
-                            .get_reference_frame()
-                            .clone(),
-                        self.simulation_settings_blueprint.get_step_size(),
-                        self.simulation_settings_blueprint.get_num_samples(),
-                        self.save_hamiltonians,
+                        self.simulation_settings_blueprint.get_simulation_settings(),
+                        // self.simulation_settings_blueprint
+                        //     .get_reference_frame()
+                        //     .clone(),
+                        // self.simulation_settings_blueprint.get_step_size(),
+                        // self.simulation_settings_blueprint.get_num_samples(),
+                        // self.save_hamiltonians,
                     ),
                 ),
             }

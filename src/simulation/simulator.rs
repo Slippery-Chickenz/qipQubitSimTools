@@ -2,19 +2,19 @@ use std::{marker::PhantomData, rc::Rc};
 
 use crate::simulation::{
     Circuit, Hamiltonian, LabFrame, PulseFrame, QubitArray, ReferenceFrame, RotatingFrame,
-    SimulationMethod, SimulationResultSaver, SimulationTimes,
+    SimulationMethod, SimulationResultSaver, SimulationTimes, SimulationSettings
 };
 
 /// Simulator for a given quantum circuit on an array of qubits
 pub struct Simulator<Method: SimulationMethod> {
+    /// Times and samples for the simulation to be run and saved at
+    simulation_times: Rc<SimulationTimes>,
+    /// Settings to run the simulation at
+    simulation_settings: SimulationSettings,
     /// Circuit to be simulated
     circuit: Circuit,
     /// Array of qubits for the circuit to be simulated on
     qubit_array: QubitArray,
-    /// Times and samples for the simulation to be run and saved at
-    simulation_times: Rc<SimulationTimes>,
-    /// Reference frame to run the simulation in
-    reference_frame: ReferenceFrame,
     /// Phantom data to store the type of method we use to simulate the circuit
     simulation_method: PhantomData<Method>,
 }
@@ -29,21 +29,21 @@ impl<Method: SimulationMethod> Simulator<Method> {
     pub fn new(
         circuit: Circuit,
         qubit_array: QubitArray,
-        reference_frame: ReferenceFrame,
-        step_size: f64,
-        num_samples: usize,
+        simulation_settings: SimulationSettings,
+        // reference_frame: ReferenceFrame,
+        // step_size: f64,
+        // num_samples: usize,
     ) -> Simulator<Method> {
-        let duration: f64 = circuit.get_duration();
         return Simulator::<Method> {
+            simulation_times: Rc::new(SimulationTimes::new(
+                circuit.get_duration(),
+                simulation_settings.get_dt(),
+                Method::get_num_times_per_step(),
+                simulation_settings.get_num_samples(),
+            )),
+            simulation_settings: simulation_settings,
             circuit: circuit,
             qubit_array: qubit_array,
-            simulation_times: Rc::new(SimulationTimes::new(
-                duration,
-                step_size,
-                Method::get_num_times_per_step(),
-                num_samples,
-            )),
-            reference_frame: reference_frame,
             simulation_method: PhantomData,
         };
     }
@@ -51,37 +51,31 @@ impl<Method: SimulationMethod> Simulator<Method> {
     pub fn simulate_circuit(
         circuit: Circuit,
         qubit_array: QubitArray,
-        reference_frame: ReferenceFrame,
-        step_size: f64,
-        num_samples: usize,
-        save_hamiltonian: bool,
+        simulation_settings: SimulationSettings,
     ) -> Method::ResultType {
         let mut simulator: Simulator<Method> = Simulator::new(
             circuit,
             qubit_array,
-            reference_frame,
-            step_size,
-            num_samples,
+            simulation_settings,
         );
-        return simulator.run(save_hamiltonian);
+        return simulator.run();
     }
     /// Simulate the circuit currently set
-    pub fn run(&mut self, save_hamiltonian: bool) -> Method::ResultType {
-        match self.reference_frame {
+    pub fn run(&mut self) -> Method::ResultType {
+        match self.simulation_settings.get_reference_frame() {
             ReferenceFrame::Lab => {
-                return self.run_in_frame::<LabFrame>(save_hamiltonian, PhantomData);
+                return self.run_in_frame::<LabFrame>(PhantomData);
             }
             ReferenceFrame::Rotating => {
-                return self.run_in_frame::<RotatingFrame>(save_hamiltonian, PhantomData);
+                return self.run_in_frame::<RotatingFrame>(PhantomData);
             }
             ReferenceFrame::Pulse => {
-                return self.run_in_frame::<PulseFrame>(save_hamiltonian, PhantomData);
+                return self.run_in_frame::<PulseFrame>(PhantomData);
             }
         }
     }
     fn run_in_frame<T: Hamiltonian>(
         &mut self,
-        save_hamiltonian: bool,
         hamiltonian: PhantomData<T>,
     ) -> Method::ResultType {
         // Prepare variables for iterating over each qubit evolution
@@ -90,7 +84,9 @@ impl<Method: SimulationMethod> Simulator<Method> {
             Vec<usize>,
             usize,
             Method::QubitStateType,
-        ) = self.prepare_simulation(save_hamiltonian);
+        ) = self.prepare_simulation();
+
+        let save_hamiltonian: bool = self.simulation_settings.get_save_hamiltonian();
 
         if save_hamiltonian && self.simulation_times.get_num_samples() != 1 {
             simulation_results.save_hamiltonian(
@@ -129,7 +125,6 @@ impl<Method: SimulationMethod> Simulator<Method> {
     }
     fn prepare_simulation(
         &mut self,
-        save_hamiltonian: bool,
     ) -> (
         Method::ResultType,
         Vec<usize>,
@@ -138,7 +133,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
     ) {
         // Make an empty simulation results to return
         let mut simulation_results: Method::ResultType =
-            Method::ResultType::new(Rc::clone(&self.simulation_times), save_hamiltonian);
+            Method::ResultType::new(Rc::clone(&self.simulation_times), self.simulation_settings.get_save_hamiltonian());
 
         // Make sure the qubit array has the correct number of qubits for this circuit
         assert!(

@@ -1,4 +1,4 @@
-use crate::simulation::ReferenceFrame;
+use crate::simulation::{ReferenceFrame, SimulationSettings};
 
 use serde_json::{Map, Value};
 
@@ -33,6 +33,8 @@ pub struct SimulationSettingsBlueprint {
     method: SimulationMethodType,
     /// Reference frame for simulation
     frame: ReferenceFrame,
+    /// Whether or not to save the hamiltonian at each sample
+    save_hamiltonian: bool,
 }
 
 impl SimulationSettingsBlueprint {
@@ -49,7 +51,16 @@ impl SimulationSettingsBlueprint {
             frame: ReferenceFrame::from(
                 serde_json::from_value::<String>(json_values.remove("frame").unwrap()).unwrap(),
             ),
+            save_hamiltonian: false,
         };
+    }
+    pub fn save_hamiltonians(&mut self, save_hamiltonians: bool) -> () {
+        self.save_hamiltonian = save_hamiltonians;
+        return;
+    }
+    /// Get the simulation settings for this blueprint
+    pub fn get_simulation_settings(&self) -> SimulationSettings {
+        return SimulationSettings::new(self.step_size, self.num_samples, self.frame.clone(), self.save_hamiltonian);
     }
     /// Get the number of samples from the blueprint
     pub fn get_num_samples(&self) -> usize {

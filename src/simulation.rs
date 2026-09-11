@@ -4,6 +4,7 @@ mod larmor_frequency;
 mod methods;
 mod qubit_array;
 mod simulation_times;
+mod simulation_settings;
 mod simulator;
 
 pub use circuit::Circuit;
@@ -16,4 +17,5 @@ pub use methods::{
 };
 pub use qubit_array::QubitArray;
 pub use simulation_times::SimulationTimes;
+pub use simulation_settings::SimulationSettings;
 pub use simulator::Simulator;
