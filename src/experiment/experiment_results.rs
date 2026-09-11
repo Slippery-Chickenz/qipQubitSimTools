@@ -1,19 +1,17 @@
 use std::rc::Rc;
 
 use super::SweepParameter;
-use crate::{
-    experiment::time_results::TimeResults,
-    simulation::{Circuit, SimulationResultGetter},
-};
+use crate::simulation::{Circuit, SimulationResultGetter};
 
-use super::adiabaticity_results::AdiabaticityResults;
-use super::bloch_coord_results::BlochCoordResults;
-use super::duration_result::DurationResult;
-use super::eigenstate_results::EigenstateResults;
-use super::hamiltonian_results::HamiltonianResults;
-use super::measurement_results::MeasurementResults;
-use super::probability_results::ProbabilityResults;
-use super::state_results::StateResults;
+use super::result_types::AdiabaticityResults;
+use super::result_types::BlochCoordResults;
+use super::result_types::DurationResult;
+use super::result_types::EigenstateResults;
+use super::result_types::HamiltonianResults;
+use super::result_types::MeasurementResults;
+use super::result_types::ProbabilityResults;
+use super::result_types::StateResults;
+use super::result_types::TimeResults;
 use super::waveform_saver::WaveformSaver;
 
 use hdf5::{Group, Result};
@@ -46,6 +44,7 @@ impl ExperimentResults {
         mut json_values: Map<String, Value>,
         sweep_parameters: Rc<Vec<SweepParameter>>,
         num_samples: usize,
+        num_shots: usize,
     ) -> (ExperimentResults, bool, bool) {
         // Vector to hold the dimensions of the results
         let results_dim: Vec<usize> =
@@ -74,6 +73,7 @@ impl ExperimentResults {
                     value,
                     results_dim.clone(),
                     num_samples,
+                    num_shots,
                 );
             if save_hamiltonian {
                 save_hamiltonians = true;
@@ -96,20 +96,25 @@ impl ExperimentResults {
         json_value: Value,
         results_dim: Vec<usize>,
         num_samples: usize,
+        num_shots: usize,
     ) -> (Box<dyn ExperimentResult>, bool) {
         match name {
             "state" => (
-                Box::new(StateResults::from_json(results_dim.clone(), num_samples)),
+                Box::new(StateResults::from_json(
+                    results_dim.clone(),
+                    num_shots,
+                    num_samples,
+                )),
                 false,
             ),
             "duration" => (
-                Box::new(DurationResult::from_json(results_dim.clone(), num_samples)),
+                Box::new(DurationResult::from_json(results_dim.clone())),
                 false,
             ),
             "measurement" => (
                 Box::new(MeasurementResults::from_json(
                     results_dim.clone(),
-                    num_samples,
+                    num_shots,
                     json_value,
                 )),
                 false,
@@ -117,6 +122,7 @@ impl ExperimentResults {
             "probability" => (
                 Box::new(ProbabilityResults::from_json(
                     results_dim.clone(),
+                    num_shots,
                     num_samples,
                     json_value,
                 )),
@@ -125,17 +131,23 @@ impl ExperimentResults {
             "bloch_coords" => (
                 Box::new(BlochCoordResults::from_json(
                     results_dim.clone(),
+                    num_shots,
                     num_samples,
                 )),
                 false,
             ),
             "times" => (
-                Box::new(TimeResults::from_json(results_dim.clone(), num_samples)),
+                Box::new(TimeResults::from_json(
+                    results_dim.clone(),
+                    num_shots,
+                    num_samples,
+                )),
                 false,
             ),
             "hamiltonians" => (
                 Box::new(HamiltonianResults::from_json(
                     results_dim.clone(),
+                    num_shots,
                     num_samples,
                 )),
                 true,
@@ -143,6 +155,7 @@ impl ExperimentResults {
             "adiabaticity" => (
                 Box::new(AdiabaticityResults::from_json(
                     results_dim.clone(),
+                    num_shots,
                     num_samples,
                 )),
                 true,
@@ -150,6 +163,7 @@ impl ExperimentResults {
             "eigenstates" => (
                 Box::new(EigenstateResults::from_json(
                     results_dim.clone(),
+                    num_shots,
                     num_samples,
                 )),
                 true,

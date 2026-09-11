@@ -1,8 +1,8 @@
-use super::experiment_results::ExperimentResult;
+use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array3, ArrayD, Axis, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array4, ArrayD, Axis, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
 use num_complex::Complex64;
 
 pub struct HamiltonianResults {
@@ -11,7 +11,14 @@ pub struct HamiltonianResults {
 }
 
 impl HamiltonianResults {
-    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize) -> HamiltonianResults {
+    pub fn from_json(
+        mut results_dim: Vec<usize>,
+        num_shots: usize,
+        num_samples: usize,
+    ) -> HamiltonianResults {
+        if num_shots > 1 {
+            results_dim.push(num_shots);
+        }
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
@@ -29,7 +36,7 @@ impl ExperimentResult for HamiltonianResults {
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
-        let hamiltonians: Array3<Complex64> = simulation_result.get_hamiltonians().clone();
+        let hamiltonians: Array4<Complex64> = simulation_result.get_hamiltonians().clone();
 
         let mut slice_info_vec: Vec<SliceInfoElem> = vec![];
 

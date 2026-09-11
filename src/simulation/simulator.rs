@@ -83,38 +83,49 @@ impl<Method: SimulationMethod> Simulator<Method> {
         let save_hamiltonian: bool = self.simulation_settings.get_save_hamiltonian();
 
         if save_hamiltonian && self.simulation_times.get_num_samples() != 1 {
-            simulation_results.save_hamiltonian(
-                0,
-                T::get_matrix(&mut self.circuit, &self.qubit_array, 0., 0),
-            );
-        }
-
-        // Loop over all the sample indices and evolve from one sample to the next
-        for i in 0..iteration_indicies.len() - 1 {
-            qubit_state = Method::evolve_state(
+            simulation_results.save_starting_hamiltonian(T::get_matrix(
                 &mut self.circuit,
                 &self.qubit_array,
-                self.simulation_times.as_ref(),
-                qubit_state,
-                hamiltonian,
-                iteration_indicies[i],
-                iteration_indicies[i + 1],
-            );
-            simulation_results.save_state(i + save_offset, qubit_state.clone());
-            if save_hamiltonian {
-                simulation_results.save_hamiltonian(
-                    i + save_offset,
-                    T::get_matrix(
-                        &mut self.circuit,
-                        &self.qubit_array,
-                        self.simulation_times
-                            .get_iteration_time(iteration_indicies[i + 1] - 1),
-                        iteration_indicies[i + 1] - 1,
-                    ),
+                0.,
+                0,
+            ));
+        }
+
+        // Loop over each shot and simulation the evolution
+        for i in 0..self.simulation_settings.get_num_shots() {
+            // Loop over all the sample indices and evolve from one sample to the next
+            for j in 0..iteration_indicies.len() - 1 {
+                qubit_state = Method::evolve_state(
+                    &mut self.circuit,
+                    &self.qubit_array,
+                    self.simulation_times.as_ref(),
+                    qubit_state,
+                    hamiltonian,
+                    iteration_indicies[j],
+                    iteration_indicies[j + 1],
                 );
+                simulation_results.save_state(i, j + save_offset, qubit_state.clone());
+                if save_hamiltonian {
+                    simulation_results.save_hamiltonian(
+                        i,
+                        j + save_offset,
+                        T::get_matrix(
+                            &mut self.circuit,
+                            &self.qubit_array,
+                            self.simulation_times
+                                .get_iteration_time(iteration_indicies[j + 1] - 1),
+                            iteration_indicies[j + 1] - 1,
+                        ),
+                    );
+                }
             }
+           qubit_state = self.reset_for_shot(); 
         }
         return simulation_results;
+    }
+    fn reset_for_shot(&mut self) -> Method::QubitStateType {
+        self.circuit.reset_for_shot();
+        return Method::get_state(self.qubit_array.get_starting_state());
     }
     fn prepare_simulation(
         &mut self,
@@ -125,10 +136,8 @@ impl<Method: SimulationMethod> Simulator<Method> {
         Method::QubitStateType,
     ) {
         // Make an empty simulation results to return
-        let mut simulation_results: Method::ResultType = Method::ResultType::new(
-            Rc::clone(&self.simulation_times),
-            self.simulation_settings.get_save_hamiltonian(),
-        );
+        let mut simulation_results: Method::ResultType =
+            Method::ResultType::new(Rc::clone(&self.simulation_times), &self.simulation_settings);
 
         // Make sure the qubit array has the correct number of qubits for this circuit
         assert!(
@@ -139,8 +148,6 @@ impl<Method: SimulationMethod> Simulator<Method> {
         );
 
         // Set the simulation times for the circuit and qubit array
-        self.circuit
-            .set_simulation_times(Rc::clone(&self.simulation_times));
         self.qubit_array
             .set_simulation_times(Rc::clone(&self.simulation_times));
 
@@ -159,7 +166,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
             save_offset = 0;
             iteration_indicies.insert(0, 0);
         } else {
-            simulation_results.save_state(0, qubit_state.clone());
+            simulation_results.save_starting_state(qubit_state.clone());
             save_offset = 1;
         }
 

@@ -1,17 +1,9 @@
 use std::rc::Rc;
 use std::{fs, io::BufReader};
 
-mod adiabaticity_results;
-mod bloch_coord_results;
-mod duration_result;
-mod eigenstate_results;
 mod experiment_results;
-mod hamiltonian_results;
-mod measurement_results;
-mod probability_results;
-mod state_results;
+mod result_types;
 mod sweep_parameter;
-mod time_results;
 mod waveform_saver;
 
 pub use waveform_saver::WaveformSaver;
@@ -96,19 +88,19 @@ impl Experiment {
         }
         sweep_parameters.append(&mut qubit_array_sweep_parameters);
 
-        let num_shots: i64 = json_values
-            .get("shots")
-            .unwrap_or_default()
-            .as_i64()
-            .unwrap_or(1);
-
-        if num_shots > 1 {
-            sweep_parameters.append(&mut vec![SweepParameter::new(
-                vec!["shots".to_string()],
-                Array1::<f64>::linspace(0., num_shots as f64, num_shots as usize).to_vec(),
-                Option::Some(-1),
-            )]);
-        }
+        // let num_shots: i64 = json_values
+        //     .get("shots")
+        //     .unwrap_or_default()
+        //     .as_i64()
+        //     .unwrap_or(1);
+        //
+        // if num_shots > 1 {
+        //     sweep_parameters.append(&mut vec![SweepParameter::new(
+        //         vec!["shots".to_string()],
+        //         Array1::<f64>::linspace(0., num_shots as f64, num_shots as usize).to_vec(),
+        //         Option::Some(-1),
+        //     )]);
+        // }
 
         let mut simulation_settings_blueprint: SimulationSettingsBlueprint =
             SimulationSettingsBlueprint::from_json(
@@ -123,6 +115,7 @@ impl Experiment {
                 serde_json::from_value(json_values.remove("output").unwrap()).unwrap(),
                 Rc::clone(&rc_sweep_parameters),
                 simulation_settings_blueprint.get_num_samples(),
+                simulation_settings_blueprint.get_num_shots(),
             );
 
         simulation_settings_blueprint.save_hamiltonians(save_hamiltonians);

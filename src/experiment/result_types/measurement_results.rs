@@ -1,9 +1,9 @@
-use super::experiment_results::ExperimentResult;
+use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 use crate::utils::get_state_from_json;
 
 use hdf5::{Group, Result};
-use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array1, Array2, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
 use num_complex::Complex64;
 use rand::RngExt;
 use serde_json::Value;
@@ -18,11 +18,11 @@ pub struct MeasurementResults {
 impl MeasurementResults {
     pub fn from_json(
         mut results_dim: Vec<usize>,
-        num_samples: usize,
+        num_shots: usize,
         json_values: Value,
     ) -> MeasurementResults {
-        if num_samples > 1 {
-            results_dim.push(num_samples);
+        if num_shots > 1 {
+            results_dim.push(num_shots);
         }
 
         // Get the state to find the probability for
@@ -44,24 +44,29 @@ impl ExperimentResult for MeasurementResults {
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
-        let probabilities: Array1<f64> = simulation_result.get_state_probabilities(&self.state);
+
+        // Get the slice information for the results at these parameters
+        let mut slice_info_vec: Vec<SliceInfoElem> = sweep_parameter_indices
+            .iter()
+            .map(|i| SliceInfoElem::Index(i.clone() as isize))
+            .collect();
+
+        let probabilities: Array2<f64> = simulation_result.get_state_probabilities(&self.state);
         let mut rng = rand::rng();
         let mut measurement_values: Array1<bool> =
             Array1::<bool>::from_shape_simple_fn(probabilities.shape()[0], || false);
         for (i, measurement) in measurement_values.iter_mut().enumerate() {
-            *measurement = rng.random_bool(probabilities[i].max(0.).min(1.));
+            *measurement = rng.random_bool(
+                probabilities[[i, probabilities.shape()[1] - 1]]
+                    .max(0.)
+                    .min(1.),
+            );
         }
 
-        if probabilities.len() == 1 {
+        if measurement_values.len() == 1 {
             self.measurements[sweep_parameter_indices.clone().into_dimension()] =
                 measurement_values[0];
             return;
-        }
-
-        let mut slice_info_vec: Vec<SliceInfoElem> = vec![];
-
-        for index in sweep_parameter_indices {
-            slice_info_vec.push(SliceInfoElem::Index(index.clone() as isize));
         }
 
         slice_info_vec.push(SliceInfoElem::Slice {

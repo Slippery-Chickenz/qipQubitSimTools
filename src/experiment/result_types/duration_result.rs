@@ -1,4 +1,4 @@
-use super::experiment_results::ExperimentResult;
+use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
@@ -10,7 +10,7 @@ pub struct DurationResult {
 }
 
 impl DurationResult {
-    pub fn from_json(results_dim: Vec<usize>, _num_samples: usize) -> DurationResult {
+    pub fn from_json(results_dim: Vec<usize>) -> DurationResult {
         // Array for results of experiment
         let results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
         return DurationResult { results };

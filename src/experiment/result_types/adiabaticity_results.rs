@@ -1,8 +1,8 @@
-use super::experiment_results::ExperimentResult;
+use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array2, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
 
 pub struct AdiabaticityResults {
     /// Multi-Dimensional array to store the results of the sweep in
@@ -10,7 +10,14 @@ pub struct AdiabaticityResults {
 }
 
 impl AdiabaticityResults {
-    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize) -> AdiabaticityResults {
+    pub fn from_json(
+        mut results_dim: Vec<usize>,
+        num_shots: usize,
+        num_samples: usize,
+    ) -> AdiabaticityResults {
+        if num_shots > 1 {
+            results_dim.push(num_shots);
+        }
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
@@ -26,9 +33,9 @@ impl ExperimentResult for AdiabaticityResults {
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
-        let probabilities: Array1<f64> = simulation_result.get_probabilities();
-        if probabilities.len() == 1 {
-            self.results[sweep_parameter_indices.clone().into_dimension()] = probabilities[0];
+        let probabilities: Array2<f64> = simulation_result.get_probabilities();
+        if probabilities.shape()[0] == 1 {
+            self.results[sweep_parameter_indices.clone().into_dimension()] = probabilities[[0, 0]];
             return;
         }
 

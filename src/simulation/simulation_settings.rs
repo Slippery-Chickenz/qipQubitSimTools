@@ -41,6 +41,10 @@ impl SimulationSettings {
     pub fn get_num_samples(&self) -> usize {
         return self.num_samples;
     }
+    /// Get the number of shots that are taken
+    pub fn get_num_shots(&self) -> usize {
+        return self.num_shots;
+    }
     /// Get the reference frame for the simulation
     pub fn get_reference_frame(&self) -> &ReferenceFrame {
         return &self.frame;

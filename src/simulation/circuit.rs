@@ -1,6 +1,4 @@
 use std::f64::consts::PI;
-use std::option::Option;
-use std::rc::Rc;
 
 use crate::gates::Gate;
 use crate::simulation::SimulationTimes;
@@ -13,8 +11,6 @@ pub struct Circuit {
     gates: Vec<Box<dyn Gate>>,
     /// Duration of the circuit. Just the sum of the duration of each gate
     duration: f64,
-    /// Simulation times to run the circuit at.
-    simulation_times: Option<Rc<SimulationTimes>>,
     /// For the circuit to be simulated the frequency of each gate must be integrated over all the
     /// time steps.
     frequency: f64,
@@ -27,7 +23,6 @@ impl Circuit {
         return Circuit {
             gates: vec![],
             duration: 0.,
-            simulation_times: None,
             frequency: 0.,
             time: 0.,
         };
@@ -60,70 +55,6 @@ impl Circuit {
         self.gates.append(&mut gates);
         return;
     }
-    /// Set the simulation times for the circuit and calculate the integrated frequencies for these
-    /// simulation times.
-    pub fn set_simulation_times(&mut self, times: Rc<SimulationTimes>) -> () {
-        self.simulation_times = Some(times);
-        // self.integrate_frequencies();
-        return;
-    }
-    /// Integrate the frequencies of the circuit based on simulation times. This integration needs
-    /// to happen for any frequency modulation. The simulation is done in a rotating frame rotating
-    /// at a frequency such that the carrier frequency of any gate is 0.
-    ///
-    /// Integrated frequency values are stored in a 2D Vector. This is due to how the simulation
-    /// times are set as a number of samples and an number of iterations per sample. The first axis
-    /// of the integrated frequencies is the sample number and the second axis is the iteration
-    /// number for that sample.
-    // fn integrate_frequencies(&mut self) -> () {
-    //     // Cannot integrate frequencies without simulation times
-    //     if let Some(sim_times) = &self.simulation_times {
-    //         self.integrated_frequencies = Array1::<f64>::zeros(sim_times.get_num_iterations());
-    //         let mut temp_f: f64 = 0.; // Temporary frequency that is the integrated value
-    //
-    //         // Outer axis is looped over number of samples
-    //         for (i, t) in sim_times.get_iteration_times().iter().enumerate() {
-    //             temp_f += self.get_raw_frequency(*t);
-    //             self.integrated_frequencies[i] = temp_f;
-    //         }
-    //         // Multiply by dt for integration
-    //         self.integrated_frequencies *= sim_times.get_dt();
-    //     } else {
-    //         eprintln!("{}", UninitializedTimesError);
-    //     }
-    //     return;
-    // }
-    /// Get hamiltonian operator for every iteration for a specific sample. If the sample number
-    /// given is n then this will return the hamiltonian operators for iterations between n and n+1.
-    /// This hamiltonian is just the pulse component and is denoted as:
-    /// $$ H = \frac{\Omega(t)}{2} 2\pi (\cos(2\pi \int f(t) + \phi(t))S_x + \sin(2\pi \int f(t) + \phi(t))S_y) $$
-    // pub fn get_hamiltonian_operator(&mut self, time: f64) -> Array2<Complex64> {
-    //     // Array of hamiltonians at each time step
-    //     // Outer axis is the iteration number
-    //     // Below that are the 2x2 Hamiltonians for the single qubit gates
-    //     let mut hamiltonian: Array2<Complex64> = Array2::<Complex64>::zeros([2, 2]);
-    //
-    //     //let t: f64 = sim_times.get_iteration_time(time_index);
-    //     let t: f64 = time;
-    //
-    //     // Amplitude, frequency, and phase for this time step in the circuit
-    //     let amplitude: f64 = self.get_amplitude(t);
-    //     // let frequency: f64 = self.get_integrated_frequency(time_index);
-    //     self.frequency += self.get_raw_frequency(t) * (t - self.time);
-    //     self.time = t;
-    //     let phase: f64 = self.get_phase(t);
-    //
-    //     // Set hamiltonian values
-    //     hamiltonian[[0, 1]] = Complex64::new(
-    //         amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).cos(),
-    //         amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).sin(),
-    //     );
-    //     hamiltonian[[1, 0]] = Complex64::new(
-    //         amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).cos(),
-    //         -amplitude * PI * 0.5 * (2. * PI * self.frequency + phase).sin(),
-    //     );
-    //     return hamiltonian;
-    // }
     /// Get the data needed to plot out the circuit. Returns 4 values: times for each data point,
     /// frequency data, amplitude_data, and combined pulse data (Real values of (0, 1) matrix
     /// element)
@@ -207,6 +138,12 @@ impl Circuit {
     // Get the phase of the circuit at a time
     pub fn get_phase(&self, time: f64) -> f64 {
         return self.gates[self.get_gate_index(time)].get_phase(time);
+    }
+    /// Reset the circuit class to simulate a shot
+    pub fn reset_for_shot(&mut self) -> () {
+        self.time = 0.;
+        self.frequency = 0.;
+        return;
     }
     // Get the index in the gates vector of the gate which is playing at a given time
     fn get_gate_index(&self, time: f64) -> usize {

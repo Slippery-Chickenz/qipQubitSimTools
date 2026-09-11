@@ -24,7 +24,7 @@ impl SimulationMethod for PadeStateMethod {
     ) -> Self::QubitStateType {
         let dt: f64 = simulation_times.get_dt();
         for t_index in start_index..end_index {
-            let time = simulation_times.get_iteration_time(t_index);
+            let time: f64 = simulation_times.get_iteration_time(t_index);
             let hamiltonain: Array2<Complex64> = T::get_matrix(circuit, qubit_array, time, t_index);
             let evolution_operator: Array2<Complex64> =
                 expm(&(Complex64::new(0., -1.) * hamiltonain * dt)).0;

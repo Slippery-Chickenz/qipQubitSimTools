@@ -1,8 +1,10 @@
-use super::experiment_results::ExperimentResult;
+use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array2, Array3, ArrayD, Axis, Ix1, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{
+    Array3, Array4, ArrayD, Axis, Ix1, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem,
+};
 use ndarray_linalg::{Eigh, UPLO};
 use num_complex::Complex64;
 
@@ -14,7 +16,14 @@ pub struct EigenstateResults {
 }
 
 impl EigenstateResults {
-    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize) -> EigenstateResults {
+    pub fn from_json(
+        mut results_dim: Vec<usize>,
+        num_shots: usize,
+        num_samples: usize,
+    ) -> EigenstateResults {
+        if num_shots > 1 {
+            results_dim.push(num_shots);
+        }
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
@@ -38,17 +47,26 @@ impl ExperimentResult for EigenstateResults {
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
         // Get the hamiltonian at each sample
-        let hamiltonians: Array3<Complex64> = simulation_result.get_hamiltonians().clone();
+        let hamiltonians: Array4<Complex64> = simulation_result.get_hamiltonians().clone();
 
         // Array to store the eigen values and states at each sample
-        let mut eigenstates: Array3<Complex64> = Array3::<Complex64>::zeros(hamiltonians.raw_dim());
-        let mut eigenenergies: Array2<f64> = Array2::<f64>::zeros((hamiltonians.shape()[0], 2));
+        let mut eigenstates: Array4<Complex64> = Array4::<Complex64>::zeros(hamiltonians.raw_dim());
+        let mut eigenenergies: Array3<f64> =
+            Array3::<f64>::zeros((hamiltonians.shape()[0], hamiltonians.shape()[1], 2));
 
         // Loop over hamiltonians and find eigen states/energies
-        for (i, hamiltonian) in hamiltonians.outer_iter().enumerate() {
-            let (evals, evecs) = hamiltonian.eigh(UPLO::Lower).unwrap();
-            eigenstates.index_axis_mut(Axis(0), i).assign(&evecs);
-            eigenenergies.index_axis_mut(Axis(0), i).assign(&evals);
+        for (i, shot_hamiltonians) in hamiltonians.outer_iter().enumerate() {
+            for (j, hamiltonian) in shot_hamiltonians.outer_iter().enumerate() {
+                let (evals, evecs) = hamiltonian.eigh(UPLO::Lower).unwrap();
+                eigenstates
+                    .index_axis_mut(Axis(0), i)
+                    .index_axis_mut(Axis(0), j)
+                    .assign(&evecs);
+                eigenenergies
+                    .index_axis_mut(Axis(0), i)
+                    .index_axis_mut(Axis(0), j)
+                    .assign(&evals);
+            }
         }
 
         let mut slice_info_vec: Vec<SliceInfoElem> = vec![];

@@ -1,4 +1,4 @@
-use super::experiment_results::ExperimentResult;
+use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
@@ -10,7 +10,14 @@ pub struct TimeResults {
 }
 
 impl TimeResults {
-    pub fn from_json(mut results_dim: Vec<usize>, num_samples: usize) -> TimeResults {
+    pub fn from_json(
+        mut results_dim: Vec<usize>,
+        num_shots: usize,
+        num_samples: usize,
+    ) -> TimeResults {
+        if num_shots > 1 {
+            results_dim.push(num_shots);
+        }
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
