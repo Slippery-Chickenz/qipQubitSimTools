@@ -2,7 +2,7 @@ use std::{marker::PhantomData, rc::Rc};
 
 use crate::simulation::{
     Circuit, Hamiltonian, LabFrame, PulseFrame, QubitArray, ReferenceFrame, RotatingFrame,
-    SimulationMethod, SimulationResultSaver, SimulationTimes, SimulationSettings
+    SimulationMethod, SimulationResultSaver, SimulationSettings, SimulationTimes,
 };
 
 /// Simulator for a given quantum circuit on an array of qubits
@@ -53,11 +53,8 @@ impl<Method: SimulationMethod> Simulator<Method> {
         qubit_array: QubitArray,
         simulation_settings: SimulationSettings,
     ) -> Method::ResultType {
-        let mut simulator: Simulator<Method> = Simulator::new(
-            circuit,
-            qubit_array,
-            simulation_settings,
-        );
+        let mut simulator: Simulator<Method> =
+            Simulator::new(circuit, qubit_array, simulation_settings);
         return simulator.run();
     }
     /// Simulate the circuit currently set
@@ -74,10 +71,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
             }
         }
     }
-    fn run_in_frame<T: Hamiltonian>(
-        &mut self,
-        hamiltonian: PhantomData<T>,
-    ) -> Method::ResultType {
+    fn run_in_frame<T: Hamiltonian>(&mut self, hamiltonian: PhantomData<T>) -> Method::ResultType {
         // Prepare variables for iterating over each qubit evolution
         let (mut simulation_results, iteration_indicies, save_offset, mut qubit_state): (
             Method::ResultType,
@@ -102,7 +96,6 @@ impl<Method: SimulationMethod> Simulator<Method> {
                 &self.qubit_array,
                 self.simulation_times.as_ref(),
                 qubit_state,
-                // &self.reference_frame,
                 hamiltonian,
                 iteration_indicies[i],
                 iteration_indicies[i + 1],
@@ -132,8 +125,10 @@ impl<Method: SimulationMethod> Simulator<Method> {
         Method::QubitStateType,
     ) {
         // Make an empty simulation results to return
-        let mut simulation_results: Method::ResultType =
-            Method::ResultType::new(Rc::clone(&self.simulation_times), self.simulation_settings.get_save_hamiltonian());
+        let mut simulation_results: Method::ResultType = Method::ResultType::new(
+            Rc::clone(&self.simulation_times),
+            self.simulation_settings.get_save_hamiltonian(),
+        );
 
         // Make sure the qubit array has the correct number of qubits for this circuit
         assert!(

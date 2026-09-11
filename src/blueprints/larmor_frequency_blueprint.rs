@@ -13,7 +13,6 @@ impl LarmorFrequencyBlueprint {
     pub fn from_json(
         mut json_values: Map<String, Value>,
     ) -> (LarmorFrequencyBlueprint, Vec<SweepParameter>) {
-
         // Empty vector for the sweep parameters
         let mut swept_parameters: Vec<SweepParameter> = vec![];
 

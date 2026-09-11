@@ -48,87 +48,37 @@ impl ExperimentResults {
         num_samples: usize,
     ) -> (ExperimentResults, bool, bool) {
         // Vector to hold the dimensions of the results
-        let mut results_dim: Vec<usize> = vec![];
-        // Loop over the sweep parameters and add the len of the values as the length of the dimension
-        for sweep_parameter in &*sweep_parameters {
-            results_dim.push(sweep_parameter.values_len());
-        }
+        let results_dim: Vec<usize> =
+            Vec::from_iter((*sweep_parameters).iter().map(|x| x.values_len()));
+
+        // Whether to save the waveform
+        let save_waveform: bool =
+            serde_json::from_value(json_values.remove("waveform").unwrap_or_default())
+                .unwrap_or(false);
+        // Whether to save the hamiltonian at each sample
+        let mut save_hamiltonians: bool = false;
 
         // List of all the results from the simulations to store
         let mut results: Vec<Box<dyn ExperimentResult>> = vec![];
 
-        // Add a result to store the total duration of each simulation
-        results.push(Box::new(DurationResult::from_json(
-            results_dim.clone(),
-            num_samples,
-        )));
-
-        let mut save_waveform: bool = false;
-        if json_values.contains_key("waveform") {
-            save_waveform = json_values["waveform"].as_bool().unwrap();
-        }
-
-        let mut save_hamiltonians: bool = false;
-        if json_values.contains_key("hamiltonians") {
-            if json_values["hamiltonians"].as_bool().unwrap() {
-                results.push(Box::new(HamiltonianResults::from_json(
+        // Loop over the outputs to save and get a result for each of them
+        for (key, value) in json_values.into_iter() {
+            // If it is a bool and false then don't include it otherwise try to
+            if !value.as_bool().unwrap_or(true) {
+                continue;
+            }
+            // Get the result and add it to the vec
+            let (result, save_hamiltonian): (Box<dyn ExperimentResult>, bool) =
+                ExperimentResults::get_result_from_json(
+                    key.as_str(),
+                    value,
                     results_dim.clone(),
                     num_samples,
-                )));
+                );
+            if save_hamiltonian {
                 save_hamiltonians = true;
             }
-        }
-        if json_values.contains_key("state") {
-            results.push(Box::new(StateResults::from_json(
-                results_dim.clone(),
-                num_samples,
-            )));
-        }
-        if json_values.contains_key("probability") {
-            results.push(Box::new(ProbabilityResults::from_json(
-                results_dim.clone(),
-                num_samples,
-                json_values.remove("probability").unwrap(),
-            )));
-        }
-        if json_values.contains_key("measurement") {
-            results.push(Box::new(MeasurementResults::from_json(
-                results_dim.clone(),
-                num_samples,
-                json_values.remove("measurement").unwrap(),
-            )));
-        }
-        if json_values.contains_key("times") {
-            results.push(Box::new(TimeResults::from_json(
-                results_dim.clone(),
-                num_samples,
-            )));
-        }
-        if json_values.contains_key("bloch_coords") {
-            if json_values["bloch_coords"].as_bool().unwrap() {
-                results.push(Box::new(BlochCoordResults::from_json(
-                    results_dim.clone(),
-                    num_samples,
-                )));
-            }
-        }
-        if json_values.contains_key("adiabaticity") {
-            if json_values["adiabaticity"].as_bool().unwrap() {
-                results.push(Box::new(AdiabaticityResults::from_json(
-                    results_dim.clone(),
-                    num_samples,
-                )));
-                save_hamiltonians = true;
-            }
-        }
-        if json_values.contains_key("eigenstates") {
-            if json_values["eigenstates"].as_bool().unwrap() {
-                results.push(Box::new(EigenstateResults::from_json(
-                    results_dim.clone(),
-                    num_samples,
-                )));
-                save_hamiltonians = true;
-            }
+            results.push(result);
         }
 
         return (
@@ -140,6 +90,72 @@ impl ExperimentResults {
             save_hamiltonians,
             save_waveform,
         );
+    }
+    fn get_result_from_json(
+        name: &str,
+        json_value: Value,
+        results_dim: Vec<usize>,
+        num_samples: usize,
+    ) -> (Box<dyn ExperimentResult>, bool) {
+        match name {
+            "state" => (
+                Box::new(StateResults::from_json(results_dim.clone(), num_samples)),
+                false,
+            ),
+            "duration" => (
+                Box::new(DurationResult::from_json(results_dim.clone(), num_samples)),
+                false,
+            ),
+            "measurement" => (
+                Box::new(MeasurementResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                    json_value,
+                )),
+                false,
+            ),
+            "probability" => (
+                Box::new(ProbabilityResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                    json_value,
+                )),
+                false,
+            ),
+            "bloch_coords" => (
+                Box::new(BlochCoordResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                )),
+                false,
+            ),
+            "times" => (
+                Box::new(TimeResults::from_json(results_dim.clone(), num_samples)),
+                false,
+            ),
+            "hamiltonians" => (
+                Box::new(HamiltonianResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                )),
+                true,
+            ),
+            "adiabaticity" => (
+                Box::new(AdiabaticityResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                )),
+                true,
+            ),
+            "eigenstates" => (
+                Box::new(EigenstateResults::from_json(
+                    results_dim.clone(),
+                    num_samples,
+                )),
+                true,
+            ),
+            _ => panic!("Invalid result name! {}", name),
+        }
     }
     pub fn save_circuit(&mut self, circuit: Circuit) -> () {
         self.waveform_saver = Option::Some(WaveformSaver::from_circuit(circuit));

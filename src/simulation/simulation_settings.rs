@@ -8,10 +8,12 @@ pub struct SimulationSettings {
     step_size: f64,
     /// Number of samples to save
     num_samples: usize,
+    /// Number of shots to perform for this simulation
+    num_shots: usize,
     /// Reference frame for simulation
     frame: ReferenceFrame,
     /// Whether to save the hamiltonian or not
-    save_hamiltonian: bool
+    save_hamiltonian: bool,
 }
 
 impl SimulationSettings {
@@ -19,12 +21,14 @@ impl SimulationSettings {
     pub fn new(
         step_size: f64,
         num_samples: usize,
+        num_shots: usize,
         reference_frame: ReferenceFrame,
-        save_hamiltonian: bool
+        save_hamiltonian: bool,
     ) -> SimulationSettings {
         return SimulationSettings {
             step_size: step_size,
             num_samples: num_samples,
+            num_shots: num_shots,
             frame: reference_frame,
             save_hamiltonian: save_hamiltonian,
         };

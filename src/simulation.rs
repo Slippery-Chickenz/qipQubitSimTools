@@ -3,8 +3,8 @@ mod hamiltonians;
 mod larmor_frequency;
 mod methods;
 mod qubit_array;
-mod simulation_times;
 mod simulation_settings;
+mod simulation_times;
 mod simulator;
 
 pub use circuit::Circuit;
@@ -16,6 +16,6 @@ pub use methods::{
     SimulationResultSaver,
 };
 pub use qubit_array::QubitArray;
-pub use simulation_times::SimulationTimes;
 pub use simulation_settings::SimulationSettings;
+pub use simulation_times::SimulationTimes;
 pub use simulator::Simulator;

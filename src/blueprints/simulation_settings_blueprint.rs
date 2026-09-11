@@ -29,6 +29,8 @@ pub struct SimulationSettingsBlueprint {
     step_size: f64,
     /// Number of samples to save
     num_samples: usize,
+    /// Number of shots to perform for this simulation
+    num_shots: usize,
     /// Simulation method to run the experiment with
     method: SimulationMethodType,
     /// Reference frame for simulation
@@ -45,6 +47,7 @@ impl SimulationSettingsBlueprint {
             step_size: serde_json::from_value(json_values.remove("step_size").unwrap()).unwrap(),
             num_samples: serde_json::from_value(json_values.remove("num_samples").unwrap())
                 .unwrap(),
+            num_shots: serde_json::from_value(json_values.remove("num_shots").unwrap()).unwrap(),
             method: SimulationMethodType::from(
                 serde_json::from_value::<String>(json_values.remove("method").unwrap()).unwrap(),
             ),
@@ -60,7 +63,13 @@ impl SimulationSettingsBlueprint {
     }
     /// Get the simulation settings for this blueprint
     pub fn get_simulation_settings(&self) -> SimulationSettings {
-        return SimulationSettings::new(self.step_size, self.num_samples, self.frame.clone(), self.save_hamiltonian);
+        return SimulationSettings::new(
+            self.step_size,
+            self.num_samples,
+            self.num_shots,
+            self.frame.clone(),
+            self.save_hamiltonian,
+        );
     }
     /// Get the number of samples from the blueprint
     pub fn get_num_samples(&self) -> usize {

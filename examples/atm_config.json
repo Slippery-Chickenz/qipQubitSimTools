@@ -1,12 +1,14 @@
 {
 	"simulation_settings": {
 		"step_size": 0.01,
+		"num_shots": 1,
 		"num_samples": 200,
 		"method": "PadeState",
 		"frame": "Pulse"
 	},
 	"output": {
 		"state": true,
+		"duration": true,
 		"probability": "-z",
 		"bloch_coords": true,
 		"times": true,

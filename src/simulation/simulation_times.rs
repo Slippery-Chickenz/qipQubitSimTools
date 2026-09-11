@@ -27,7 +27,6 @@ impl SimulationTimes {
 
         // Iteration times without sub timings for fourth order runge kutta
         let iteration_times: Array2<f64> = Array1::<f64>::linspace(0., duration, num_times)
-            // Array1::<f64>::range(0., duration, step_size / (times_per_step as f64))
             .into_shape_with_order((
                 ((duration / (step_size as f64)).ceil() + 1.) as usize,
                 times_per_step,
