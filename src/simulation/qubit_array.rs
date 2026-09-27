@@ -57,30 +57,13 @@ impl QubitArray {
     pub fn get_num_qubits(&self) -> u32 {
         return self.num_qubts;
     }
-    /// Get the detuning Hamiltonian for the qubit array. Just a 2x2 array with the detuning value
-    /// (guess - larmor) for each time step in the simulation times
-    pub fn get_detuning_hamiltonian(&self, t_index: usize) -> Array2<Complex64> {
-        // Detuning between guess and qubit. Factor of pi is to convert to angular frequency
-        // combined with 1/2 factor from S_z gate
-        let detuning: f64 =
-            (self.larmor.get_larmor_frequencies()[t_index] - self.guess_larmor) * -PI;
-
-        let detuning_hamiltonian: Array2<Complex64> =
-            Array2::<Complex64>::from_shape_fn((2, 2), |(i, j)| {
-                Complex64::new(
-                    f64::from(-(i32::try_from(i + j).unwrap() - 1)) * detuning,
-                    0.,
-                )
-            });
-        return detuning_hamiltonian;
-    }
     ///  Get the decoherence strength of the qubits
     pub fn get_decoherence(&self) -> f64 {
         return self.decoherence;
     }
     /// Get the larmor frequency of the qubits
-    pub fn get_larmor_frequency(&self, t_index: usize) -> f64 {
-        return self.larmor.get_larmor_frequencies()[t_index];
+    pub fn get_larmor_frequency(&self, shot_num: usize, iteration_index: usize) -> f64 {
+        return self.larmor.get_larmor_frequency(shot_num, iteration_index);
     }
     /// Get the guess larmor frequency of the qubits
     pub fn get_guess_larmor(&self) -> f64 {

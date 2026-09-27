@@ -7,14 +7,14 @@ use crate::simulation::{
 
 /// Simulator for a given quantum circuit on an array of qubits
 pub struct Simulator<Method: SimulationMethod> {
-    /// Times and samples for the simulation to be run and saved at
-    simulation_times: Rc<SimulationTimes>,
-    /// Settings to run the simulation at
-    simulation_settings: SimulationSettings,
     /// Circuit to be simulated
     circuit: Circuit,
     /// Array of qubits for the circuit to be simulated on
     qubit_array: QubitArray,
+    /// Settings to run the simulation at
+    simulation_settings: SimulationSettings,
+    /// Times and samples for the simulation to be run and saved at
+    simulation_times: Rc<SimulationTimes>,
     /// Phantom data to store the type of method we use to simulate the circuit
     simulation_method: PhantomData<Method>,
 }
@@ -34,16 +34,17 @@ impl<Method: SimulationMethod> Simulator<Method> {
         // step_size: f64,
         // num_samples: usize,
     ) -> Simulator<Method> {
-        return Simulator::<Method> {
-            simulation_times: Rc::new(SimulationTimes::new(
+        let simulation_times: SimulationTimes = SimulationTimes::new(
                 circuit.get_duration(),
                 simulation_settings.get_dt(),
                 Method::get_num_times_per_step(),
                 simulation_settings.get_num_samples(),
-            )),
-            simulation_settings: simulation_settings,
+            );
+        return Simulator::<Method> {
             circuit: circuit,
             qubit_array: qubit_array,
+            simulation_settings: simulation_settings,
+            simulation_times: Rc::new(),
             simulation_method: PhantomData,
         };
     }
