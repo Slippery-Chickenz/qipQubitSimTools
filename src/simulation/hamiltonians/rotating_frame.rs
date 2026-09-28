@@ -11,9 +11,10 @@ impl Hamiltonian for RotatingFrame {
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         time: f64,
-        time_index: usize,
+        shot_index: usize,
+        iteration_index: usize,
     ) -> Array2<Complex64> {
-        let larmor_frequency: f64 = qubit_array.get_larmor_frequency(time_index);
+        let larmor_frequency: f64 = qubit_array.get_larmor_frequency(shot_index, iteration_index);
         let guess_frequency: f64 = qubit_array.get_guess_larmor();
         let amplitude: f64 = circuit.get_amplitude(time);
         let integrated_frequency: f64 = circuit.get_integrated_frequency(time);

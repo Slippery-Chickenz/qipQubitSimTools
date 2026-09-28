@@ -1,9 +1,10 @@
 {
 	"simulation_settings": {
-		"step_size": 0.01,
+		"step_size": 0.1,
 		"num_shots": 100,
 		"num_samples": 1,
-		"method": "PadeState",
+		"umethod": "PadeState",
+		"method": "RK",
 		"frame": "Rotating"
 	},
 	"output": {
@@ -28,10 +29,10 @@
 			{
 				"name": "Constant",
 				"parameters": {
-					"amplitude": 1,
+					"amplitude": 0.5,
 					"frequency": 0,
 					"phase": 0,
-					"duration": { "linspace": [0.1, 8, 400] }
+					"duration": { "linspace": [0.2, 100, 1000] }
 				}
 			}
 		],
@@ -44,7 +45,7 @@
 				"pink_noise_power": 0
 			},
 			"guess_larmor": 0,
-			"decoherence": 0,
+			"decoherence": 0.1,
 			"init_state": "+z"
 		}
 	]

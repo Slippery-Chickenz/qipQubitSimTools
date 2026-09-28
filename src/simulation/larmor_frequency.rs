@@ -1,8 +1,6 @@
-use std::rc::Rc;
+use crate::simulation::{SimulationSettings, SimulationTimes};
 
-use crate::simulation::{ SimulationTimes, SimulationSettings };
-
-use ndarray::{ Array1, Array2 };
+use ndarray::{Array1, Array2};
 use num_complex::Complex64;
 use rand::{RngExt, rng};
 use rustfft::FftPlanner;
@@ -87,15 +85,28 @@ impl LarmorFrequency {
     //     return;
     // }
     // fn calculate_noise_values(&mut self) -> () {
-    fn calculate_noise_values(&mut self, simulation_settings: &SimulationSettings, simulation_times: &SimulationTimes) -> () {
-        let mut larmor_values: Array1<f64> = Array1::<f64>::from_elem(simulation_times.get_num_iterations() * simulation_settings.get_num_shots(), self.base_larmor);
+    pub fn calculate_noise_values(
+        &mut self,
+        simulation_settings: &SimulationSettings,
+        simulation_times: &SimulationTimes,
+    ) -> () {
+        let mut larmor_values: Array1<f64> = Array1::<f64>::from_elem(
+            simulation_times.get_num_times() * simulation_settings.get_num_shots(),
+            self.base_larmor,
+        );
         if self.white_noise_power != 0. {
             larmor_values = self.calculate_white_noise_values(larmor_values);
         }
         if self.pink_noise_power != 0. {
-            larmor_values = self.calculate_pink_noise_values(larmor_values, simulation_settings.get_dt());
+            larmor_values =
+                self.calculate_pink_noise_values(larmor_values, simulation_settings.get_dt());
         }
-        self.larmor_values = larmor_values.into_shape_with_order([simulation_settings.get_num_shots(), simulation_times.get_num_iterations()]).unwrap();
+        self.larmor_values = larmor_values
+            .into_shape_with_order([
+                simulation_settings.get_num_shots(),
+                simulation_times.get_num_times(),
+            ])
+            .unwrap();
         return;
     }
     fn calculate_white_noise_values(&self, mut larmor_values: Array1<f64>) -> Array1<f64> {
@@ -107,17 +118,20 @@ impl LarmorFrequency {
         }
         return larmor_values;
     }
-    fn calculate_pink_noise_values(&mut self, mut larmor_values: Array1<f64>, dt: f64) -> Array1<f64> {
+    fn calculate_pink_noise_values(
+        &self,
+        mut larmor_values: Array1<f64>,
+        dt: f64,
+    ) -> Array1<f64> {
         let mut random_generator = rng();
         let mut planner: FftPlanner<f64> = FftPlanner::new();
         let mut pink_noise_values: Vec<Complex64> =
-            vec![Complex64::new(0., 0.); simulation_times.get_num_iterations()];
+            vec![Complex64::new(0., 0.); larmor_values.len()];
         let mut fft_frequency_scalings: Vec<f64> = vec![0.; pink_noise_values.len()];
         for i in 0..pink_noise_values.len() {
             pink_noise_values[i].re = random_generator.random();
             if i != 0 {
-                fft_frequency_scalings[i] =
-                    (fft_frequency_scalings.len() as f64 * simulation_times.get_dt()) / (i as f64);
+                fft_frequency_scalings[i] = (fft_frequency_scalings.len() as f64 * dt) / (i as f64);
             }
         }
         let fft = planner.plan_fft_forward(pink_noise_values.len());
@@ -133,10 +147,10 @@ impl LarmorFrequency {
             .unwrap()
             .re
             .abs();
-        for i in 0..self.larmor_values.len() {
-            self.larmor_values[i] +=
+        for i in 0..larmor_values.len() {
+            larmor_values[i] +=
                 (pink_noise_values[i].re * self.pink_noise_power) / maximum_pink_noise_value;
         }
-        return;
+        return larmor_values;
     }
 }

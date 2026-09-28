@@ -35,6 +35,7 @@ pub trait Hamiltonian {
         circuit: &mut Circuit,
         qubit_array: &QubitArray,
         time: f64,
-        time_index: usize,
+        shot_index: usize,
+        iteration_index: usize,
     ) -> Array2<Complex64>;
 }

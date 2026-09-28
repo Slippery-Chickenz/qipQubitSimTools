@@ -18,6 +18,7 @@ impl SimulationMethod for RKMethod {
         simulation_times: &SimulationTimes,
         mut qubit_state: Self::QubitStateType,
         _hamiltonian: PhantomData<T>,
+        shot_num: usize,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitStateType {
@@ -28,22 +29,22 @@ impl SimulationMethod for RKMethod {
             // Four coefficients for Runge Kutta
             let k_1: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 qubit_array,
-                T::get_matrix(circuit, qubit_array, time, t_index),
+                T::get_matrix(circuit, qubit_array, time, shot_num, t_index),
                 &qubit_state,
             );
             let k_2: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 qubit_array,
-                T::get_matrix(circuit, qubit_array, time + (dt / 2.), t_index + 1),
+                T::get_matrix(circuit, qubit_array, time + (dt / 2.), shot_num, t_index + 1),
                 &(&qubit_state + (&k_1 * (dt / 2.))),
             );
             let k_3: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 qubit_array,
-                T::get_matrix(circuit, qubit_array, time + (dt / 2.), t_index + 2),
+                T::get_matrix(circuit, qubit_array, time + (dt / 2.), shot_num, t_index + 2),
                 &(&qubit_state + (&k_2 * (dt / 2.))),
             );
             let k_4: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 qubit_array,
-                T::get_matrix(circuit, qubit_array, time + dt, t_index + 3),
+                T::get_matrix(circuit, qubit_array, time + dt, shot_num, t_index + 3),
                 &(&qubit_state + (&k_3 * dt)),
             );
 

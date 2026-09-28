@@ -17,6 +17,7 @@ pub trait SimulationMethod {
         simulation_times: &SimulationTimes,
         qubit_state: Self::QubitStateType,
         _hamiltonian: PhantomData<T>,
+        shot_num: usize,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitStateType;

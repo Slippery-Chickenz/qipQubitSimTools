@@ -1,7 +1,7 @@
 use std::f64::consts::PI;
 use std::rc::Rc;
 
-use crate::simulation::{LarmorFrequency, SimulationTimes};
+use crate::simulation::{LarmorFrequency, SimulationTimes, SimulationSettings};
 
 use ndarray::{Array1, Array2};
 use num_complex::Complex64;
@@ -20,8 +20,8 @@ pub struct QubitArray {
     guess_larmor: f64,
     /// Coefficient to determine how strong decoherence is
     decoherence: f64,
-    /// Simulation times for the simulation
-    simulation_times: Option<Rc<SimulationTimes>>,
+    // /// Simulation times for the simulation
+    // simulation_times: Option<Rc<SimulationTimes>>,
 }
 
 impl QubitArray {
@@ -40,13 +40,13 @@ impl QubitArray {
             larmor: larmor,
             guess_larmor: guess_larmor,
             decoherence: decoherence,
-            simulation_times: None,
+            // simulation_times: None,
         };
     }
     /// Set the simulation times for the qubit array
-    pub fn set_simulation_times(&mut self, simulation_times: Rc<SimulationTimes>) -> () {
-        self.simulation_times = Some(Rc::clone(&simulation_times));
-        self.larmor.set_simulation_times(simulation_times);
+    pub fn initialize_larmor_noise(&mut self, simulation_settings: &SimulationSettings, simulation_times: &SimulationTimes) -> () {
+        // self.simulation_times = Some(Rc::clone(&simulation_times));
+        self.larmor.calculate_noise_values(simulation_settings, simulation_times);
         return;
     }
     /// Get the density_matrix that represents the starting state for the qubits

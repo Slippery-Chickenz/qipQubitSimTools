@@ -44,7 +44,6 @@ impl ExperimentResult for MeasurementResults {
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &dyn SimulationResultGetter,
     ) -> () {
-
         // Get the slice information for the results at these parameters
         let mut slice_info_vec: Vec<SliceInfoElem> = sweep_parameter_indices
             .iter()

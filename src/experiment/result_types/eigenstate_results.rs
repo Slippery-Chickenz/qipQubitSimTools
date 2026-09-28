@@ -2,9 +2,7 @@ use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{
-    Array3, Array4, ArrayD, Axis, Ix1, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem,
-};
+use ndarray::{Array3, Array4, ArrayD, Axis, Ix1, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
 use ndarray_linalg::{Eigh, UPLO};
 use num_complex::Complex64;
 

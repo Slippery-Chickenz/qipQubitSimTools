@@ -7,14 +7,14 @@ use crate::simulation::{
 
 /// Simulator for a given quantum circuit on an array of qubits
 pub struct Simulator<Method: SimulationMethod> {
+    /// Times and samples for the simulation to be run and saved at
+    simulation_times: Rc<SimulationTimes>,
+    /// Settings to run the simulation at
+    simulation_settings: SimulationSettings,
     /// Circuit to be simulated
     circuit: Circuit,
     /// Array of qubits for the circuit to be simulated on
     qubit_array: QubitArray,
-    /// Settings to run the simulation at
-    simulation_settings: SimulationSettings,
-    /// Times and samples for the simulation to be run and saved at
-    simulation_times: Rc<SimulationTimes>,
     /// Phantom data to store the type of method we use to simulate the circuit
     simulation_method: PhantomData<Method>,
 }
@@ -34,17 +34,16 @@ impl<Method: SimulationMethod> Simulator<Method> {
         // step_size: f64,
         // num_samples: usize,
     ) -> Simulator<Method> {
-        let simulation_times: SimulationTimes = SimulationTimes::new(
+        return Simulator::<Method> {
+            simulation_times: Rc::new(SimulationTimes::new(
                 circuit.get_duration(),
                 simulation_settings.get_dt(),
                 Method::get_num_times_per_step(),
                 simulation_settings.get_num_samples(),
-            );
-        return Simulator::<Method> {
+            )),
+            simulation_settings: simulation_settings,
             circuit: circuit,
             qubit_array: qubit_array,
-            simulation_settings: simulation_settings,
-            simulation_times: Rc::new(),
             simulation_method: PhantomData,
         };
     }
@@ -89,6 +88,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
                 &self.qubit_array,
                 0.,
                 0,
+                0,
             ));
         }
 
@@ -102,6 +102,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
                     self.simulation_times.as_ref(),
                     qubit_state,
                     hamiltonian,
+                    i,
                     iteration_indicies[j],
                     iteration_indicies[j + 1],
                 );
@@ -115,12 +116,13 @@ impl<Method: SimulationMethod> Simulator<Method> {
                             &self.qubit_array,
                             self.simulation_times
                                 .get_iteration_time(iteration_indicies[j + 1] - 1),
+                            i,
                             iteration_indicies[j + 1] - 1,
                         ),
                     );
                 }
             }
-           qubit_state = self.reset_for_shot(); 
+            qubit_state = self.reset_for_shot();
         }
         return simulation_results;
     }
@@ -149,8 +151,8 @@ impl<Method: SimulationMethod> Simulator<Method> {
         );
 
         // Set the simulation times for the circuit and qubit array
-        self.qubit_array
-            .set_simulation_times(Rc::clone(&self.simulation_times));
+        self.qubit_array.initialize_larmor_noise(&self.simulation_settings, &self.simulation_times);
+            // .set_simulation_times(Rc::clone(&self.simulation_times));
 
         // Get the starting state for the simulation
         let qubit_state: Method::QubitStateType =

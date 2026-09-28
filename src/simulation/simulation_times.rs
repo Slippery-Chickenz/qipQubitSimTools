@@ -5,11 +5,14 @@ use ndarray::{Array1, Array2};
 #[derive(Debug)]
 pub struct SimulationTimes {
     /// Time values at each iteration
-    iteration_times: Array2<f64>,
+    // iteration_times: Array2<f64>,
+    iteration_times: Array1<f64>,
     /// Indicies of the samples in the iteration times vector
     sample_indices: Vec<usize>,
     /// Time difference between iterations
     dt: f64,
+    /// Number of time steps done between each iteration
+    times_per_iteration: usize,
 }
 
 impl SimulationTimes {
@@ -21,17 +24,18 @@ impl SimulationTimes {
         num_samples: usize,
     ) -> SimulationTimes {
         // Total number of times needed for this simulation
-        let num_times: usize = (((duration / (step_size as f64)).ceil() + 1.)
-            * (times_per_step as f64))
+        let num_times: usize = ((duration / (step_size as f64)).ceil() + 1.)
             .ceil() as usize;
+            // * (times_per_step as f64))
 
         // Iteration times without sub timings for fourth order runge kutta
-        let iteration_times: Array2<f64> = Array1::<f64>::linspace(0., duration, num_times)
-            .into_shape_with_order((
-                ((duration / (step_size as f64)).ceil() + 1.) as usize,
-                times_per_step,
-            ))
-            .unwrap();
+        let iteration_times: Array1<f64> = Array1::<f64>::linspace(0., duration - step_size, num_times - 1);
+        // let iteration_times: Array2<f64> = Array1::<f64>::linspace(0., duration, num_times)
+        //     .into_shape_with_order((
+        //         ((duration / (step_size as f64)).ceil() + 1.) as usize,
+        //         times_per_step,
+        //     ))
+        //     .unwrap();
         if num_samples >= iteration_times.len() {
             panic!("Not enough iteration times for the desired number of samples");
         }
@@ -40,17 +44,18 @@ impl SimulationTimes {
         let mut sample_indicies: Vec<usize> = vec![];
 
         if num_samples != 1 {
-            let sample_index_spacing: usize = iteration_times.shape()[0] / (num_samples - 1);
+            let sample_index_spacing: usize = iteration_times.len() / (num_samples - 1);
             for i in 0..num_samples - 1 {
                 sample_indicies.push(i * sample_index_spacing);
             }
         }
 
-        sample_indicies.push(iteration_times.shape()[0]);
+        sample_indicies.push(iteration_times.len());
         return SimulationTimes {
             iteration_times: iteration_times,
             sample_indices: sample_indicies,
             dt: step_size,
+            times_per_iteration: times_per_step,
         };
     }
     /// Get the dt for each time step
@@ -75,23 +80,30 @@ impl SimulationTimes {
         for (i, index) in self.sample_indices.iter().enumerate() {
             if *index == self.iteration_times.shape()[0] {
                 sample_times[i] =
-                    self.iteration_times[[*index - 1, self.iteration_times.shape()[1] - 1]];
+                    //self.iteration_times[[*index - 1, self.iteration_times.shape()[1] - 1]];
+                    self.iteration_times[*index - 1];
                 break;
             }
-            sample_times[i] = self.iteration_times[[*index, self.iteration_times.shape()[1] - 1]];
+            // sample_times[i] = self.iteration_times[[*index, self.iteration_times.shape()[1] - 1]];
+            sample_times[i] = self.iteration_times[*index];
         }
         return sample_times;
     }
     /// Get all the iteration times
-    pub fn get_iteration_times(&self) -> &Array2<f64> {
+    pub fn get_iteration_times(&self) -> &Array1<f64> {
         return &self.iteration_times;
     }
     /// Get a specific iteration time based on an index
     pub fn get_iteration_time(&self, index: usize) -> f64 {
-        return self.iteration_times[[index, 0]];
+        return self.iteration_times[index];
+        //return self.iteration_times[[index, 0]];
     }
     /// Get the number of iterations for the simulation
     pub fn get_num_iterations(&self) -> usize {
         return self.iteration_times.len();
+    }
+    /// Get the number of times for the simulation
+    pub fn get_num_times(&self) -> usize {
+        return self.iteration_times.len() * self.times_per_iteration;
     }
 }

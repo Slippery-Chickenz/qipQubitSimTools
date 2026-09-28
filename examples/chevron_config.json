@@ -1,6 +1,6 @@
 {
 	"simulation_settings": {
-		"step_size": 0.1,
+		"step_size": 0.05,
 		"num_shots": 100,
 		"num_samples": 1,
 		"method": "PadeState",
@@ -8,7 +8,7 @@
 	},
 	"output": {
 		"state": true,
-		"probability": "-z",
+		"probability": "+z",
 		"measurement": true,
 		"bloch_coords": false,
 		"times": false,
@@ -21,12 +21,21 @@
 		"gates": [
 			{
 				"name": "Idle",
-				"parameters": { "duration": { "linspace": [0, 8, 50] } }
+				"parameters": { "duration": 1 }
 			},
 			{ "name": "PiO2X" },
-			{ "name": "PiO2Y" }
+			{ "name": "PiO2Y" },
+			{
+				"name": "Constant",
+				"parameters": {
+					"amplitude": 1,
+					"frequency": 0,
+					"phase": 0,
+					"duration": { "linspace": [0.1, 20, 100] }
+				}
+			}
 		],
-		"order": ["PiO2X", "Idle", "PiO2Y"]
+		"order": ["Constant"]
 	},
 	"qubits": [
 		{

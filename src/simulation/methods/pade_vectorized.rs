@@ -20,6 +20,7 @@ impl SimulationMethod for PadeVectorizedMethod {
         simulation_times: &SimulationTimes,
         mut qubit_state: Self::QubitStateType,
         _hamiltonian: PhantomData<T>,
+        shot_num: usize,
         start_index: usize,
         end_index: usize,
     ) -> Self::QubitStateType {
@@ -27,7 +28,7 @@ impl SimulationMethod for PadeVectorizedMethod {
         for t_index in start_index..end_index {
             let time = simulation_times.get_iteration_time(t_index);
             let lindblad: Array2<Complex64> = PadeVectorizedMethod::get_lindblad_operator(
-                T::get_matrix(circuit, qubit_array, time, t_index),
+                T::get_matrix(circuit, qubit_array, time, shot_num, t_index),
                 qubit_array,
             );
             let evolution_operator: Array2<Complex64> = expm(&(lindblad * dt)).0;
