@@ -1,4 +1,4 @@
-use ndarray::{Array1, Array2};
+use ndarray::Array1;
 
 /// Struct to hold the times for a simulation and the indices of the time values at which the
 /// samples should be saved.

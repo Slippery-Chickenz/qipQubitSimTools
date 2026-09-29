@@ -65,6 +65,14 @@ impl QubitArray {
     pub fn get_larmor_frequency(&self, shot_num: usize, iteration_index: usize) -> f64 {
         return self.larmor.get_larmor_frequency(shot_num, iteration_index);
     }
+    /// Get all the larmor values for the qubits
+    pub fn get_larmor_values(&self) -> &Array2<f64> {
+        return self.larmor.get_larmor_values();
+    }
+    /// Remove and get all the larmor values for the qubits
+    pub fn take_larmor_values(&mut self) -> Array2<f64> {
+        return self.larmor.take_larmor_values();
+    }
     /// Get the guess larmor frequency of the qubits
     pub fn get_guess_larmor(&self) -> f64 {
         return self.guess_larmor;

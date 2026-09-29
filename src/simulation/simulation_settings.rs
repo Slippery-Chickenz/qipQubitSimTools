@@ -14,6 +14,8 @@ pub struct SimulationSettings {
     frame: ReferenceFrame,
     /// Whether to save the hamiltonian or not
     save_hamiltonian: bool,
+    /// Whether to save the larmor values used in the simulation
+    save_larmors: bool,
 }
 
 impl SimulationSettings {
@@ -24,6 +26,7 @@ impl SimulationSettings {
         num_shots: usize,
         reference_frame: ReferenceFrame,
         save_hamiltonian: bool,
+        save_lamors: bool,
     ) -> SimulationSettings {
         return SimulationSettings {
             step_size: step_size,
@@ -31,6 +34,7 @@ impl SimulationSettings {
             num_shots: num_shots,
             frame: reference_frame,
             save_hamiltonian: save_hamiltonian,
+            save_larmors: save_lamors,
         };
     }
     /// Get the dt for each time step
@@ -52,5 +56,9 @@ impl SimulationSettings {
     /// Get if the hamiltonian should be saved at each sample
     pub fn get_save_hamiltonian(&self) -> bool {
         return self.save_hamiltonian;
+    }
+    /// Get if the larmor values should be saved for the simulation
+    pub fn get_save_lamors(&self) -> bool {
+        return self.save_larmors;
     }
 }

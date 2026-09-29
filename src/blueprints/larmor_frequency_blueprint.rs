@@ -7,6 +7,7 @@ use serde_json::{Map, Value};
 pub struct LarmorFrequencyBlueprint {
     base_value: f64,
     pink_noise_power: f64,
+    white_noise_power: f64,
 }
 
 impl LarmorFrequencyBlueprint {
@@ -35,10 +36,20 @@ impl LarmorFrequencyBlueprint {
             swept_parameters.push(sweep_parameter);
         }
 
+        let (white_noise_power, sweep_parameter_option): (f64, Option<SweepParameter>) =
+            SweepParameter::from_json(
+                "white_noise_power",
+                serde_json::from_value(json_values.remove("white_noise_power").unwrap()).unwrap(),
+            );
+        if let Some(sweep_parameter) = sweep_parameter_option {
+            swept_parameters.push(sweep_parameter);
+        }
+
         return (
             LarmorFrequencyBlueprint {
                 base_value: base_value,
                 pink_noise_power: pink_noise_power,
+                white_noise_power: white_noise_power,
             },
             swept_parameters,
         );

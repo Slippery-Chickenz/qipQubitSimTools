@@ -1,3 +1,5 @@
+use std::mem;
+
 use crate::simulation::{SimulationSettings, SimulationTimes};
 
 use ndarray::{Array1, Array2};
@@ -41,6 +43,12 @@ impl LarmorFrequency {
     }
     pub fn get_larmor_frequency(&self, shot_num: usize, iteration_index: usize) -> f64 {
         return self.larmor_values[[shot_num, iteration_index]];
+    }
+    pub fn get_larmor_values(&self) -> &Array2<f64> {
+        return &self.larmor_values;
+    }
+    pub fn take_larmor_values(&mut self) -> Array2<f64> {
+        return mem::take(&mut self.larmor_values);
     }
     // pub fn get_larmor_frequency(&self, _time: f64) -> f64 {
     //     return self.base_larmor;

@@ -124,6 +124,9 @@ impl<Method: SimulationMethod> Simulator<Method> {
             }
             qubit_state = self.reset_for_shot();
         }
+        if self.simulation_settings.get_save_lamors() {
+            simulation_results.save_larmors(self.qubit_array.get_larmor_values().clone());
+        }
         return simulation_results;
     }
     fn reset_for_shot(&mut self) -> Method::QubitStateType {
@@ -153,6 +156,7 @@ impl<Method: SimulationMethod> Simulator<Method> {
         // Set the simulation times for the circuit and qubit array
         self.qubit_array.initialize_larmor_noise(&self.simulation_settings, &self.simulation_times);
             // .set_simulation_times(Rc::clone(&self.simulation_times));
+
 
         // Get the starting state for the simulation
         let qubit_state: Method::QubitStateType =

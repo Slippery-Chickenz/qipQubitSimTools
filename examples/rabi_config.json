@@ -3,8 +3,8 @@
 		"step_size": 0.1,
 		"num_shots": 100,
 		"num_samples": 1,
-		"umethod": "PadeState",
-		"method": "RK",
+		"method": "PadeState",
+		"umethod": "RK",
 		"frame": "Rotating"
 	},
 	"output": {
@@ -29,10 +29,10 @@
 			{
 				"name": "Constant",
 				"parameters": {
-					"amplitude": 0.5,
+					"amplitude": 1,
 					"frequency": 0,
 					"phase": 0,
-					"duration": { "linspace": [0.2, 100, 1000] }
+					"duration": { "linspace": [0.2, 50, 400] }
 				}
 			}
 		],
@@ -42,10 +42,11 @@
 		{
 			"larmor": {
 				"base_value": 0,
-				"pink_noise_power": 0
+				"pink_noise_power": 0.3,
+				"white_noise_power": 0
 			},
 			"guess_larmor": 0,
-			"decoherence": 0.1,
+			"decoherence": 0,
 			"init_state": "+z"
 		}
 	]

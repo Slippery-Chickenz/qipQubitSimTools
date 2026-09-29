@@ -12,6 +12,7 @@ use super::result_types::MeasurementResults;
 use super::result_types::ProbabilityResults;
 use super::result_types::StateResults;
 use super::result_types::TimeResults;
+use super::result_types::LarmorResults;
 use super::waveform_saver::WaveformSaver;
 
 use hdf5::{Group, Result};

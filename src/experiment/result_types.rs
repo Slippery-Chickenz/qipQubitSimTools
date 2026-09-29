@@ -7,6 +7,7 @@ mod measurement_results;
 mod probability_results;
 mod state_results;
 mod time_results;
+mod larmor_results;
 
 pub use adiabaticity_results::AdiabaticityResults;
 pub use bloch_coord_results::BlochCoordResults;
@@ -17,3 +18,4 @@ pub use measurement_results::MeasurementResults;
 pub use probability_results::ProbabilityResults;
 pub use state_results::StateResults;
 pub use time_results::TimeResults;
+pub use larmor_results::LarmorResults;

@@ -38,6 +38,7 @@ pub trait SimulationResultSaver {
         hamiltonian: Array2<Complex64>,
     ) -> ();
     fn save_starting_hamiltonian(&mut self, hamiltonian: Array2<Complex64>) -> ();
+    fn save_larmors(&mut self, larmors: Array2<f64>) -> ();
 }
 
 pub trait SimulationResultGetter {
@@ -48,4 +49,5 @@ pub trait SimulationResultGetter {
     fn get_bloch_coords_cart(&self) -> (Array2<f64>, Array2<f64>, Array2<f64>);
     fn get_simulation_times(&self) -> &SimulationTimes;
     fn get_hamiltonians(&self) -> &Array4<Complex64>;
+    fn take_larmors(&self) -> Array2<f64>;
 }

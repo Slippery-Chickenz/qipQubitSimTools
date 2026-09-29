@@ -15,6 +15,8 @@ pub struct DensityMatrixResult {
     density_matrices: Array4<Complex64>,
     /// Hamiltonian at each sample point
     hamiltonians: Array4<Complex64>,
+    /// Larmor values used in the simulation
+    larmor_values: Array2<f64>,
 }
 
 impl SimulationResultSaver for DensityMatrixResult {
@@ -47,6 +49,7 @@ impl SimulationResultSaver for DensityMatrixResult {
             simulation_times: simulation_times,
             density_matrices: density_matrices,
             hamiltonians: hamiltonians,
+            larmor_values: Array2::<f64>::zeros([0, 0]),
         };
     }
     fn save_state(&mut self, shot_num: usize, sample_num: usize, state: Array2<Complex64>) -> () {
@@ -79,6 +82,10 @@ impl SimulationResultSaver for DensityMatrixResult {
         self.hamiltonians
             .index_axis_mut(Axis(1), 0)
             .assign(&hamiltonian);
+        return;
+    }
+    fn save_larmors(&mut self, larmors: Array2<f64>) -> () {
+        self.larmor_values = larmors;
         return;
     }
 }
@@ -157,6 +164,9 @@ impl SimulationResultGetter for DensityMatrixResult {
     }
     fn get_hamiltonians(&self) -> &Array4<Complex64> {
         return &self.hamiltonians;
+    }
+    fn get_larmors(&self) -> &Array2<f64> {
+        return &self.larmor_values;
     }
 }
 
