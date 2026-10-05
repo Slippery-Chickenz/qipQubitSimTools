@@ -33,7 +33,7 @@ impl ExperimentResult for StateResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         // Get the slice information for the results at these parameters
         let mut slice_info_vec: Vec<SliceInfoElem> = sweep_parameter_indices

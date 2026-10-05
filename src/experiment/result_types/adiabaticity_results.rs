@@ -31,7 +31,7 @@ impl ExperimentResult for AdiabaticityResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         let probabilities: Array2<f64> = simulation_result.get_probabilities();
         if probabilities.shape()[0] == 1 {

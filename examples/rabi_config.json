@@ -1,7 +1,7 @@
 {
 	"simulation_settings": {
-		"step_size": 0.1,
-		"num_shots": 100,
+		"step_size": 0.01,
+		"num_shots": 200,
 		"num_samples": 1,
 		"method": "PadeState",
 		"umethod": "RK",
@@ -12,6 +12,7 @@
 		"probability": "-z",
 		"measurement": true,
 		"bloch_coords": true,
+		"larmors": true,
 		"times": false,
 		"waveform": false,
 		"hamiltonians": false,
@@ -29,10 +30,10 @@
 			{
 				"name": "Constant",
 				"parameters": {
-					"amplitude": 1,
+					"amplitude": 0.5,
 					"frequency": 0,
 					"phase": 0,
-					"duration": { "linspace": [0.2, 50, 400] }
+					"duration": { "linspace": [0.2, 100, 500] }
 				}
 			}
 		],

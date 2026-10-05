@@ -21,7 +21,7 @@ impl ExperimentResult for DurationResult {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         self.results[sweep_parameter_indices.clone().into_dimension()] =
             simulation_result.get_duration();

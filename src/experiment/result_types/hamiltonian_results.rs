@@ -34,7 +34,7 @@ impl ExperimentResult for HamiltonianResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         let hamiltonians: Array4<Complex64> = simulation_result.get_hamiltonians().clone();
 

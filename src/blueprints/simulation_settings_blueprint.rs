@@ -37,6 +37,8 @@ pub struct SimulationSettingsBlueprint {
     frame: ReferenceFrame,
     /// Whether or not to save the hamiltonian at each sample
     save_hamiltonian: bool,
+    /// Whether to save the larmor values used in the simulation
+    save_larmors: bool,
 }
 
 impl SimulationSettingsBlueprint {
@@ -55,10 +57,15 @@ impl SimulationSettingsBlueprint {
                 serde_json::from_value::<String>(json_values.remove("frame").unwrap()).unwrap(),
             ),
             save_hamiltonian: false,
+            save_larmors: false,
         };
     }
     pub fn save_hamiltonians(&mut self, save_hamiltonians: bool) -> () {
         self.save_hamiltonian = save_hamiltonians;
+        return;
+    }
+    pub fn save_larmors(&mut self, save_larmors: bool) -> () {
+        self.save_larmors = save_larmors;
         return;
     }
     /// Get the simulation settings for this blueprint
@@ -69,6 +76,7 @@ impl SimulationSettingsBlueprint {
             self.num_shots,
             self.frame.clone(),
             self.save_hamiltonian,
+            self.save_larmors
         );
     }
     /// Get the number of samples from the blueprint

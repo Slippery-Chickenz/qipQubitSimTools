@@ -1,3 +1,4 @@
+use std::mem;
 use std::rc::Rc;
 
 use crate::simulation::{
@@ -165,8 +166,8 @@ impl SimulationResultGetter for DensityMatrixResult {
     fn get_hamiltonians(&self) -> &Array4<Complex64> {
         return &self.hamiltonians;
     }
-    fn get_larmors(&self) -> &Array2<f64> {
-        return &self.larmor_values;
+    fn take_larmors(&mut self) -> Array2<f64> {
+        return mem::take(&mut self.larmor_values);
     }
 }
 

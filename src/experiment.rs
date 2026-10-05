@@ -110,7 +110,7 @@ impl Experiment {
         // Rc of sweep parameters to save here and also send to results
         let rc_sweep_parameters: Rc<Vec<SweepParameter>> = Rc::new(sweep_parameters);
 
-        let (results, save_hamiltonians, save_waveform): (ExperimentResults, bool, bool) =
+        let (results, save_hamiltonians, save_waveform, save_larmors): (ExperimentResults, bool, bool, bool) =
             ExperimentResults::from_json(
                 serde_json::from_value(json_values.remove("output").unwrap()).unwrap(),
                 Rc::clone(&rc_sweep_parameters),
@@ -119,6 +119,7 @@ impl Experiment {
             );
 
         simulation_settings_blueprint.save_hamiltonians(save_hamiltonians);
+        simulation_settings_blueprint.save_larmors(save_larmors);
 
         return Experiment {
             circuit_blueprint: circuit_blueprint,
@@ -155,7 +156,7 @@ impl Experiment {
             match self.simulation_settings_blueprint.get_simulation_method() {
                 SimulationMethodType::RKMethod => self.results.add_simulation_result(
                     &sweep_parameter_indicies,
-                    &Simulator::<RKMethod>::simulate_circuit(
+                    &mut Simulator::<RKMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
                         self.simulation_settings_blueprint.get_simulation_settings(),
@@ -169,7 +170,7 @@ impl Experiment {
                 ),
                 SimulationMethodType::RKVectorizedMethod => self.results.add_simulation_result(
                     &sweep_parameter_indicies,
-                    &Simulator::<RKVectorizedMethod>::simulate_circuit(
+                    &mut Simulator::<RKVectorizedMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
                         self.simulation_settings_blueprint.get_simulation_settings(),
@@ -183,7 +184,7 @@ impl Experiment {
                 ),
                 SimulationMethodType::PadeVectorizedMethod => self.results.add_simulation_result(
                     &sweep_parameter_indicies,
-                    &Simulator::<PadeVectorizedMethod>::simulate_circuit(
+                    &mut Simulator::<PadeVectorizedMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
                         self.simulation_settings_blueprint.get_simulation_settings(),
@@ -197,7 +198,7 @@ impl Experiment {
                 ),
                 SimulationMethodType::PadeStateMethod => self.results.add_simulation_result(
                     &sweep_parameter_indicies,
-                    &Simulator::<PadeStateMethod>::simulate_circuit(
+                    &mut Simulator::<PadeStateMethod>::simulate_circuit(
                         self.circuit_blueprint.get_circuit(),
                         self.qubit_array_blueprint.get_qubit_array(),
                         self.simulation_settings_blueprint.get_simulation_settings(),

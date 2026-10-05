@@ -24,7 +24,6 @@ impl BlochCoordResults {
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
-        dbg!(&results_dim);
         // Array for results of experiment
         let results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
         return BlochCoordResults {
@@ -39,7 +38,7 @@ impl ExperimentResult for BlochCoordResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         let (x_coords, y_coords, z_coords): (Array2<f64>, Array2<f64>, Array2<f64>) =
             simulation_result.get_bloch_coords_cart();

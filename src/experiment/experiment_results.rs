@@ -22,7 +22,7 @@ pub trait ExperimentResult {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> ();
     fn save(&self, group: &Group) -> Result<()>;
 }
@@ -46,7 +46,7 @@ impl ExperimentResults {
         sweep_parameters: Rc<Vec<SweepParameter>>,
         num_samples: usize,
         num_shots: usize,
-    ) -> (ExperimentResults, bool, bool) {
+    ) -> (ExperimentResults, bool, bool, bool) {
         // Vector to hold the dimensions of the results
         let results_dim: Vec<usize> =
             Vec::from_iter((*sweep_parameters).iter().map(|x| x.values_len()));
@@ -57,6 +57,7 @@ impl ExperimentResults {
                 .unwrap_or(false);
         // Whether to save the hamiltonian at each sample
         let mut save_hamiltonians: bool = false;
+        let mut save_larmors: bool = false;
 
         // List of all the results from the simulations to store
         let mut results: Vec<Box<dyn ExperimentResult>> = vec![];
@@ -68,7 +69,7 @@ impl ExperimentResults {
                 continue;
             }
             // Get the result and add it to the vec
-            let (result, save_hamiltonian): (Box<dyn ExperimentResult>, bool) =
+            let (result, save_hamiltonian, save_larmor): (Box<dyn ExperimentResult>, bool, bool) =
                 ExperimentResults::get_result_from_json(
                     key.as_str(),
                     value,
@@ -78,6 +79,9 @@ impl ExperimentResults {
                 );
             if save_hamiltonian {
                 save_hamiltonians = true;
+            }
+            if save_larmor {
+                save_larmors = true;
             }
             results.push(result);
         }
@@ -90,6 +94,7 @@ impl ExperimentResults {
             },
             save_hamiltonians,
             save_waveform,
+            save_larmors,
         );
     }
     fn get_result_from_json(
@@ -98,7 +103,7 @@ impl ExperimentResults {
         results_dim: Vec<usize>,
         num_samples: usize,
         num_shots: usize,
-    ) -> (Box<dyn ExperimentResult>, bool) {
+    ) -> (Box<dyn ExperimentResult>, bool, bool) {
         match name {
             "state" => (
                 Box::new(StateResults::from_json(
@@ -107,9 +112,11 @@ impl ExperimentResults {
                     num_samples,
                 )),
                 false,
+                false,
             ),
             "duration" => (
                 Box::new(DurationResult::from_json(results_dim.clone())),
+                false,
                 false,
             ),
             "measurement" => (
@@ -118,6 +125,7 @@ impl ExperimentResults {
                     num_shots,
                     json_value,
                 )),
+                false,
                 false,
             ),
             "probability" => (
@@ -128,6 +136,7 @@ impl ExperimentResults {
                     json_value,
                 )),
                 false,
+                false,
             ),
             "bloch_coords" => (
                 Box::new(BlochCoordResults::from_json(
@@ -135,6 +144,7 @@ impl ExperimentResults {
                     num_shots,
                     num_samples,
                 )),
+                false,
                 false,
             ),
             "times" => (
@@ -144,6 +154,7 @@ impl ExperimentResults {
                     num_samples,
                 )),
                 false,
+                false,
             ),
             "hamiltonians" => (
                 Box::new(HamiltonianResults::from_json(
@@ -152,6 +163,7 @@ impl ExperimentResults {
                     num_samples,
                 )),
                 true,
+                false,
             ),
             "adiabaticity" => (
                 Box::new(AdiabaticityResults::from_json(
@@ -160,6 +172,7 @@ impl ExperimentResults {
                     num_samples,
                 )),
                 true,
+                false,
             ),
             "eigenstates" => (
                 Box::new(EigenstateResults::from_json(
@@ -167,6 +180,15 @@ impl ExperimentResults {
                     num_shots,
                     num_samples,
                 )),
+                true,
+                false,
+            ),
+            "larmors" => (
+                Box::new(LarmorResults::from_json(
+                    results_dim.clone(),
+                    num_shots,
+                )),
+                false,
                 true,
             ),
             _ => panic!("Invalid result name! {}", name),
@@ -179,7 +201,7 @@ impl ExperimentResults {
     pub fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         for result in &mut self.results {
             result.add_simulation_result(sweep_parameter_indices, simulation_result);

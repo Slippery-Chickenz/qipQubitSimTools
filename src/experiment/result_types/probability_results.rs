@@ -44,7 +44,7 @@ impl ExperimentResult for ProbabilityResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         let mut slice_info_vec: Vec<SliceInfoElem> = sweep_parameter_indices
             .iter()

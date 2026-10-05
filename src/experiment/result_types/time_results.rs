@@ -32,7 +32,7 @@ impl ExperimentResult for TimeResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         let sample_times: Array1<f64> = simulation_result.get_simulation_times().get_sample_times();
         if sample_times.len() == 1 {

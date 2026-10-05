@@ -49,5 +49,5 @@ pub trait SimulationResultGetter {
     fn get_bloch_coords_cart(&self) -> (Array2<f64>, Array2<f64>, Array2<f64>);
     fn get_simulation_times(&self) -> &SimulationTimes;
     fn get_hamiltonians(&self) -> &Array4<Complex64>;
-    fn take_larmors(&self) -> Array2<f64>;
+    fn take_larmors(&mut self) -> Array2<f64>;
 }

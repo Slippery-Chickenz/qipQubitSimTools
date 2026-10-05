@@ -42,7 +42,7 @@ impl ExperimentResult for EigenstateResults {
     fn add_simulation_result(
         &mut self,
         sweep_parameter_indices: &Vec<usize>,
-        simulation_result: &dyn SimulationResultGetter,
+        simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
         // Get the hamiltonian at each sample
         let hamiltonians: Array4<Complex64> = simulation_result.get_hamiltonians().clone();
