@@ -2,7 +2,7 @@ use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array4, ArrayD, Axis, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array4, ArrayD, Axis, Ix2, Ix3, Ix4, IxDyn, SliceInfo, SliceInfoElem};
 use num_complex::Complex64;
 
 pub struct HamiltonianResults {
@@ -68,7 +68,14 @@ impl ExperimentResult for HamiltonianResults {
             end: None,
             step: 1,
         });
-        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix3> =
+
+        slice_info_vec.push(SliceInfoElem::Slice {
+            start: 0,
+            end: None,
+            step: 1,
+        });
+
+        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix4> =
             SliceInfo::try_from(slice_info_vec).unwrap();
 
         self.results.slice_mut(slice_info).assign(&hamiltonians);

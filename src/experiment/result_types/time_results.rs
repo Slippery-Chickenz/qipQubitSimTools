@@ -2,7 +2,7 @@ use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array1, ArrayD, IntoDimension, Ix1, Ix2, IxDyn, SliceInfo, SliceInfoElem};
 
 pub struct TimeResults {
     /// Multi-Dimensional array to store the results of the sweep in
@@ -51,8 +51,13 @@ impl ExperimentResult for TimeResults {
             end: None,
             step: 1,
         });
+        slice_info_vec.push(SliceInfoElem::Slice {
+            start: 0,
+            end: None,
+            step: 1,
+        });
 
-        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
+        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
             SliceInfo::try_from(slice_info_vec).unwrap();
         self.times.slice_mut(slice_info).assign(&sample_times);
         return;

@@ -2,7 +2,7 @@ use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array3, Array4, ArrayD, Axis, Ix1, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array3, Array4, ArrayD, Axis, Ix1, Ix2, Ix3, Ix4, IxDyn, SliceInfo, SliceInfoElem};
 use ndarray_linalg::{Eigh, UPLO};
 use num_complex::Complex64;
 
@@ -78,8 +78,14 @@ impl ExperimentResult for EigenstateResults {
             step: 1,
         });
 
+        slice_info_vec.push(SliceInfoElem::Slice {
+            start: 0,
+            end: None,
+            step: 1,
+        });
+
         if hamiltonians.shape()[0] == 1 {
-            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
                 SliceInfo::try_from(slice_info_vec.clone()).unwrap();
 
             self.eigenenergies
@@ -92,7 +98,7 @@ impl ExperimentResult for EigenstateResults {
                 step: 1,
             });
 
-            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix3> =
                 SliceInfo::try_from(slice_info_vec).unwrap();
 
             self.eigenstates
@@ -108,7 +114,7 @@ impl ExperimentResult for EigenstateResults {
             step: 1,
         });
 
-        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
+        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix3> =
             SliceInfo::try_from(slice_info_vec.clone()).unwrap();
 
         self.eigenenergies
@@ -121,7 +127,7 @@ impl ExperimentResult for EigenstateResults {
             step: 1,
         });
 
-        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix3> =
+        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix4> =
             SliceInfo::try_from(slice_info_vec).unwrap();
 
         self.eigenstates.slice_mut(slice_info).assign(&eigenstates);

@@ -2,7 +2,7 @@ use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array2, ArrayD, Axis, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array2, ArrayD, Axis, IntoDimension, Ix1, Ix2, IxDyn, SliceInfo, SliceInfoElem};
 
 pub struct BlochCoordResults {
     /// Multi-Dimensional array to store the results of the sweep in
@@ -72,10 +72,10 @@ impl ExperimentResult for BlochCoordResults {
             });
         }
 
-        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
-            SliceInfo::try_from(slice_info_vec).unwrap();
 
         if x_coords.shape()[0] == 1 && x_coords.shape()[1] != 1 {
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
+                SliceInfo::try_from(slice_info_vec).unwrap();
             self.x_coord_results
                 .slice_mut(&slice_info)
                 .assign(&x_coords.index_axis_move(Axis(0), 0));
@@ -86,6 +86,8 @@ impl ExperimentResult for BlochCoordResults {
                 .slice_mut(&slice_info)
                 .assign(&z_coords.index_axis_move(Axis(0), 0));
         } else if x_coords.shape()[0] != 1 && x_coords.shape()[1] == 1 {
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
+                SliceInfo::try_from(slice_info_vec).unwrap();
             self.x_coord_results
                 .slice_mut(&slice_info)
                 .assign(&x_coords.index_axis_move(Axis(1), 0));
@@ -96,6 +98,8 @@ impl ExperimentResult for BlochCoordResults {
                 .slice_mut(&slice_info)
                 .assign(&z_coords.index_axis_move(Axis(1), 0));
         } else {
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
+                SliceInfo::try_from(slice_info_vec).unwrap();
             self.x_coord_results
                 .slice_mut(&slice_info)
                 .assign(&x_coords);

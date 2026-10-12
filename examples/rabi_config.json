@@ -1,7 +1,7 @@
 {
 	"simulation_settings": {
 		"step_size": 0.01,
-		"num_shots": 200,
+		"num_shots": 20,
 		"num_samples": 1,
 		"method": "PadeState",
 		"umethod": "RK",
@@ -33,7 +33,7 @@
 					"amplitude": 0.5,
 					"frequency": 0,
 					"phase": 0,
-					"duration": { "linspace": [0.2, 100, 500] }
+					"duration": { "linspace": [0.2, 10, 100] }
 				}
 			}
 		],
@@ -43,7 +43,7 @@
 		{
 			"larmor": {
 				"base_value": 0,
-				"pink_noise_power": 0.3,
+				"pink_noise_power": 0.0,
 				"white_noise_power": 0
 			},
 			"guess_larmor": 0,

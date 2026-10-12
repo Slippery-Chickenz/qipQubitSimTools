@@ -3,7 +3,7 @@ use crate::simulation::SimulationResultGetter;
 use crate::utils::get_state_from_json;
 
 use hdf5::{Group, Result};
-use ndarray::{Array1, Array2, ArrayD, Axis, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array1, Array2, ArrayD, Axis, IntoDimension, Ix1, Ix2, IxDyn, SliceInfo, SliceInfoElem};
 use num_complex::Complex64;
 use serde_json::Value;
 
@@ -79,18 +79,21 @@ impl ExperimentResult for ProbabilityResults {
             });
         }
 
-        let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
-            SliceInfo::try_from(slice_info_vec).unwrap();
-
         if probabilities.shape()[0] == 1 && probabilities.shape()[1] != 1 {
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
+                SliceInfo::try_from(slice_info_vec).unwrap();
             self.probabilities
                 .slice_mut(slice_info)
                 .assign(&probabilities.index_axis_move(Axis(0), 0));
         } else if probabilities.shape()[0] != 1 && probabilities.shape()[1] == 1 {
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
+                SliceInfo::try_from(slice_info_vec).unwrap();
             self.probabilities
                 .slice_mut(slice_info)
                 .assign(&probabilities.index_axis_move(Axis(1), 0));
         } else {
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
+                SliceInfo::try_from(slice_info_vec).unwrap();
             self.probabilities
                 .slice_mut(slice_info)
                 .assign(&probabilities);
