@@ -28,10 +28,10 @@
 			{
 				"name": "Constant",
 				"parameters": {
-					"amplitude": 1,
+					"amplitude": 2,
 					"frequency": 0,
 					"phase": 0,
-					"duration": { "linspace": [0.1, 20, 100] }
+					"duration": { "linspace": [0.1, 10, 200] }
 				}
 			}
 		],
@@ -41,9 +41,10 @@
 		{
 			"larmor": {
 				"base_value": 0,
-				"pink_noise_power": 0.1
+				"pink_noise_power": 0.3,
+				"white_noise_power": 0
 			},
-			"guess_larmor": { "linspace" : [-1, 1, 200] },
+			"guess_larmor": { "linspace" : [-1, 1, 100] },
 			"decoherence": 0,
 			"init_state": "+z"
 		}
