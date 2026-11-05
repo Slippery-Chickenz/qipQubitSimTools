@@ -21,7 +21,6 @@ use crate::{
 
 use hdf5::Result;
 use indicatif::ProgressBar;
-use ndarray::Array1;
 use serde_json::{Map, Value};
 
 /// Error to be returned if construction of an experiment failed

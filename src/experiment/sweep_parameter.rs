@@ -75,6 +75,20 @@ impl SweepParameter {
             )
             .to_vec();
         }
+        // If a logspace is defined
+        else if values_map.contains_key("logspace") {
+            // If it is a logspace then just return a sweep parameter and create the array of
+            // values with the ndarray logspace function
+            let logspace_args: Vec<f64> =
+                serde_json::from_value(values_map.remove("logspace").unwrap()).unwrap();
+            sweep_values = Array1::<f64>::logspace(
+                10.,
+                logspace_args[0],
+                logspace_args[1],
+                logspace_args[2] as usize,
+            )
+            .to_vec();
+        }
         // Or define a type of random distribution to sample from
         else if values_map.contains_key("distribution") {
             let distribution: &Map<String, Value> = values_map["distribution"].as_object().unwrap();

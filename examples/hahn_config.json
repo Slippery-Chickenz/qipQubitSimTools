@@ -1,14 +1,18 @@
 {
-	"step_size": 0.001,
-	"shots": 1,
-	"method": "PadeState",
-	"frame": "Rotating",
-	"output": {
+	"simulation_settings": {
+		"step_size": 0.01,
+		"num_shots": 100,
 		"num_samples": 100,
-		"state": true,
-		"probability": true,
-		"measurement": "+z",
+		"method": "PadeState",
+		"umethod": "RK",
+		"frame": "Rotating"
+	},
+	"output": {
+		"state": false,
+		"probability": false,
+		"measurement": true,
 		"bloch_coords": true,
+		"larmors": false,
 		"times": false,
 		"waveform": false,
 		"hamiltonians": false,
@@ -16,49 +20,30 @@
 		"eigenstates": false
 	},
 	"circuit": { 
-		"gates": {
-			"Idle": {
-				"type": "Idle",
-				"duration": { 
-					"linspace": [0, 4, 200]
+		"gates": [
+			{
+				"name": "Idle",
+				"parameters": { 
+					"duration": [0.1, 0.1373823795883263, 0.18873918221350972, 0.2592943797404667, 0.3562247890262442, 0.4893900918477494, 0.6723357536499337, 0.9236708571873861, 1.2689610031679222, 1.743328822199988, 2.395026619987486, 3.2903445623126677, 4.520353656360243, 6.2101694189156165, 8.531678524172806, 11.721022975334806, 16.102620275609393, 22.12216291070448, 30.391953823131978, 41.753189365604, 57.361525104486816, 78.80462815669912, 108.2636733874054, 148.73521072935117, 204.33597178569417, 280.72162039411756, 385.6620421163472, 529.8316906283708, 727.8953843983146, 1000.0]
 				}
 			},
-			"PiO2X": {},
-			"PiO2Y": {},
-			"PiX": {},
-			"PiY": {}
-		},
+			{ "name": "PiO2X" },
+			{ "name": "PiX" },
+			{ "name": "PiO2Y" },
+			{ "name": "PiY" }
+		],
 		"order": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"]
 	},
-	"qubits": { 
-		"q1": {
-			"decoherence": 0,
+	"qubits": [
+		{
 			"larmor": {
-				"base_value": {
-					"distribution": {
-						"type": "uniform",
-						"min": -0.1,
-						"max": 0.1,
-						"num_samples": 300
-					}
-				},
-				"noise_power": {
-					"pink": [0.3]
-				}
+				"base_value": 0,
+				"pink_noise_power": [0.01, 0.05, 0.1, 0.15, 0.2, 0.25],
+				"white_noise_power": 0
 			},
 			"guess_larmor": 0,
 			"decoherence": 0,
-			"init_state": "+z",
-			"uinit_state": {
-				"+z": {
-					"real": 1,
-					"imag": 0
-				},
-				"-z": {
-					"real": 0,
-					"imag": 0
-				}
-			}
+			"init_state": "+z"
 		}
-	}
+	]
 }

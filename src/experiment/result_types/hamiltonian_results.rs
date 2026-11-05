@@ -2,7 +2,7 @@ use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array4, ArrayD, Axis, Ix2, Ix3, Ix4, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array4, ArrayD, Axis, Ix2, Ix4, IxDyn, SliceInfo, SliceInfoElem};
 use num_complex::Complex64;
 
 pub struct HamiltonianResults {

@@ -23,7 +23,9 @@
 		"gates": [
 			{
 				"name": "Idle",
-				"parameters": { "duration": 0 }
+				"parameters": { 
+					"duration": 0 
+				}
 			},
 			{ "name": "PiO2X" },
 			{ "name": "PiO2Y" },
@@ -43,7 +45,7 @@
 		{
 			"larmor": {
 				"base_value": 0,
-				"pink_noise_power": 0.1,
+				"pink_noise_power": 0.15,
 				"white_noise_power": 0
 			},
 			"guess_larmor": 0,

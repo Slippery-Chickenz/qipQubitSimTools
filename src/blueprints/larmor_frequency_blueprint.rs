@@ -7,7 +7,7 @@ use serde_json::{Map, Value};
 pub struct LarmorFrequencyBlueprint {
     base_value: f64,
     pink_noise_power: f64,
-    white_noise_power: f64,
+    _white_noise_power: f64,
 }
 
 impl LarmorFrequencyBlueprint {
@@ -49,7 +49,7 @@ impl LarmorFrequencyBlueprint {
             LarmorFrequencyBlueprint {
                 base_value: base_value,
                 pink_noise_power: pink_noise_power,
-                white_noise_power: white_noise_power,
+                _white_noise_power: white_noise_power,
             },
             swept_parameters,
         );

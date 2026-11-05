@@ -1,6 +1,3 @@
-use std::f64::consts::PI;
-use std::rc::Rc;
-
 use crate::simulation::{LarmorFrequency, SimulationTimes, SimulationSettings};
 
 use ndarray::{Array1, Array2};

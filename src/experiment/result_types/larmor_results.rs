@@ -2,14 +2,13 @@ use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array1, Array2, Array3, ArrayD, Axis, IntoDimension, Ix1, Ix2, Ix3, IxDyn, ShapeArg, SliceInfo, SliceInfoElem};
-use num_complex::Complex64;
+use ndarray::{Array1, ArrayD, IntoDimension, Ix1, IxDyn, SliceInfo, SliceInfoElem};
 
 pub struct LarmorResults {
     /// Multi-Dimensional array to store the results of the sweep in
     larmors: ArrayD<Array1<f64>>,
     /// Number of shots
-    num_shots: usize,
+    _num_shots: usize,
     /// Maximum number of larmors stored in a single shot
     max_iterations: usize,
 }
@@ -21,7 +20,7 @@ impl LarmorResults {
     ) -> LarmorResults {
         // Set the eigen value array and the eigen state array
         let larmors: ArrayD<Array1<f64>> = ArrayD::<Array1<f64>>::from_elem(IxDyn(&results_dim), Array1::<f64>::zeros(0));
-        return LarmorResults { larmors: larmors, num_shots: num_shots, max_iterations: 0 };
+        return LarmorResults { larmors: larmors, _num_shots: num_shots, max_iterations: 0 };
     }
 }
 
