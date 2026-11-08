@@ -76,7 +76,7 @@ impl SimulationSettingsBlueprint {
             self.num_shots,
             self.frame.clone(),
             self.save_hamiltonian,
-            self.save_larmors
+            self.save_larmors,
         );
     }
     /// Get the number of samples from the blueprint

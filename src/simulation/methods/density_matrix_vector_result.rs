@@ -5,7 +5,7 @@ use crate::simulation::{
     SimulationResultGetter, SimulationResultSaver, SimulationSettings, SimulationTimes,
 };
 
-use ndarray::{Array1, Array2, Array3, Array4, Axis};
+use ndarray::{Array1, Array2, Array3, Array4, Axis, arr1, s};
 use ndarray_linalg::trace::Trace;
 use num_complex::Complex64;
 
@@ -110,7 +110,10 @@ impl SimulationResultGetter for DensityMatrixVectorResult {
         ));
         for i in 0..self.density_matrices.shape()[0] {
             for j in 0..self.density_matrices.shape()[1] {
-                let (x, y, z): (f64, f64, f64) = self.get_bloch_coord_cart(i, j);
+                let coord: Array1<f64> = self.get_bloch_coord_cart(i, j);
+                let x: f64 = coord[0];
+                let y: f64 = coord[1];
+                let z: f64 = coord[2];
                 let magnitude: f64 = (x.powf(2.) + y.powf(2.) + z.powf(2.)).sqrt();
                 // If the magnitude is zero then just set the state to +z
                 if magnitude < 0.0001 {
@@ -133,31 +136,22 @@ impl SimulationResultGetter for DensityMatrixVectorResult {
     fn get_duration(&self) -> f64 {
         return self.simulation_times.get_duration();
     }
-    fn get_bloch_coords_cart(&self) -> (Array2<f64>, Array2<f64>, Array2<f64>) {
+    fn get_bloch_coords_cart(&self) -> Array3<f64> {
         // Coordinates to return
-        let mut x_coords: Array2<f64> = Array2::<f64>::zeros([
+        let mut coords: Array3<f64> = Array3::<f64>::zeros([
             self.density_matrices.shape()[0],
             self.density_matrices.shape()[1],
-        ]);
-        let mut y_coords: Array2<f64> = Array2::<f64>::zeros([
-            self.density_matrices.shape()[0],
-            self.density_matrices.shape()[1],
-        ]);
-        let mut z_coords: Array2<f64> = Array2::<f64>::zeros([
-            self.density_matrices.shape()[0],
-            self.density_matrices.shape()[1],
+            3,
         ]);
 
         // Loop over all samples and get/set the coordinates
         for i in 0..self.density_matrices.shape()[0] {
             for j in 0..self.density_matrices.shape()[1] {
-                let (x, y, z): (f64, f64, f64) = self.get_bloch_coord_cart(i, j);
-                x_coords[[i, j]] = x;
-                y_coords[[i, j]] = y;
-                z_coords[[i, j]] = z;
+                let coord: Array1<f64> = self.get_bloch_coord_cart(i, j);
+                coords.slice_mut(s![i, j, ..]).assign(&coord);
             }
         }
-        return (x_coords, y_coords, z_coords);
+        return coords;
     }
     fn get_simulation_times(&self) -> &SimulationTimes {
         return &self.simulation_times;
@@ -242,11 +236,11 @@ impl DensityMatrixVectorResult {
         }
         return probabilities;
     }
-    pub fn get_bloch_coord_cart(&self, shot_num: usize, sample_num: usize) -> (f64, f64, f64) {
-        return (
+    pub fn get_bloch_coord_cart(&self, shot_num: usize, sample_num: usize) -> Array1<f64> {
+        return arr1(&[
             2. * self.density_matrices[[shot_num, sample_num, 1]].re,
             2. * self.density_matrices[[shot_num, sample_num, 1]].im,
             2. * self.density_matrices[[shot_num, sample_num, 0]].re - 1.,
-        );
+        ]);
     }
 }

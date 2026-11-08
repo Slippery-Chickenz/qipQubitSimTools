@@ -2,13 +2,11 @@ use crate::experiment::experiment_results::ExperimentResult;
 use crate::simulation::SimulationResultGetter;
 
 use hdf5::{Group, Result};
-use ndarray::{Array2, ArrayD, Axis, IntoDimension, Ix1, Ix2, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{Array3, ArrayD, Axis, Ix1, Ix2, Ix3, IxDyn, SliceInfo, SliceInfoElem};
 
 pub struct BlochCoordResults {
     /// Multi-Dimensional array to store the results of the sweep in
-    x_coord_results: ArrayD<f64>,
-    y_coord_results: ArrayD<f64>,
-    z_coord_results: ArrayD<f64>,
+    coord_results: ArrayD<f64>,
 }
 
 impl BlochCoordResults {
@@ -24,12 +22,12 @@ impl BlochCoordResults {
         if num_samples > 1 {
             results_dim.push(num_samples);
         }
+
+        results_dim.push(3);
         // Array for results of experiment
         let results: ArrayD<f64> = ArrayD::<f64>::zeros(IxDyn(&results_dim));
         return BlochCoordResults {
-            x_coord_results: results.clone(),
-            y_coord_results: results.clone(),
-            z_coord_results: results,
+            coord_results: results,
         };
     }
 }
@@ -40,75 +38,60 @@ impl ExperimentResult for BlochCoordResults {
         sweep_parameter_indices: &Vec<usize>,
         simulation_result: &mut dyn SimulationResultGetter,
     ) -> () {
-        let (x_coords, y_coords, z_coords): (Array2<f64>, Array2<f64>, Array2<f64>) =
-            simulation_result.get_bloch_coords_cart();
-        if x_coords.shape() == [1, 1] {
-            self.x_coord_results[sweep_parameter_indices.clone().into_dimension()] =
-                x_coords[[0, 0]];
-            self.y_coord_results[sweep_parameter_indices.clone().into_dimension()] =
-                y_coords[[0, 0]];
-            self.z_coord_results[sweep_parameter_indices.clone().into_dimension()] =
-                z_coords[[0, 0]];
-            return;
-        }
+        let coords: Array3<f64> = simulation_result.get_bloch_coords_cart();
 
         let mut slice_info_vec: Vec<SliceInfoElem> = sweep_parameter_indices
             .iter()
             .map(|i| SliceInfoElem::Index(i.clone() as isize))
             .collect();
 
-        if x_coords.shape()[0] != 1 {
+        // Add a slice if there is more than 1 shot
+        if coords.shape()[0] != 1 {
             slice_info_vec.push(SliceInfoElem::Slice {
                 start: 0,
                 end: None,
                 step: 1,
             });
         }
-        if x_coords.shape()[1] != 1 {
+        // Add a slice if there is more than 1 sample
+        if coords.shape()[1] != 1 {
             slice_info_vec.push(SliceInfoElem::Slice {
                 start: 0,
                 end: None,
                 step: 1,
             });
         }
+        // Add a slice for x, y, and z
+        slice_info_vec.push(SliceInfoElem::Slice {
+            start: 0,
+            end: None,
+            step: 1,
+        });
 
-
-        if x_coords.shape()[0] == 1 && x_coords.shape()[1] != 1 {
+        if coords.shape()[0] == 1 && coords.shape()[1] == 1 {
             let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
                 SliceInfo::try_from(slice_info_vec).unwrap();
-            self.x_coord_results
-                .slice_mut(&slice_info)
-                .assign(&x_coords.index_axis_move(Axis(0), 0));
-            self.y_coord_results
-                .slice_mut(&slice_info)
-                .assign(&y_coords.index_axis_move(Axis(0), 0));
-            self.z_coord_results
-                .slice_mut(&slice_info)
-                .assign(&z_coords.index_axis_move(Axis(0), 0));
-        } else if x_coords.shape()[0] != 1 && x_coords.shape()[1] == 1 {
-            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix1> =
-                SliceInfo::try_from(slice_info_vec).unwrap();
-            self.x_coord_results
-                .slice_mut(&slice_info)
-                .assign(&x_coords.index_axis_move(Axis(1), 0));
-            self.y_coord_results
-                .slice_mut(&slice_info)
-                .assign(&y_coords.index_axis_move(Axis(1), 0));
-            self.z_coord_results
-                .slice_mut(&slice_info)
-                .assign(&z_coords.index_axis_move(Axis(1), 0));
-        } else {
+            self.coord_results.slice_mut(&slice_info).assign(
+                &coords
+                    .index_axis_move(Axis(0), 0)
+                    .index_axis_move(Axis(0), 0),
+            );
+        } else if coords.shape()[0] == 1 && coords.shape()[1] != 1 {
             let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
                 SliceInfo::try_from(slice_info_vec).unwrap();
-            self.x_coord_results
+            self.coord_results
                 .slice_mut(&slice_info)
-                .assign(&x_coords);
-            self.y_coord_results
+                .assign(&coords.index_axis_move(Axis(0), 0));
+        } else if coords.shape()[0] != 1 && coords.shape()[1] == 1 {
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix2> =
+                SliceInfo::try_from(slice_info_vec).unwrap();
+            self.coord_results
                 .slice_mut(&slice_info)
-                .assign(&y_coords);
-            self.z_coord_results
-                .slice_mut(&slice_info)
-                .assign(&z_coords);
+                .assign(&coords.index_axis_move(Axis(1), 0));
+        } else {
+            let slice_info: SliceInfo<Vec<SliceInfoElem>, IxDyn, Ix3> =
+                SliceInfo::try_from(slice_info_vec).unwrap();
+            self.coord_results.slice_mut(&slice_info).assign(&coords);
         }
         return;
     }
@@ -116,19 +99,11 @@ impl ExperimentResult for BlochCoordResults {
     /// be the number of swept parameters. The size in each dimension corresponds to the number of
     /// values for the parameter across that axis. The file is saved under the given filename
     fn save(&self, group: &Group) -> Result<()> {
-        let bloch_coords_group: Group = group.create_group("bloch_coords")?;
-        let builder = bloch_coords_group.new_dataset_builder();
+        let builder = group.new_dataset_builder();
         let _ds = builder
             .clone()
-            .with_data(&self.x_coord_results)
-            .create("x_coords")?;
-        let _ds = builder
-            .clone()
-            .with_data(&self.y_coord_results)
-            .create("y_coords")?;
-        let _ds = builder
-            .with_data(&self.z_coord_results)
-            .create("z_coords")?;
+            .with_data(&self.coord_results)
+            .create("bloch_coords")?;
         return Ok(());
     }
 }

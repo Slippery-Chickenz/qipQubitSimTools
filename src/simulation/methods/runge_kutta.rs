@@ -34,12 +34,24 @@ impl SimulationMethod for RKMethod {
             );
             let k_2: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 qubit_array,
-                T::get_matrix(circuit, qubit_array, time + (dt / 2.), shot_num, t_index + 1),
+                T::get_matrix(
+                    circuit,
+                    qubit_array,
+                    time + (dt / 2.),
+                    shot_num,
+                    t_index + 1,
+                ),
                 &(&qubit_state + (&k_1 * (dt / 2.))),
             );
             let k_3: Array2<Complex64> = RKMethod::get_lindblad_operator(
                 qubit_array,
-                T::get_matrix(circuit, qubit_array, time + (dt / 2.), shot_num, t_index + 2),
+                T::get_matrix(
+                    circuit,
+                    qubit_array,
+                    time + (dt / 2.),
+                    shot_num,
+                    t_index + 2,
+                ),
                 &(&qubit_state + (&k_2 * (dt / 2.))),
             );
             let k_4: Array2<Complex64> = RKMethod::get_lindblad_operator(

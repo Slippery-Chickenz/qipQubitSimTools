@@ -46,7 +46,7 @@ pub trait SimulationResultGetter {
     fn get_state_probabilities(&self, state: &Array1<Complex64>) -> Array2<f64>;
     fn get_states(&self) -> Array3<Complex64>;
     fn get_duration(&self) -> f64;
-    fn get_bloch_coords_cart(&self) -> (Array2<f64>, Array2<f64>, Array2<f64>);
+    fn get_bloch_coords_cart(&self) -> Array3<f64>;
     fn get_simulation_times(&self) -> &SimulationTimes;
     fn get_hamiltonians(&self) -> &Array4<Complex64>;
     fn take_larmors(&mut self) -> Array2<f64>;

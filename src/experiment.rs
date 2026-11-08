@@ -109,13 +109,17 @@ impl Experiment {
         // Rc of sweep parameters to save here and also send to results
         let rc_sweep_parameters: Rc<Vec<SweepParameter>> = Rc::new(sweep_parameters);
 
-        let (results, save_hamiltonians, save_waveform, save_larmors): (ExperimentResults, bool, bool, bool) =
-            ExperimentResults::from_json(
-                serde_json::from_value(json_values.remove("output").unwrap()).unwrap(),
-                Rc::clone(&rc_sweep_parameters),
-                simulation_settings_blueprint.get_num_samples(),
-                simulation_settings_blueprint.get_num_shots(),
-            );
+        let (results, save_hamiltonians, save_waveform, save_larmors): (
+            ExperimentResults,
+            bool,
+            bool,
+            bool,
+        ) = ExperimentResults::from_json(
+            serde_json::from_value(json_values.remove("output").unwrap()).unwrap(),
+            Rc::clone(&rc_sweep_parameters),
+            simulation_settings_blueprint.get_num_samples(),
+            simulation_settings_blueprint.get_num_shots(),
+        );
 
         simulation_settings_blueprint.save_hamiltonians(save_hamiltonians);
         simulation_settings_blueprint.save_larmors(save_larmors);

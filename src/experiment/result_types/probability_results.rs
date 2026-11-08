@@ -3,7 +3,9 @@ use crate::simulation::SimulationResultGetter;
 use crate::utils::get_state_from_json;
 
 use hdf5::{Group, Result};
-use ndarray::{Array1, Array2, ArrayD, Axis, IntoDimension, Ix1, Ix2, IxDyn, SliceInfo, SliceInfoElem};
+use ndarray::{
+    Array1, Array2, ArrayD, Axis, IntoDimension, Ix1, Ix2, IxDyn, SliceInfo, SliceInfoElem,
+};
 use num_complex::Complex64;
 use serde_json::Value;
 

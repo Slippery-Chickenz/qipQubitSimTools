@@ -122,11 +122,13 @@ impl Circuit {
     }
     // Get the pulse amplitude of the circuit at a time
     pub fn get_amplitude(&self, time: f64) -> f64 {
-        return self.gates[self.get_gate_index(time)].get_amplitude(time);
+        let (i, gate_time) = self.get_gate_index(time);
+        return self.gates[i].get_amplitude(gate_time);
     }
     // Get the raw pulse frequency of the circuit at a time
     pub fn get_frequency(&self, time: f64) -> f64 {
-        return self.gates[self.get_gate_index(time)].get_frequency(time);
+        let (i, gate_time) = self.get_gate_index(time);
+        return self.gates[i].get_frequency(gate_time);
     }
     // Get the integrated frequency of the circuit at a time
     pub fn get_integrated_frequency(&mut self, time: f64) -> f64 {
@@ -137,7 +139,8 @@ impl Circuit {
     }
     // Get the phase of the circuit at a time
     pub fn get_phase(&self, time: f64) -> f64 {
-        return self.gates[self.get_gate_index(time)].get_phase(time);
+        let (i, gate_time) = self.get_gate_index(time);
+        return self.gates[i].get_phase(gate_time);
     }
     /// Reset the circuit class to simulate a shot
     pub fn reset_for_shot(&mut self) -> () {
@@ -146,12 +149,12 @@ impl Circuit {
         return;
     }
     // Get the index in the gates vector of the gate which is playing at a given time
-    fn get_gate_index(&self, time: f64) -> usize {
+    fn get_gate_index(&self, time: f64) -> (usize, f64) {
         let mut gate_time: f64 = time.clone();
         for (i, gate) in self.gates.iter().enumerate() {
             let gate_duration: f64 = gate.get_duration();
             if (gate_time - gate_duration) <= 1e-10 {
-                return i;
+                return (i, gate_time);
             }
             gate_time -= gate_duration;
         }

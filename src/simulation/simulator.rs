@@ -154,9 +154,9 @@ impl<Method: SimulationMethod> Simulator<Method> {
         );
 
         // Set the simulation times for the circuit and qubit array
-        self.qubit_array.initialize_larmor_noise(&self.simulation_settings, &self.simulation_times);
-            // .set_simulation_times(Rc::clone(&self.simulation_times));
-
+        self.qubit_array
+            .initialize_larmor_noise(&self.simulation_settings, &self.simulation_times);
+        // .set_simulation_times(Rc::clone(&self.simulation_times));
 
         // Get the starting state for the simulation
         let qubit_state: Method::QubitStateType =

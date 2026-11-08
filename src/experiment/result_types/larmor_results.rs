@@ -14,13 +14,15 @@ pub struct LarmorResults {
 }
 
 impl LarmorResults {
-    pub fn from_json(
-        results_dim: Vec<usize>,
-        num_shots: usize,
-    ) -> LarmorResults {
+    pub fn from_json(results_dim: Vec<usize>, num_shots: usize) -> LarmorResults {
         // Set the eigen value array and the eigen state array
-        let larmors: ArrayD<Array1<f64>> = ArrayD::<Array1<f64>>::from_elem(IxDyn(&results_dim), Array1::<f64>::zeros(0));
-        return LarmorResults { larmors: larmors, _num_shots: num_shots, max_iterations: 0 };
+        let larmors: ArrayD<Array1<f64>> =
+            ArrayD::<Array1<f64>>::from_elem(IxDyn(&results_dim), Array1::<f64>::zeros(0));
+        return LarmorResults {
+            larmors: larmors,
+            _num_shots: num_shots,
+            max_iterations: 0,
+        };
     }
 }
 
@@ -54,8 +56,6 @@ impl ExperimentResult for LarmorResults {
     /// be the number of swept parameters. The size in each dimension corresponds to the number of
     /// values for the parameter across that axis. The file is saved under the given filename
     fn save(&self, group: &Group) -> Result<()> {
-
-
         let mut padded_dimensions: Vec<usize> = self.larmors.shape().to_vec();
         padded_dimensions.push(self.max_iterations);
         // padded_dimensions.push(self.max_iterations);
@@ -94,7 +94,6 @@ impl ExperimentResult for LarmorResults {
                     break;
                 }
             }
-
         }
 
         // Make a builder and put the results data set into the file

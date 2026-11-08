@@ -1,4 +1,4 @@
-use crate::simulation::{LarmorFrequency, SimulationTimes, SimulationSettings};
+use crate::simulation::{LarmorFrequency, SimulationSettings, SimulationTimes};
 
 use ndarray::{Array1, Array2};
 use num_complex::Complex64;
@@ -41,9 +41,14 @@ impl QubitArray {
         };
     }
     /// Set the simulation times for the qubit array
-    pub fn initialize_larmor_noise(&mut self, simulation_settings: &SimulationSettings, simulation_times: &SimulationTimes) -> () {
+    pub fn initialize_larmor_noise(
+        &mut self,
+        simulation_settings: &SimulationSettings,
+        simulation_times: &SimulationTimes,
+    ) -> () {
         // self.simulation_times = Some(Rc::clone(&simulation_times));
-        self.larmor.calculate_noise_values(simulation_settings, simulation_times);
+        self.larmor
+            .calculate_noise_values(simulation_settings, simulation_times);
         return;
     }
     /// Get the density_matrix that represents the starting state for the qubits

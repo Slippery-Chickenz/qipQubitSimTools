@@ -126,11 +126,7 @@ impl LarmorFrequency {
         }
         return larmor_values;
     }
-    fn calculate_pink_noise_values(
-        &self,
-        mut larmor_values: Array1<f64>,
-        dt: f64,
-    ) -> Array1<f64> {
+    fn calculate_pink_noise_values(&self, mut larmor_values: Array1<f64>, dt: f64) -> Array1<f64> {
         let mut random_generator = rng();
         let mut planner: FftPlanner<f64> = FftPlanner::new();
         let mut pink_noise_values: Vec<Complex64> =

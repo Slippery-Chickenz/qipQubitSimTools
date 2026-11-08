@@ -1,5 +1,6 @@
 pub mod atm_gate;
 pub mod constant;
+pub mod cpmg;
 pub mod idle;
 pub mod pi;
 pub mod pi_o_2_x;
@@ -9,6 +10,7 @@ pub mod pi_y;
 
 pub use atm_gate::ATMGate;
 pub use constant::Constant;
+pub use cpmg::CPMG;
 pub use idle::Idle;
 pub use pi_o_2_x::PiO2X;
 pub use pi_o_2_y::PiO2Y;

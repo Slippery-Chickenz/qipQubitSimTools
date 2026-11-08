@@ -5,7 +5,7 @@ use crate::simulation::{
     SimulationResultGetter, SimulationResultSaver, SimulationSettings, SimulationTimes,
 };
 
-use ndarray::{Array1, Array2, Array3, Array4, Axis};
+use ndarray::{Array1, Array2, Array3, Array4, Axis, arr1, s};
 use num_complex::Complex64;
 
 pub struct QubitStateResult {
@@ -106,25 +106,19 @@ impl SimulationResultGetter for QubitStateResult {
     fn get_duration(&self) -> f64 {
         return self.simulation_times.get_duration();
     }
-    fn get_bloch_coords_cart(&self) -> (Array2<f64>, Array2<f64>, Array2<f64>) {
-        // Coordinates to return
-        let mut x_coords: Array2<f64> =
-            Array2::<f64>::zeros([self.states.shape()[0], self.states.shape()[1]]);
-        let mut y_coords: Array2<f64> =
-            Array2::<f64>::zeros([self.states.shape()[0], self.states.shape()[1]]);
-        let mut z_coords: Array2<f64> =
-            Array2::<f64>::zeros([self.states.shape()[0], self.states.shape()[1]]);
+    fn get_bloch_coords_cart(&self) -> Array3<f64> {
+
+        let mut coords: Array3<f64> =
+            Array3::<f64>::zeros([self.states.shape()[0], self.states.shape()[1], 3]);
 
         // Loop over all samples and get/set the coordinates
         for i in 0..self.states.shape()[0] {
             for j in 0..self.states.shape()[1] {
-                let (x, y, z): (f64, f64, f64) = self.get_bloch_coord_cart(i, j);
-                x_coords[[i, j]] = x;
-                y_coords[[i, j]] = y;
-                z_coords[[i, j]] = z;
+                let coord: Array1<f64> = self.get_bloch_coord_cart(i, j);
+                coords.slice_mut(s![i, j, ..]).assign(&coord);
             }
         }
-        return (x_coords, y_coords, z_coords);
+        return coords;
     }
     fn get_simulation_times(&self) -> &SimulationTimes {
         return &self.simulation_times;
@@ -197,7 +191,7 @@ impl QubitStateResult {
         }
         return probabilities;
     }
-    pub fn get_bloch_coord_cart(&self, shot_num: usize, sample_num: usize) -> (f64, f64, f64) {
+    pub fn get_bloch_coord_cart(&self, shot_num: usize, sample_num: usize) -> Array1<f64> {
         // Sample state to find the bloch coord for
         let sample_state: Array1<Complex64> = self
             .states
@@ -210,10 +204,10 @@ impl QubitStateResult {
             .to_shape([2, 1])
             .unwrap()
             .dot(&sample_state.mapv(|x| x.conj()).to_shape([1, 2]).unwrap());
-        return (
+        return arr1(&[
             2. * density_matrix[[0, 1]].re,
             2. * density_matrix[[0, 1]].im,
             2. * density_matrix[[0, 0]].re - 1.,
-        );
+        ]);
     }
 }

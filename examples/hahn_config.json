@@ -2,7 +2,7 @@
 	"simulation_settings": {
 		"step_size": 0.01,
 		"num_shots": 100,
-		"num_samples": 100,
+		"num_samples": 200,
 		"method": "PadeState",
 		"umethod": "RK",
 		"frame": "Rotating"

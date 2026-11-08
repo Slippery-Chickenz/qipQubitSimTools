@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::gates::{ATMGate, CheckGateName, Constant, Gate, Idle, PiO2X, PiO2Y, PiX, PiY};
+use crate::gates::{ATMGate, CPMG, CheckGateName, Constant, Gate, Idle, PiO2X, PiO2Y, PiX, PiY};
 
 use crate::experiment::SweepParameter;
 
@@ -134,6 +134,13 @@ impl From<&GateBlueprint> for ATMGate {
     }
 }
 
+impl From<&GateBlueprint> for CPMG {
+    /// Convert from a reference to a gate blueprint to an ATM Gate
+    fn from(blueprint: &GateBlueprint) -> CPMG {
+        return CPMG::new_raw(blueprint.get("tau"), blueprint.get("num_pi") as usize);
+    }
+}
+
 /// Function to try and convert from a blueprint to a Box to a gate object
 /// If it finds a conversion from the blueprint to the gate it returns a Box to the gate if not it
 /// errors and returns back the reference to the blueprint object
@@ -161,6 +168,7 @@ fn try_convert_blueprint(mut blueprint: &GateBlueprint) -> Option<Box<dyn Gate>>
         try_convert_blueprint_to::<PiO2Y>,
         try_convert_blueprint_to::<PiY>,
         try_convert_blueprint_to::<ATMGate>,
+        try_convert_blueprint_to::<CPMG>,
     ];
     // Loop over the functiosn and try each one to convert
     for loader in DICT_LOADERS {

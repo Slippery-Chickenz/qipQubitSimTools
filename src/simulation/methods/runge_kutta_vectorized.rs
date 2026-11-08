@@ -34,12 +34,24 @@ impl SimulationMethod for RKVectorizedMethod {
             )
             .dot(&qubit_state);
             let k_2: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
-                T::get_matrix(circuit, qubit_array, time + (dt / 2.), shot_num, t_index + 1),
+                T::get_matrix(
+                    circuit,
+                    qubit_array,
+                    time + (dt / 2.),
+                    shot_num,
+                    t_index + 1,
+                ),
                 qubit_array,
             )
             .dot(&(&qubit_state + (&k_1 * (dt / 2.))));
             let k_3: Array1<Complex64> = RKVectorizedMethod::get_lindblad_operator(
-                T::get_matrix(circuit, qubit_array, time + (dt / 2.), shot_num, t_index + 2),
+                T::get_matrix(
+                    circuit,
+                    qubit_array,
+                    time + (dt / 2.),
+                    shot_num,
+                    t_index + 2,
+                ),
                 qubit_array,
             )
             .dot(&(&qubit_state + (&k_2 * (dt / 2.))));

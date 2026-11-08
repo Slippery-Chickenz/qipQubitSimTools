@@ -9,11 +9,10 @@ fn main() {
     unsafe {
         env::set_var("RUST_BACKTRACE", "1");
     }
-
     let mut test_experiment: Experiment =
-        Experiment::from_json_file("examples/T2_relaxation_config.json").unwrap();
+        Experiment::from_json_file("examples/cpmg_config.json").unwrap();
     dbg!(&test_experiment);
     test_experiment
-        .run_experiment("examples/T2_relaxation")
+        .run_experiment("examples/cpmg_results")
         .unwrap();
 }
