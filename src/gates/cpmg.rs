@@ -1,5 +1,5 @@
 use crate::default_name;
-use crate::gates::{CheckGateName, Gate, Idle, PiX};
+use crate::gates::{CheckGateName, Gate, Idle, PiX, PiY};
 
 /// Struct for a gate which just idles
 pub struct CPMG {
@@ -26,12 +26,12 @@ impl CPMG {
 
         let idle_time: f64 = tau / (num_pi * 2) as f64;
 
-        let mut gates: Vec<Box<dyn Gate>> = vec![Idle::new(idle_time), PiX::new()];
+        let mut gates: Vec<Box<dyn Gate>> = vec![Idle::new(idle_time), PiY::new()];
         let pi_x_duration = gates[1].get_duration();
 
         for _i in 0..num_pi - 1 {
             gates.push(Idle::new(idle_time * 2.));
-            gates.push(PiX::new());
+            gates.push(PiY::new());
         }
 
         gates.push(Idle::new(idle_time));

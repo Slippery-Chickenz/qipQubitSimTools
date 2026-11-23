@@ -32,7 +32,7 @@
 			{ "name": "PiO2Y" },
 			{ "name": "PiY" }
 		],
-		"order": ["PiO2X", "Idle", "PiX", "Idle", "PiO2X"]
+		"order": ["PiO2X", "Idle", "PiY", "Idle", "PiO2X"]
 	},
 	"qubits": [
 		{
