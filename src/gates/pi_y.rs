@@ -2,17 +2,17 @@ use crate::default_name;
 use crate::gates::{CheckGateName, Gate};
 use crate::pulses::{Constant, Pulse};
 
-/// Struct for a gate that performs a $\pi/2$ rotation around the +x axis
+/// Struct for a gate that performs a $\pi$ rotation around the +Y axis
 pub struct PiY {}
 
 impl PiY {
-    /// The gate consists of a single on resonance constant pulse with amplitude of 1 for 0.5 us
+    /// The gate consists of a single on resonance constant pulse with amplitude of 1 for 1 us
     const PI_Y_PULSE: Constant = Constant::new(1., 0., -(std::f64::consts::PI) / 2., 1.);
-    /// Get a box to a PiO2X gate
+    /// Get a box to a PiY gate
     pub fn new() -> Box<PiY> {
         return Box::new(PiY {});
     }
-    /// Get a raw PiO2X object
+    /// Get a raw PiY object
     pub fn new_raw() -> PiY {
         return PiY {};
     }
